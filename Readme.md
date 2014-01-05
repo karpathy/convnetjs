@@ -7,9 +7,9 @@ For much more information, see the main page at:
 http://cs.stanford.edu/people/karpathy/convnetjs/
 
 ## Online demos
-Convolutional Neural Network on MNIST digits: http://cs.stanford.edu/~karpathy/convnetjs/demo/mnist.html
-Convolutional Neural Network on CIFAR-10: http://cs.stanford.edu/~karpathy/convnetjs/demo/cifar10.html
-Neural Network with 2 hidden layers on toy 2D data: http://cs.stanford.edu/~karpathy/convnetjs/demo/classify2d.html
+- [Convolutional Neural Network on MNIST digits](http://cs.stanford.edu/~karpathy/convnetjs/demo/mnist.html)
+- [Convolutional Neural Network on CIFAR-10](http://cs.stanford.edu/~karpathy/convnetjs/demo/cifar10.html)
+- [Neural Network with 2 hidden layers on toy 2D data](http://cs.stanford.edu/~karpathy/convnetjs/demo/classify2d.html)
 
 ## Train your own models
 To run these locally it is recommended that you use Nodejs or you may run into cross-origin security issues and not being able to load images. Chrome will have this problem. Firefox will work fine but I found Chrome to run much faster and more consistently.
@@ -24,9 +24,23 @@ To setup a nodejs server and start training:
 
 If you don't want to work on images but have some custom data, you probably want just a basic neural network with no convolutions and pooling etc. That means you probably want to use the `FullyConnLayer` layer and stack it once or twice. Right now only ReLU (Rectified Linear Units: i.e. x -> max(0,x)) nonlinearity is supported, more (Maxout, Sigmoid?) are coming soon perhaps (but ReLUs work very well in practice).
 
+## Layers
+Every layer takes a 3D volume (dimensions of WIDTH x HEIGHT x DEPTH) and transforms it into a different 3D volume using some set of internal parameters. Some layers (such as pooling, dropout) have no parameters. Currently available layers are:
+
+1. `Convolutional Layer`: convolves input volume with local filters of given size, at given stride.
+2. `Pooling Layer`: max-pools neighboring activations in 3D volume, keeping depth the same but reducing width and height of volume
+3. `Softmax`: this is a classifier layer that should currently be last. It computes probabilities via dense connections to the input volume and dot product with class weights.
+4. `Dropout Layer`: implements dropout to control overfitting. Can be used after layers that have very large number of nodes for regularization.
+5. `Local Contrast Normalization Layer`: Creates local competition among neurons along depth at specific location, for all locations.
+6. `Fully Connected Layer`: a number of neurons connected densely to input volume. They each compute dot product follwed by Rectified Linear Unit (ReLU) non-linear activation function, which simply computes x->max(0,x), i.e. thresholds at zero. Sometimes people use Sigmoids but ReLUs have become popular more recently because they train faster and give just as good of a performance.
+
+If you're not dealing with images, the only layer that is of interest is the Fully Connected Layer, which you probably want to stack once or twice on top of your input. You also may consider using a Dropout layer in places where there are a lot of parameters to control overfitting (overfitting = your validation accuracy is much lower than the training accuracy).
+
+If you're dealing with images, your networks should look similar to what you see in the demos.
+
 ## Use in Node
 1. install: `npm install convnetjs`
-2. var convnetjs = require("convnetjs");
+2. `var convnetjs = require("convnetjs");`
 
 ## License
 MIT

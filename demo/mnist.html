@@ -35,6 +35,9 @@
 .ltlrn {
   background-color: #DFD; 
 }
+.ltdropout {
+  background-color: #AAA;  
+}
 .ltitle {
   color: #333;
   font-size: 18px;
@@ -176,10 +179,11 @@ $(window).load(function() {
   layer_defs.push({type:'pool', sx:2, stride:2});
   layer_defs.push({type:'conv', sx:5, filters:16, stride:1});
   layer_defs.push({type:'pool', sx:3, stride:3});
+  layer_defs.push({type:'dropout', drop_prob:0.5});
   layer_defs.push({type:'softmax', num_classes:10});
 
   document.getElementById('newnet').value = JSON.stringify(layer_defs, undefined, 1);
-  
+
   net = new convnetjs.Net();
   net.makeLayers(layer_defs);
 
@@ -377,7 +381,7 @@ var load_and_step = function() {
 
 // evaluate current network on test set
 var test_predict = function() {
-  var num_classes = this.net.layers[this.net.layers.length-1].out_depth;
+  var num_classes = net.layers[net.layers.length-1].out_depth;
 
   document.getElementById('testset_acc').innerHTML = '';
   // grab a random test image
@@ -531,14 +535,12 @@ var toggle_pause = function() {
   else { btn.value = 'pause'; load_and_step(); }
 }
 var dump_json = function() {
-  document.getElementById("dumpjson").value = JSON.stringify(this.net.toJSON());
+  document.getElementById("dumpjson").value = JSON.stringify(net.toJSON());
 }
-var load_from_json = function() {
-  var jsonString = document.getElementById("dumpjson").value;
-  var json = JSON.parse(jsonString);
-  this.net = new convnetjs.Net();
-  this.net.fromJSON(json);
-
+var clear_graph = function() {
+  lossGraph = new cnnvis.Graph(); // reinit graph too 
+}
+var reset_all = function() {
   // reinit trainer
   trainer = new convnetjs.SGDTrainer(net, {learning_rate:trainer.learning_rate, momentum:trainer.momentum, batch_size:trainer.batch_size, decay:trainer.decay});
   update_net_param_display();
@@ -548,24 +550,22 @@ var load_from_json = function() {
   wLossWindow.reset();
   trainAccWindow.reset();
   valAccWindow.reset();
-
   lossGraph = new cnnvis.Graph(); // reinit graph too
+  step_num = 0;
 }
-var clear_graph = function() {
-  lossGraph = new cnnvis.Graph(); // reinit graph too 
+var load_from_json = function() {
+  var jsonString = document.getElementById("dumpjson").value;
+  var json = JSON.parse(jsonString);
+  net = new convnetjs.Net();
+  net.fromJSON(json);
+  reset_all();
 }
 var change_net = function() {
   var layer_defs_txt = document.getElementById('newnet').value;
   var layer_defs = JSON.parse(layer_defs_txt);
   net = new convnetjs.Net();
   net.makeLayers(layer_defs);
-  trainer = new convnetjs.SGDTrainer(net, {learning_rate:trainer.learning_rate, momentum:trainer.momentum, batch_size:trainer.batch_size, decay:trainer.decay});
-  update_net_param_display();
-  xLossWindow.reset(); // various resets
-  wLossWindow.reset();
-  trainAccWindow.reset();
-  valAccWindow.reset();
-  lossGraph = new cnnvis.Graph(); // reinit graph too
+  reset_all();
 }
 
 </script>
