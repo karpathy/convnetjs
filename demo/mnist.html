@@ -178,9 +178,10 @@ $(window).load(function() {
   layer_defs.push({type:'pool', sx:3, stride:3});
   layer_defs.push({type:'softmax', num_classes:10});
 
+  document.getElementById('newnet').value = JSON.stringify(layer_defs, undefined, 1);
+  
   net = new convnetjs.Net();
   net.makeLayers(layer_defs);
-  net.layers[net.layers.length-1].gmul = 10.0; // make softmax learn bit faster
 
   trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.1, momentum:0.9, batch_size:16, decay:0.001});
 
@@ -553,6 +554,19 @@ var load_from_json = function() {
 var clear_graph = function() {
   lossGraph = new cnnvis.Graph(); // reinit graph too 
 }
+var change_net = function() {
+  var layer_defs_txt = document.getElementById('newnet').value;
+  var layer_defs = JSON.parse(layer_defs_txt);
+  net = new convnetjs.Net();
+  net.makeLayers(layer_defs);
+  trainer = new convnetjs.SGDTrainer(net, {learning_rate:trainer.learning_rate, momentum:trainer.momentum, batch_size:trainer.batch_size, decay:trainer.decay});
+  update_net_param_display();
+  xLossWindow.reset(); // various resets
+  wLossWindow.reset();
+  trainAccWindow.reset();
+  valAccWindow.reset();
+  lossGraph = new cnnvis.Graph(); // reinit graph too
+}
 
 </script>
 
@@ -566,6 +580,7 @@ var clear_graph = function() {
   <p>
     This network takes a 28x28 MNIST image and crops a random 24x24 window before training on it (this technique is called data augmentation and improves generalization). Similarly to do prediction, 4 random crops are sampled and the probabilities across all crops are averaged to produce final predictions. The network runs at about 5ms for both forward and backward pass on my reasonably decent Ubuntu+Chrome machine.
   </p>
+  <p>Friendly reminder: You want to gradually decrease learning rate as the training happens, especially when you see that the total cost curve is starting to be very wiggly, or if the validation stops increasing.</p>
   <p>Report questions/bugs/suggestions to <a href="https://twitter.com/karpathy">@karpathy</a>.</p>
   <h1>Training Stats</h1>
   <div class="divsec" style="270px;">
@@ -602,6 +617,12 @@ var clear_graph = function() {
         </canvas>
         <br />
         <input id="buttoncg" type="submit" value="clear graph" onclick="clear_graph();"/>
+      </div>
+
+      <div>
+      <br />
+      <textarea id="newnet" style="width:100%"></textarea><br />
+      <input id="buttonnn" type="submit" value="change network" onclick="change_net();"/>
       </div>
 
     </div>
