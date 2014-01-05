@@ -1,0 +1,205 @@
+
+<script src="jquery-1.8.3.min.js"></script>
+
+<html>
+<head>
+<title>ConvNetJS demo: Classify toy 2D data</title>
+<link href='http://fonts.googleapis.com/css?family=Cabin' rel='stylesheet' type='text/css'>
+
+<style>
+body {
+  font-family: 'Cabin', sans-serif;
+  color: #333;
+  padding: 20px;
+}
+</style>
+
+<script src="./npgmain.js"></script>
+<script src="../lib/convnet.js"></script>
+<script type="text/javascript">
+
+
+var N= 10; //number of data points
+var data = new Array(N);
+var labels= new Array(N);
+var ss = 50.0; // scale for drawing
+
+// create neural net
+var layer_defs = [];
+layer_defs.push({type:'input', out_sx:1, out_sy:1, out_depth:2});
+layer_defs.push({type:'fc', filters:20});
+layer_defs.push({type:'fc', filters:20});
+layer_defs.push({type:'softmax', num_classes:2});
+
+var net = new convnetjs.Net();
+net.makeLayers(layer_defs);
+
+var trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.01, momentum:0.0, batch_size:1, decay:0.001});
+
+function myinit(){
+  
+  data[0]=[-0.4326  ,  1.1909 ];
+  data[1]= [3.0, 4.0];
+  data[2]=[0.1253 , -0.0376   ];
+  data[3]=[0.2877 ,   0.3273  ];
+  data[4]=[-1.1465 ,   0.1746 ];
+  data[5]=[1.8133 ,   2.1139  ];
+  data[6]=[2.7258 ,   3.0668  ];
+  data[7]=[1.4117 ,   2.0593  ];
+  data[8]=[4.1832 ,   1.9044  ];
+  data[9]=[1.8636 ,   1.1677  ];
+  labels[0]= 1;
+  labels[1]= 1;
+  labels[2]= 1;
+  labels[3]= 1;
+  labels[4]= 1;
+  labels[5]= 0;
+  labels[6]= 0;
+  labels[7]= 0;
+  labels[8]= 0;
+  labels[9]= 0;
+  
+}
+ 
+function update(){
+  // forward prop the data
+
+  var start = new Date().getTime();
+
+  var x = new convnetjs.Vol(1,1,2);
+  //x.w = data[ix];
+  var avloss = 0.0;
+  for(var iters=0;iters<100;iters++) {
+    for(var ix=0;ix<N;ix++) {
+      x.w = data[ix];
+      var stats = trainer.train(x, labels[ix]);
+      avloss += stats.loss;
+    }
+  }
+  avloss /= N*iters;
+
+  var end = new Date().getTime();
+  var time = end - start;
+      
+  console.log('loss = ' + avloss + ', 100 cycles through data in ' + time + 'ms');
+}
+
+function draw(){
+    
+    ctx.clearRect(0,0,WIDTH,HEIGHT);
+    
+    var netx = new convnetjs.Vol(1,1,2);
+    // draw decisions in the grid
+    var density= 3.0;
+    for(var x=0.0; x<=WIDTH; x+= density) {
+      for(var y=0.0; y<=HEIGHT; y+= density) {
+        //var dec= svm.marginOne([(x-WIDTH/2)/ss, (y-HEIGHT/2)/ss]);
+        netx.w[0] = (x-WIDTH/2)/ss;
+        netx.w[1] = (y-HEIGHT/2)/ss;
+        var a = net.forward(netx);
+        
+        if(a.w[0] > a.w[1]) ctx.fillStyle = 'rgb(250, 150, 150)';
+        else ctx.fillStyle = 'rgb(150, 250, 150)';
+
+        //ctx.fillStyle = 'rgb(150,' + Math.floor(a.w[0]*105)+150 + ',150)';
+        //ctx.fillStyle = 'rgb(' + Math.floor(a.w[0]*255) + ',' + Math.floor(a.w[1]*255) + ', 0)';
+        ctx.fillRect(x-density/2-1, y-density-1, density+2, density+2);
+      }
+    }
+    
+    // draw axes
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgb(50,50,50)';
+    ctx.lineWidth = 1;
+    ctx.moveTo(0, HEIGHT/2);
+    ctx.lineTo(WIDTH, HEIGHT/2);
+    ctx.moveTo(WIDTH/2, 0);
+    ctx.lineTo(WIDTH/2, HEIGHT);
+    ctx.stroke();
+
+    // draw datapoints. Draw support vectors larger
+    ctx.strokeStyle = 'rgb(0,0,0)';
+    ctx.lineWidth = 1;
+    for(var i=0;i<N;i++) {
+      
+      if(labels[i]==1) ctx.fillStyle = 'rgb(100,200,100)';
+      else ctx.fillStyle = 'rgb(200,100,100)';
+      
+      drawCircle(data[i][0]*ss+WIDTH/2, data[i][1]*ss+HEIGHT/2, 5.0);
+    }
+    
+}
+
+function mouseClick(x, y, shiftPressed){
+  
+  // add datapoint at location of click
+  data.push([(x-WIDTH/2)/ss, (y-HEIGHT/2)/ss]);
+  labels.push(shiftPressed ? 1 : 0);
+  N += 1;
+
+}
+
+function keyDown(key){
+}
+
+function keyUp(key) {
+
+}
+
+$(function() {
+    
+});
+</script>
+
+<style type="text/css">
+canvas { 
+    border: 1px solid #555;
+    margin-top: 10px;
+}
+#wrap {
+  width: 800px;
+  margin-right: auto;
+  margin-left: auto;
+  margin-bottom: 200px;
+}
+</style>
+
+</head>
+
+<body onLoad="NPGinit(10);">
+
+<div id="wrap">
+<h1>ConvnetJS demo: toy 2d classification with 2-layer neural network</h1>
+
+<p>The simulation below shows a toy binary problem with a few data points of class 0 (red) and 1 (green). The 2layer network is set up as:</p>
+
+<pre>
+var layer_defs = [];
+layer_defs.push({type:'input', out_sx:1, out_sy:1, out_depth:2});
+layer_defs.push({type:'fc', filters:20});
+layer_defs.push({type:'fc', filters:20});
+layer_defs.push({type:'softmax', num_classes:2});
+
+var net = new convnetjs.Net();
+net.makeLayers(layer_defs);
+
+var trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.01, momentum:0.0, batch_size:1, decay:0.001});
+</pre>
+<p>Every 10th of a second, all points are fed to the network multiple times through the trainer class to train the network. Here's an example for one point:</p>
+<pre>
+var x = new convnetjs.Vol(1,1,2);
+x.w = [1.8636, 1.1677];
+var stats = trainer.train(x, 1);
+</pre>
+
+<canvas id="NPGcanvas" width="500" height="500">Browser not supported for Canvas. Get a real browser.</canvas>
+
+<p>Add red data points by clicking and green data points by shift clicking. Watch the classification prediction "landscape" morph as the network learns the data points.</p>
+
+<p>Go <a href="http://cs.stanford.edu/people/karpathy/convnetjs/">back to ConvNetJS</a></p>
+
+</div>
+
+</body>
+</html>
+
