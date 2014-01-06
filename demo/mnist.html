@@ -23,6 +23,9 @@
 .ltconv {
   background-color: #FDD;
 }
+.ltrelu {
+  background-color: #FDF;
+}
 .ltpool {
   background-color: #DDF;
 }
@@ -175,11 +178,10 @@ $(window).load(function() {
 
   var layer_defs = [];
   layer_defs.push({type:'input', out_sx:24, out_sy:24, out_depth:1});
-  layer_defs.push({type:'conv', sx:5, filters:8, stride:1});
+  layer_defs.push({type:'conv', sx:5, filters:8, stride:1, activation:'relu'});
   layer_defs.push({type:'pool', sx:2, stride:2});
-  layer_defs.push({type:'conv', sx:5, filters:16, stride:1});
-  layer_defs.push({type:'pool', sx:3, stride:3});
-  layer_defs.push({type:'dropout', drop_prob:0.5});
+  layer_defs.push({type:'conv', sx:5, filters:16, stride:1, activation:'relu'});
+  layer_defs.push({type:'pool', sx:3, stride:3, drop_prob: 0.5});
   layer_defs.push({type:'softmax', num_classes:10});
 
   document.getElementById('newnet').value = JSON.stringify(layer_defs, undefined, 1);
@@ -352,7 +354,7 @@ var visualize_activations = function(net, elt) {
       layer_div.appendChild(document.createTextNode(t));
       layer_div.appendChild(document.createElement('br'));
     }
-    if(L.layer_type==='softmax' || L.layer_type==='fc') {
+    if(L.layer_type==='fc') {
       var tot_params = L.num_inputs*L.filters.length + L.filters.length;
       var t = 'parameters: ' + L.filters.length + 'x' + L.num_inputs + '+' + L.filters.length + ' = ' + tot_params;
       layer_div.appendChild(document.createTextNode(t));
@@ -376,7 +378,7 @@ var load_and_step = function() {
   var sample = sample_training_instance();
   step(sample); // process this image
   
-  setTimeout(load_and_step, 1); // schedule the next iteration
+  setTimeout(load_and_step, 0); // schedule the next iteration
 }
 
 // evaluate current network on test set

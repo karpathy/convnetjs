@@ -23,6 +23,9 @@
 .ltconv {
   background-color: #FDD;
 }
+.ltrelu {
+  background-color: #FDF;
+}
 .ltpool {
   background-color: #DDF;
 }
@@ -187,12 +190,12 @@ $(window).load(function() {
 
   var layer_defs = [];
   layer_defs.push({type:'input', out_sx:32, out_sy:32, out_depth:3});
-  layer_defs.push({type:'conv', sx:5, filters:16, stride:1});
+  layer_defs.push({type:'conv', sx:5, filters:16, stride:1, activation:'relu'});
   layer_defs.push({type:'pool', sx:3, stride:2});
   layer_defs.push({type:'lrn', k:1,n:3,alpha:0.1,beta:0.75});
-  layer_defs.push({type:'conv', sx:5, filters:32, stride:1});
+  layer_defs.push({type:'conv', sx:5, filters:32, stride:1, activation:'relu'});
   layer_defs.push({type:'pool', sx:3, stride:2});
-  layer_defs.push({type:'conv', sx:5, filters:32, stride:1});
+  layer_defs.push({type:'conv', sx:5, filters:32, stride:1, activation:'relu'});
   layer_defs.push({type:'pool', sx:3, stride:2});
   layer_defs.push({type:'softmax', num_classes:10});
 
@@ -416,7 +419,7 @@ var visualize_activations = function(net, elt) {
       layer_div.appendChild(document.createTextNode(t));
       layer_div.appendChild(document.createElement('br'));
     }
-    if(L.layer_type==='softmax' || L.layer_type==='fc') {
+    if(L.layer_type==='fc') {
       var tot_params = L.num_inputs*L.filters.length + L.filters.length;
       var t = 'parameters: ' + L.filters.length + 'x' + L.num_inputs + '+' + L.filters.length + ' = ' + tot_params;
       layer_div.appendChild(document.createTextNode(t));
@@ -440,7 +443,7 @@ var load_and_step = function() {
   var sample = sample_training_instance();
   step(sample); // process this image
   
-  setTimeout(load_and_step, 1); // schedule the next iteration
+  setTimeout(load_and_step, 0); // schedule the next iteration
 }
 
 // evaluate current network on test set
@@ -453,7 +456,7 @@ var test_predict = function() {
   var num_correct = 0;
 
   // grab a random test image
-  for(num=0;num<50;num++) {
+  for(num=0;num<100;num++) {
     var sample = sample_test_instance();
     var y = sample.label;  // ground truth label
 
@@ -572,7 +575,7 @@ var step = function(sample) {
   }
 
   // run prediction on test set
-  if(step_num % 1000 === 0) {
+  if((step_num % 2000 === 0 && step_num > 0) || step_num===100) {
     test_predict();
   }
   step_num++;
@@ -651,7 +654,7 @@ var change_net = function() {
   <p>
     This demo trains a Convolutional Neural Network on the <a href="http://www.cs.toronto.edu/~kriz/cifar.html">CIFAR-10 dataset</a> in your browser, with nothing but Javascript. The state of the art on this dataset is about 90% accuracy and human performance is at about 94% (not perfect as the dataset can be a bit ambiguous). I used <a href="cifar10_parse.zip">this python script</a> to parse the <a href="http://www.cs.toronto.edu/~kriz/cifar.html">original files</a> (python version) into batches of images that can be easily loaded into page DOM with img tags.
   </p>
-  <p>This dataset is more difficult and it takes longer to train a network. Here is a <a href="cifar10/trained_model_example.json">6-layer model I trained overnight (1MB)</a>. It saw a total of 400K examples while I slept (i.e. 8 epochs through the data) at constant learning rate of 0.01 and it achieves 75% validation accuracy. To load the model, copy paste the chunk of JSON into text box below and click the init network button to load the network and parameters. You also probably want to decrease the learning rate down to 0.001 and see it perform even better (probably up to ~80%). To gain additional performance we'd have to do more aggressive data augmentation and cropping (currently only horizontal flips are done), and make the network larger.</p>
+  <p>This dataset is more difficult and it takes longer to train a network. Currently, the only form of data augmentation is possible horizontal flips. I'll implement small displacements soon as well and we should see a bit higher accuracies.</p>
   <p>Friendly reminder: You want to gradually decrease learning rate as the training happens, especially when you see that the total cost curve is starting to be very wiggly, or if the validation stops increasing.</p>
   <p>Report questions/bugs/suggestions to <a href="https://twitter.com/karpathy">@karpathy</a>.</p>
   <h1>Training Stats</h1>

@@ -22,9 +22,10 @@ function almosteq(a, b, txt) {
   var rel_error2 = (a-b)*(a-b)/(b*b);
   var rel_error = Math.max(rel_error1, rel_error2);
   if(a===b) rel_error=0;
+  var f = true;
+  if(typeof a==='undefined' || isNaN(a) || isNaN(b) || typeof b ==='undefined') { rel_error = Infinity; };
   var re = '(rel_error = ' + rel_error + ')';
   var msg = 'PASS ' + re;
-  var f = true;
   if(rel_error > 0.001) { msg = 'WARN ' + re; f = false;}
   if(rel_error > 0.02) { msg = 'FAIL ' + re; f = false;}
   if(!f)
@@ -53,7 +54,7 @@ var gradcheck_softmax = function() {
 
   // feed forward test
   A = net.forward(x);
-  var S = net.layers[1];
+  var S = net.layers[1]; // fully conn layer created internally
   net.backward(y); // computes the gradient
 
   // evaluate and check numerical gradient (for both weights and biases)
@@ -61,25 +62,25 @@ var gradcheck_softmax = function() {
   for(var k=0;k<C;k++) {
     for(var d=0;d<=D;d++) {
       var v;
-      if(d==D) v = S.biases[k];
+      if(d==D) v = S.biases.w[k];
       else v = S.filters[k].w[d];
       var v1 = v - dv;
       var v2 = v + dv;
-      if(d==D) S.biases[k] = v1;
+      if(d==D) S.biases.w[k] = v1;
       else S.filters[k].w[d] = v1;
       var A1 = net.forward(x);
       var L1 = -Math.log(A1.w[y]);
-      if(d==D) S.biases[k] = v2;
+      if(d==D) S.biases.w[k] = v2;
       else S.filters[k].w[d] = v2;
       var A2 = net.forward(x);
       var L2 = -Math.log(A2.w[y]);
       var DL = (L2-L1)/(2*dv);
 
-      if(d==D) S.biases[k] = v; //reset
+      if(d==D) S.biases.w[k] = v; //reset
       else S.filters[k].w[d] = v;
 
       if(d==D) {
-        almosteq(DL, S.biases[k], 'SOFTMAX gradcheck bias');
+        almosteq(DL, S.biases.dw[k], 'SOFTMAX gradcheck bias');
       } else {
         almosteq(DL, S.filters[k].dw[d], 'SOFTMAX gradcheck');
       }
@@ -107,6 +108,50 @@ var gradcheck_softmax = function() {
   return match;
 }
 
+var gradcheck_lrn = function() {
+
+  // random example
+  var sx = 3; 
+  var sy = 3;
+  var x = new convnetjs.Vol(sx, sy, 15);
+  var y = 1; // ground truth pretend label
+
+  // set up a network
+  var layer_defs = [];
+  layer_defs.push({type:'input', out_sx:x.sx, out_sy:x.sy, out_depth:x.depth});
+  layer_defs.push({type:'lrn', k:1,n:3,alpha:0.1,beta:0.75});
+  layer_defs.push({type:'softmax', num_classes:4});
+
+  net = new convnetjs.Net();
+  net.makeLayers(layer_defs);
+
+  // feed forward test
+  A = net.forward(x);
+
+  // evaluate analytical gradient
+  net.backward(y); // computes gradients in layers
+
+  // evaluate grad wrt input
+  for(var i=0;i<x.w.length;i++) {
+    var v = x.w[i];
+    var v1 = v - dv;
+    var v2 = v + dv;
+
+    x.w[i] = v1;
+    var A1 = net.forward(x);
+    var L1 = -Math.log(A1.w[y]);
+
+    x.w[i] = v2;
+    var A2 = net.forward(x);
+    var L2 = -Math.log(A2.w[y]);
+
+    var DL = (L2-L1)/(2*dv);
+    x.w[i] = v;
+
+    almosteq(DL, x.dw[i], 'LRN data gradcheck ' + i);
+  }
+}
+
 var gradcheck_net = function() {
 
   // random example
@@ -120,9 +165,8 @@ var gradcheck_net = function() {
   layer_defs.push({type:'input', out_sx:sx, out_sy:sx, out_depth:4});
   layer_defs.push({type:'conv', sx:3, filters:5, stride:1});
   layer_defs.push({type:'pool', sx:2, stride:2});
-  layer_defs.push({type:'conv', sx:2, filters:4, stride:1});
+  layer_defs.push({type:'conv', sx:2, filters:4, stride:1, activation:'relu'});
   layer_defs.push({type:'pool', sx:2, stride:2});
-  layer_defs.push({type:'fc', filters:32});
   layer_defs.push({type:'softmax', num_classes:4});
 
   net = new convnetjs.Net();
@@ -165,6 +209,7 @@ $(window).load(function() {
   // exactly appropriate approximation
   var elt = document.getElementById("out");
   gradcheck_softmax();
+  gradcheck_lrn();
   gradcheck_net();
 });
 
