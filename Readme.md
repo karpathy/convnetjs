@@ -24,6 +24,50 @@ To setup a nodejs server and start training:
 
 If you don't want to work on images but have some custom data, you probably want just a basic neural network with no convolutions and pooling etc. That means you probably want to use the `FullyConnLayer` layer and stack it once or twice. Make sure to follow the FullyConnLayers with ReLU layers to introduce nonlinearities, or use activation:'relu' in the layer definition.
 
+## Example code
+Import convnet.js into your document: `<script src="lib/convnet.js"></script>`
+
+We first have to create a network. If you have images, here's an example network:
+
+    var layer_defs = [];
+    layer_defs.push({type:'input', out_sx:32, out_sy:32, out_depth:3});
+    layer_defs.push({type:'conv', sx:5, filters:8, stride:1, activation:'relu'});
+    layer_defs.push({type:'pool', sx:3, stride:2});
+    layer_defs.push({type:'fc', num_neurons:20, activation:'relu'});
+    layer_defs.push({type:'softmax', num_classes:10});
+
+It takes 32x32x3 images (3 is for RGB), convolves with 8 5x5 filters with stride 1, uses Rectified Linear Unit activation function (i.e. it thresholds all values below zero to zero), then pools spatially, then there is a fully connected layer and finally a classifier.
+
+If you don't have images but some 2-D data, for example, your main building block is a FullyConnected layer:
+
+    var layer_defs = [];
+    layer_defs.push({type:'input', out_sx:1, out_sy:1, out_depth:2});
+    layer_defs.push({type:'fc', num_neurons:20, activation:'relu'});
+    layer_defs.push({type:'fc', num_neurons:40, activation:'relu', drop_prob:0.5});
+    layer_defs.push({type:'softmax', num_classes:4});
+
+Here we have a 2-layer neural network classifier for 4 classes working on 2-D points, where the second layer is also followed by dropout for regularization. The drop_prob must be in range (0,1).
+
+To use a network or 2-D network,
+
+    var net = new convnetjs.Net();
+    net.makeLayers(layer_defs);
+    var some_input = new convnetjs.Vol(1,1,2); // a 2-dimensional point
+    var class_probabilities = net.forward(some_input); // forward props all layers in turn
+
+To train the network we use the Trainer class:
+
+    var trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.01, momentum:0.9, batch_size:16, decay:0.001});
+    for(var i=0;i<my_dataset.length;i++) {
+      var x = new convnetjs.Vol(1,1,2,0.0); // a 1x1x2 volume initialized to 0's.
+      x.w[0] = my_data[i][0]; // Vol.w is just a list, it holds your data
+      x.w[1] = my_data[i][1];
+      trainer.train(x, my_labels[i]);
+    }
+
+Once you train the network, simply use `net.forward(x)` for predictions.
+
+
 ## Layers
 Every layer takes a 3D volume (dimensions of WIDTH x HEIGHT x DEPTH) and transforms it into a different 3D volume using some set of internal parameters. Some layers (such as pooling, dropout) have no parameters. Currently available layers are:
 
