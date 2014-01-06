@@ -96,7 +96,7 @@ function draw(){
         //var dec= svm.marginOne([(x-WIDTH/2)/ss, (y-HEIGHT/2)/ss]);
         netx.w[0] = (x-WIDTH/2)/ss;
         netx.w[1] = (y-HEIGHT/2)/ss;
-        var a = net.forward(netx);
+        var a = net.forward(netx, false);
         
         if(a.w[0] > a.w[1]) ctx.fillStyle = 'rgb(250, 150, 150)';
         else ctx.fillStyle = 'rgb(150, 250, 150)';
@@ -176,8 +176,8 @@ canvas {
 <pre>
 var layer_defs = [];
 layer_defs.push({type:'input', out_sx:1, out_sy:1, out_depth:2});
-layer_defs.push({type:'fc', filters:20});
-layer_defs.push({type:'fc', filters:20});
+layer_defs.push({type:'fc', num_neurons:20, activation: 'relu'});
+layer_defs.push({type:'fc', num_neurons:20, activation: 'relu'});
 layer_defs.push({type:'softmax', num_classes:2});
 
 var net = new convnetjs.Net();

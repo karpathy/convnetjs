@@ -143,7 +143,9 @@ var sample_training_instance = function() {
       }
     }
   }
-  x = convnetjs.augment(x, 32, Math.random()<0.5); //maybe flip horizontally
+  var dx = Math.floor(Math.random()*5-2);
+  var dy = Math.floor(Math.random()*5-2);
+  x = convnetjs.augment(x, 32, dx, dy, Math.random()<0.5); //maybe flip horizontally
 
   var isval = use_validation_data && n%10===0 ? true : false;
   return {x:x, label:labels[n], isval:isval};
@@ -171,8 +173,15 @@ var sample_test_instance = function() {
     }
   }
 
-  // flip and no flip (horizontally)
-  var xs = [convnetjs.augment(x, 32, false), convnetjs.augment(x, 32, true)]; 
+  // distort position and maybe flip
+  var xs = [];
+  //xs.push(x, 32, 0, 0, false); // push an un-augmented copy
+  for(var k=0;k<6;k++) {
+    var dx = Math.floor(Math.random()*5-2);
+    var dy = Math.floor(Math.random()*5-2);
+    xs.push(convnetjs.augment(x, 32, dx, dy, k>2));
+  }
+  
   // return multiple augmentations, and we will average the network over them
   // to increase performance
   return {x:xs, label:labels[n]};
@@ -190,12 +199,12 @@ $(window).load(function() {
 
   var layer_defs = [];
   layer_defs.push({type:'input', out_sx:32, out_sy:32, out_depth:3});
-  layer_defs.push({type:'conv', sx:5, filters:16, stride:1, activation:'relu'});
+  layer_defs.push({type:'conv', sx:5, filters:8, stride:1, activation:'relu'});
   layer_defs.push({type:'pool', sx:3, stride:2});
   layer_defs.push({type:'lrn', k:1,n:3,alpha:0.1,beta:0.75});
-  layer_defs.push({type:'conv', sx:5, filters:32, stride:1, activation:'relu'});
+  layer_defs.push({type:'conv', sx:5, filters:16, stride:1, activation:'relu'});
   layer_defs.push({type:'pool', sx:3, stride:2});
-  layer_defs.push({type:'conv', sx:5, filters:32, stride:1, activation:'relu'});
+  layer_defs.push({type:'conv', sx:5, filters:16, stride:1, activation:'relu'});
   layer_defs.push({type:'pool', sx:3, stride:2});
   layer_defs.push({type:'softmax', num_classes:10});
 
@@ -204,7 +213,7 @@ $(window).load(function() {
   net = new convnetjs.Net();
   net.makeLayers(layer_defs);
 
-  trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.1, momentum:0.9, batch_size:16, decay:0.001});
+  trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.05, momentum:0.9, batch_size:16, decay:0.001});
 
   update_net_param_display();
 
@@ -451,12 +460,11 @@ var test_predict = function() {
   var num_classes = net.layers[net.layers.length-1].out_depth;
 
   document.getElementById('testset_acc').innerHTML = '';
-  document.getElementById('testset_vis').innerHTML = '';
   var num_total = 0;
   var num_correct = 0;
 
   // grab a random test image
-  for(num=0;num<100;num++) {
+  for(num=0;num<4;num++) {
     var sample = sample_test_instance();
     var y = sample.label;  // ground truth label
 
@@ -495,17 +503,21 @@ var test_predict = function() {
     div.appendChild(probsdiv);
 
     // add it into DOM
-    $("#testset_vis").append(div).fadeIn(1000);
+    $(div).prependTo($("#testset_vis")).hide().fadeIn('slow').slideDown('slow');
+    if($(".probsdiv").length>200) {
+      $("#testset_vis > .probsdiv").last().remove(); // pop to keep upper bound of shown items
+    }
   }
-  $("#testset_acc").text('approx. testing accuracy (only based on this small batch): ' + num_correct/num_total);
+  testAccWindow.add(num_correct/num_total);
+  $("#testset_acc").text('test accuracy based on last 200 test images: ' + testAccWindow.get_average());  
 }
-
 
 var lossGraph = new cnnvis.Graph();
 var xLossWindow = new cnnutil.Window(100);
 var wLossWindow = new cnnutil.Window(100);
 var trainAccWindow = new cnnutil.Window(100);
 var valAccWindow = new cnnutil.Window(100);
+var testAccWindow = new cnnutil.Window(50, 1);
 var step_num = 0;
 var step = function(sample) {
 
@@ -575,7 +587,7 @@ var step = function(sample) {
   }
 
   // run prediction on test set
-  if((step_num % 2000 === 0 && step_num > 0) || step_num===100) {
+  if((step_num % 100 === 0 && step_num > 0) || step_num===100) {
     test_predict();
   }
   step_num++;
@@ -626,6 +638,7 @@ var reset_all = function() {
   wLossWindow.reset();
   trainAccWindow.reset();
   valAccWindow.reset();
+  testAccWindow.reset();
   lossGraph = new cnnvis.Graph(); // reinit graph too
   step_num = 0;
 }
@@ -654,7 +667,7 @@ var change_net = function() {
   <p>
     This demo trains a Convolutional Neural Network on the <a href="http://www.cs.toronto.edu/~kriz/cifar.html">CIFAR-10 dataset</a> in your browser, with nothing but Javascript. The state of the art on this dataset is about 90% accuracy and human performance is at about 94% (not perfect as the dataset can be a bit ambiguous). I used <a href="cifar10_parse.zip">this python script</a> to parse the <a href="http://www.cs.toronto.edu/~kriz/cifar.html">original files</a> (python version) into batches of images that can be easily loaded into page DOM with img tags.
   </p>
-  <p>This dataset is more difficult and it takes longer to train a network. Currently, the only form of data augmentation is possible horizontal flips. I'll implement small displacements soon as well and we should see a bit higher accuracies.</p>
+  <p>This dataset is more difficult and it takes longer to train a network. Data augmentation includes random flipping and random image shifts by up to 2px horizontally and verically.</p>
   <p>Friendly reminder: You want to gradually decrease learning rate as the training happens, especially when you see that the total cost curve is starting to be very wiggly, or if the validation stops increasing.</p>
   <p>Report questions/bugs/suggestions to <a href="https://twitter.com/karpathy">@karpathy</a>.</p>
   <h1>Training Stats</h1>
