@@ -29,6 +29,7 @@ If you're not working on images but have some custom data, you probably want jus
 ## Example code
 Import convnet.js into your document: `<script src="lib/convnet.js"></script>`
 
+### For images
 We first have to create a network. If you have images, here's an example network:
 
     var layer_defs = [];
@@ -38,8 +39,9 @@ We first have to create a network. If you have images, here's an example network
     layer_defs.push({type:'fc', num_neurons:20, activation:'relu'});
     layer_defs.push({type:'softmax', num_classes:10});
 
-It takes 32x32x3 images (3 is for RGB), convolves with 8 5x5 filters with stride 1, uses Rectified Linear Unit activation function (i.e. it thresholds all values below zero to zero), then pools spatially, then there is a fully connected layer and finally a classifier.
+It takes 32x32x3 images (3 is for RGB), convolves with 8 5x5 filters with stride 1, uses Rectified Linear Unit activation function (i.e. it thresholds all values below zero to zero), then pools spatially, then there is a fully connected layer and finally a classifier. Again, don't miss convnetjs.img_to_vol() if you'd like to use your own images.
 
+### Arbitrary non-image data : Classification
 If you don't have images but some 2-D data, for example, your main building block is a FullyConnected layer:
 
     var layer_defs = [];
@@ -69,6 +71,15 @@ To train the network we use the Trainer class:
 
 Once you train the network, simply use `net.forward(x)` for predictions.
 
+### Regression
+There is also an implementation of L2 loss that can be used for regression to arbitrary values. Instead of softmax, as a last layer just use 
+
+    layer_defs.push({type:'regression', num_neurons:3});
+
+In example above we'd be regressing to a single output that you must specify in the backward call as a list:
+
+      trainer.train(x, [0.5, 1.2, -0.7]);
+
 
 ## Layers
 Every layer takes a 3D volume (dimensions of WIDTH x HEIGHT x DEPTH) and transforms it into a different 3D volume using some set of internal parameters. Some layers (such as pooling, dropout) have no parameters. Currently available layers are:
@@ -76,10 +87,12 @@ Every layer takes a 3D volume (dimensions of WIDTH x HEIGHT x DEPTH) and transfo
 1. `Convolutional Layer`: convolves input volume with local filters of given size, at given stride.
 2. `Pooling Layer`: max-pools neighboring activations in 3D volume, keeping depth the same but reducing width and height of volume
 3. `Softmax`: this is a classifier layer that should currently be last. It computes probabilities via dense connections to the input volume and dot product with class weights.
-4. `Dropout Layer`: implements dropout to control overfitting. Can be used after layers that have very large number of nodes for regularization.
+4. `Dropout Layer`: implements dropout to control overfitting. Can be used after layers that have very large number of nodes for regularization. You don't have to add this explicitly, simply use drop_prob:0.5 (or other amount) in a layer def to automatically add a Dropout layer right after it.
 5. `Local Contrast Normalization Layer`: Creates local competition among neurons along depth at specific location, for all locations.
 6. `Fully Connected Layer`: a number of neurons connected densely to input volume. They each compute dot product with the input
-7. `ReluLayer`: creates the ReLU (Rectified Linear Unit) activation function.
+7. `ReluLayer`: creates the ReLU (Rectified Linear Unit) activation function. You don't have to add this explicitly, simply use activation:'relu' in a layer def to follow that layer with ReLU.
+8. `RegressionLayer`: can be replaced with Softmax to do regression instead of classification.
+9. `SigmoidLayer`: can be used as nonlinearity instead of ReluLayer, computes the sigmoid function x->1/(1+e^(-x)) You don't have to add this explicitly, simply use activation:'sigmoid' in a layer def to follow that layer with the Sigmoid.
 
 If you're not dealing with images, the only layer that is of interest is the Fully Connected Layer, which you probably want to stack once or twice on top of your input. You also may consider using a Dropout layer in places where there are a lot of parameters to control overfitting (overfitting = your validation accuracy is much lower than the training accuracy).
 
