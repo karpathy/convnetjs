@@ -27,8 +27,8 @@ var ss = 50.0; // scale for drawing
 // create neural net
 var layer_defs = [];
 layer_defs.push({type:'input', out_sx:1, out_sy:1, out_depth:2});
-layer_defs.push({type:'fc', num_neurons:20, activation:'sigmoid'});
-layer_defs.push({type:'fc', num_neurons:20, activation:'sigmoid'});
+layer_defs.push({type:'fc', num_neurons:20, activation:'relu'});
+layer_defs.push({type:'fc', num_neurons:20, activation:'relu'});
 layer_defs.push({type:'softmax', num_classes:2});
 
 var net = new convnetjs.Net();
@@ -69,7 +69,7 @@ function update(){
   var x = new convnetjs.Vol(1,1,2);
   //x.w = data[ix];
   var avloss = 0.0;
-  for(var iters=0;iters<100;iters++) {
+  for(var iters=0;iters<50;iters++) {
     for(var ix=0;ix<N;ix++) {
       x.w = data[ix];
       var stats = trainer.train(x, labels[ix]);
