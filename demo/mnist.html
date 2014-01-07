@@ -201,7 +201,10 @@ $(window).load(function() {
 });
 
 var start_fun = function() {
-  if(loaded[0] && loaded[20]) { console.log('starting!'); load_and_step(); } // lets go!
+  if(loaded[0] && loaded[20]) { 
+    console.log('starting!'); 
+    setInterval(load_and_step, 0); // lets go!
+  }
   else { setTimeout(start_fun, 200); } // keep checking
 }
 
@@ -377,8 +380,6 @@ var load_and_step = function() {
 
   var sample = sample_training_instance();
   step(sample); // process this image
-  
-  setTimeout(load_and_step, 0); // schedule the next iteration
 }
 
 // evaluate current network on test set
@@ -534,7 +535,7 @@ var toggle_pause = function() {
   paused = !paused;
   var btn = document.getElementById('buttontp');
   if(paused) { btn.value = 'resume' }
-  else { btn.value = 'pause'; load_and_step(); }
+  else { btn.value = 'pause'; }
 }
 var dump_json = function() {
   document.getElementById("dumpjson").value = JSON.stringify(net.toJSON());
