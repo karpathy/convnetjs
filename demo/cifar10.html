@@ -565,7 +565,7 @@ var step = function(sample) {
 
   // train on it with network
   var stats = trainer.train(x, y);
-  var lossx = stats.softmax_loss;
+  var lossx = stats.cost_loss;
   var lossw = stats.decay_loss;
 
   // keep track of stats such as the average training error and loss

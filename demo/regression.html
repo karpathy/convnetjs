@@ -1,0 +1,230 @@
+<html>
+<head>
+<title>ConvNetJS demo: Classify toy 2D data</title>
+<link href='http://fonts.googleapis.com/css?family=Cabin' rel='stylesheet' type='text/css'>
+
+<style>
+body {
+  font-family: 'Cabin', sans-serif;
+  color: #333;
+  padding: 20px;
+}
+</style>
+
+<script src="jquery-1.8.3.min.js"></script>
+<script src="./npgmain.js"></script>
+<script src="../lib/convnet.js"></script>
+<script type="text/javascript">
+
+var N, data, labels;
+var ss = 30.0; // scale for drawing
+
+var layer_defs, net, trainer;
+
+// create neural net
+var t = "layer_defs = [];\n\
+layer_defs.push({type:'input', out_sx:1, out_sy:1, out_depth:1});\n\
+layer_defs.push({type:'fc', num_neurons:20, activation:'relu'});\n\
+layer_defs.push({type:'fc', num_neurons:20, activation:'sigmoid'});\n\
+layer_defs.push({type:'regression', num_neurons:1});\n\
+\n\
+net = new convnetjs.Net();\n\
+net.makeLayers(layer_defs);\n\
+\n\
+trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.01, momentum:0.0, batch_size:1, decay:0.001});\n\
+";
+
+var lix=2; // layer id of layer we'd like to draw outputs of
+function reload() {
+  eval($("#layerdef").val());
+
+  // refresh buttons
+  var t = '';
+  for(var i=1;i<net.layers.length-1;i++) { // ignore input and regression layers (first and last)
+    var butid = "button" + i;
+    t += "<input id=\""+butid+"\" value=\"" + net.layers[i].layer_type +"\" type=\"submit\" onclick=\"updateLix("+i+")\" style=\"width:80px; height: 30px; margin:5px;\";>";
+  }
+  $("#layer_ixes").html(t);
+  $("#button"+lix).css('background-color', '#FFA');
+}
+function updateLix(newlix) {
+  $("#button"+lix).css('background-color', ''); // erase highlight
+  lix = newlix;
+  $("#button"+lix).css('background-color', '#FFA');
+}
+ 
+function regen_data() {
+  N = parseInt($("#num_data").val());
+  data = [];
+  labels = [];
+  for(var i=0;i<N;i++) {
+    var x = Math.random()*10-5;
+    var y = x*Math.sin(x);
+    data.push([x]);
+    labels.push([y]);
+  }
+}
+
+function myinit(){
+  regen_data();
+  $("#layerdef").val(t);
+  reload();
+}
+ 
+function update(){
+  // forward prop the data
+  
+  var netx = new convnetjs.Vol(1,1,1);
+  avloss = 0.0;
+
+  for(var iters=0;iters<50;iters++) {
+    for(var ix=0;ix<N;ix++) {
+      netx.w = data[ix];
+      var stats = trainer.train(netx, labels[ix]);
+      avloss += stats.loss;
+    }
+  }
+  avloss /= N*iters;
+
+}
+
+function draw(){
+    
+    ctx.clearRect(0,0,WIDTH,HEIGHT);
+    ctx.fillStyle = "black";
+
+    var netx = new convnetjs.Vol(1,1,1);
+
+    // draw decisions in the grid
+    var density= 5.0;
+    var draw_neuron_outputs = $("#layer_outs").is(':checked');
+    
+    // draw final decision
+    var neurons = [];
+    ctx.beginPath();
+    for(var x=0.0; x<=WIDTH; x+= density) {
+
+      netx.w[0] = (x-WIDTH/2)/ss;
+      var a = net.forward(netx);
+      var y = a.w[0];
+
+      if(draw_neuron_outputs) {
+        neurons.push(net.layers[lix].out_act.w); // back these up
+      }
+
+      if(x===0) ctx.moveTo(x, -y*ss+HEIGHT/2);
+      else ctx.lineTo(x, -y*ss+HEIGHT/2);
+    }
+    ctx.stroke();
+
+    // draw individual neurons on first layer
+    if(draw_neuron_outputs) {
+      var NL = neurons.length;
+      ctx.strokeStyle = 'rgb(250,50,50)';
+      for(var k=0;k<NL;k++) {
+        ctx.beginPath();
+        var n = 0;
+        for(var x=0.0; x<=WIDTH; x+= density) {
+          if(x===0) ctx.moveTo(x, -neurons[n][k]*ss+HEIGHT/2);
+          else ctx.lineTo(x, -neurons[n][k]*ss+HEIGHT/2);
+          n++;
+        }
+        ctx.stroke();
+      }
+    }
+  
+    // draw axes
+    ctx.beginPath();
+    ctx.strokeStyle = 'rgb(50,50,50)';
+    ctx.lineWidth = 1;
+    ctx.moveTo(0, HEIGHT/2);
+    ctx.lineTo(WIDTH, HEIGHT/2);
+    ctx.moveTo(WIDTH/2, 0);
+    ctx.lineTo(WIDTH/2, HEIGHT);
+    ctx.stroke();
+
+    // draw datapoints. Draw support vectors larger
+    ctx.strokeStyle = 'rgb(0,0,0)';
+    ctx.lineWidth = 1;
+    for(var i=0;i<N;i++) {
+      drawCircle(data[i]*ss+WIDTH/2, -labels[i]*ss+HEIGHT/2, 5.0);
+    }
+
+    ctx.fillStyle = "blue";
+    ctx.font = "bold 16px Arial";
+    ctx.fillText("average loss: " + avloss, 20, 20);
+}
+
+function mouseClick(x, y, shiftPressed){
+  
+  // add datapoint at location of click
+  data.push([(x-WIDTH/2)/ss]);
+  labels.push([-(y-HEIGHT/2)/ss]);
+  N += 1;
+
+}
+
+function keyDown(key){
+}
+
+function keyUp(key) {
+
+}
+
+$(function() {
+    
+});
+</script>
+
+<style type="text/css">
+canvas { 
+    border: 1px solid #555;
+    margin-top: 10px;
+}
+#wrap {
+  width: 800px;
+  margin-right: auto;
+  margin-left: auto;
+  margin-bottom: 200px;
+}
+</style>
+
+</head>
+
+<body onLoad="NPGinit(10);">
+
+<div id="wrap">
+<h1>ConvnetJS demo: toy 1d regression</h1>
+
+<p>The simulation below is a 1-dimensional regression where a neural network is trained to regress to y coordinates for every given point x through an L2 loss. That is, the minimized cost function computes the squared difference between the predicted y-coordinate and the "correct" y coordinate. Every 10th of a second, all points are fed to the network multiple times through the trainer class to train the network.</p>
+
+<p>The simulation below will eval() whatever you have in the text area and reload. Feel free to explore and use ConvNetJS to instantiate your own network!</p>
+
+<p>Report questions/bugs/suggestions to <a href="https://twitter.com/karpathy">@karpathy</a>.</p>
+
+<textarea id="layerdef" style="width:100%; height:250px;">
+</textarea>
+<br /><br  />
+<input id="buttontp" type="submit" value="change network" onclick="reload();" style="width: 300px; height: 50px;"/>
+
+<div style="float: right;">
+Number of points to generate:  <input type="text" name="num_points" id="num_data" value="20">
+<input type="submit" value="regenerate data" style="height:50px;" onclick="regen_data();" />
+</div>
+
+<br />
+<p style="color: red">Add data points by clicking!</p>
+<br />
+<input type="checkbox" name="draw_layer_outputs" id="layer_outs">
+Also draw outputs of a layer (click layer button below) in red.
+<br /><div id="layer_ixes"></div>
+
+<canvas id="NPGcanvas" width="800" height="500">Browser not supported for Canvas. Get a real browser.</canvas>
+
+<p>Go <a href="http://cs.stanford.edu/people/karpathy/convnetjs/">back to ConvNetJS</a></p>
+
+</div>
+
+</body>
+</html>
+
