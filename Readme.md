@@ -20,9 +20,11 @@ To setup a nodejs server and start training:
 2. `cd` into convnetjs directory
 3. install the connect library for nodejs to serve static pages `npm install connect`
 4. `node nodejs_server.js`
-5. Access the demos. http://localhost:8080/demo/classify2d.html will just work out of the box, but mnist.html and cifar10.html will require that you download the datasets and parse them into images. (You can also use the ones on my webserver if you're clever enough to see how to change the paths but naturally I'd prefer if you didn't use too much of my bandwidth). The python scripts I used to parse the datasets are linked to from the demo pages and require numpy and scipy. 
+5. Access the demos. http://localhost:8080/demo/classify2d.html will just work out of the box, but mnist.html and cifar10.html will require that you download the datasets and parse them into images. (You can also use the ones on my webserver if you're clever enough to see how to change the paths but naturally I'd prefer if you didn't use too much of my bandwidth). The python scripts I used to parse the datasets are linked to from the demo pages and require numpy and scipy.
 
-If you don't want to work on images but have some custom data, you probably want just a basic neural network with no convolutions and pooling etc. That means you probably want to use the `FullyConnLayer` layer and stack it once or twice. Make sure to follow the FullyConnLayers with ReLU layers to introduce nonlinearities, or use activation:'relu' in the layer definition.
+If you'd like to use your own images, also don't miss the utility function `convnetjs.img_to_vol(document.getElementById('input_image'))` which takes an image element in the DOM as input and returns a convnetjs.Vol() ready to be consumed by ConvNetJS. Instead of loading images individually, you can also batch them up like I do for MNIST/CIFAR, with every image as a row in a large image. For example, one MNIST batch is a 10,000x768 image that I load once and then I pluck out a row at a time and reshape it into 28x28 image to use in a net.
+
+If you're not working on images but have some custom data, you probably want just a basic neural network with no convolutions and pooling etc. You likely want to use the `FullyConnLayer` layer and stack it once or twice. Make sure to follow the FullyConnLayers with ReLU layers to introduce nonlinearities (append activation:'relu' in the layer definition), and also Dropout layers (append drop_prob:0.5 in layer definition, or any amount of dropout you desire).
 
 ## Example code
 Import convnet.js into your document: `<script src="lib/convnet.js"></script>`
