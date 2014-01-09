@@ -523,14 +523,14 @@ var change_batch_size = function() {
   update_net_param_display();
 }
 var change_decay = function() {
-  trainer.decay = parseFloat(document.getElementById("decay_input").value);
+  trainer.l2_decay = parseFloat(document.getElementById("decay_input").value);
   update_net_param_display();
 }
 var update_net_param_display = function() {
   document.getElementById('lr_input').value = trainer.learning_rate;
   document.getElementById('momentum_input').value = trainer.momentum;
   document.getElementById('batch_size_input').value = trainer.batch_size;
-  document.getElementById('decay_input').value = trainer.decay;
+  document.getElementById('decay_input').value = trainer.l2_decay;
 }
 var toggle_pause = function() {
   paused = !paused;
@@ -546,7 +546,7 @@ var clear_graph = function() {
 }
 var reset_all = function() {
   // reinit trainer
-  trainer = new convnetjs.SGDTrainer(net, {learning_rate:trainer.learning_rate, momentum:trainer.momentum, batch_size:trainer.batch_size, decay:trainer.decay});
+  trainer = new convnetjs.SGDTrainer(net, {learning_rate:trainer.learning_rate, momentum:trainer.momentum, batch_size:trainer.batch_size, decay:trainer.l2_decay});
   update_net_param_display();
 
   // reinit windows that keep track of val/train accuracies
