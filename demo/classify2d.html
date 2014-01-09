@@ -15,7 +15,7 @@ body {
 </style>
 
 <script src="./npgmain.js"></script>
-<script src="../lib/convnet.js"></script>
+<script src="../build/convnet.js"></script>
 <script type="text/javascript">
 
 
@@ -34,7 +34,7 @@ layer_defs.push({type:'softmax', num_classes:2});
 var net = new convnetjs.Net();
 net.makeLayers(layer_defs);
 
-var trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.01, momentum:0.0, batch_size:1, decay:0.001});
+var trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.01, momentum:0.0, batch_size:1, l2_decay:0.001});
 
 function myinit(){
   
@@ -69,7 +69,7 @@ function update(){
   var x = new convnetjs.Vol(1,1,2);
   //x.w = data[ix];
   var avloss = 0.0;
-  for(var iters=0;iters<50;iters++) {
+  for(var iters=0;iters<20;iters++) {
     for(var ix=0;ix<N;ix++) {
       x.w = data[ix];
       var stats = trainer.train(x, labels[ix]);
@@ -90,7 +90,7 @@ function draw(){
     
     var netx = new convnetjs.Vol(1,1,2);
     // draw decisions in the grid
-    var density= 3.0;
+    var density= 5.0;
     for(var x=0.0; x<=WIDTH; x+= density) {
       for(var y=0.0; y<=HEIGHT; y+= density) {
         //var dec= svm.marginOne([(x-WIDTH/2)/ss, (y-HEIGHT/2)/ss]);
@@ -183,7 +183,7 @@ layer_defs.push({type:'softmax', num_classes:2});
 var net = new convnetjs.Net();
 net.makeLayers(layer_defs);
 
-var trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.01, momentum:0.0, batch_size:1, decay:0.001});
+var trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.01, momentum:0.0, batch_size:1, l2_decay:0.001});
 </pre>
 <p>Every 10th of a second, all points are fed to the network multiple times through the trainer class to train the network. Here's an example for one point:</p>
 <pre>

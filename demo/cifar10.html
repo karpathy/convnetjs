@@ -94,10 +94,9 @@ h1 {
 </style>
 
 <script src="jquery-1.8.3.min.js"></script>
-<script src="../lib/vis.js"></script>
-<script src="../lib/util.js"></script>
-<script src="../lib/convnet.js"></script>
-
+<script src="../build/vis.js"></script>
+<script src="../build/util.js"></script>
+<script src="../build/convnet.js"></script>
 
 <script src="cifar10/cifar10_labels.js"></script>
 
@@ -199,13 +198,10 @@ $(window).load(function() {
 
   var layer_defs = [];
   layer_defs.push({type:'input', out_sx:32, out_sy:32, out_depth:3});
-  layer_defs.push({type:'conv', sx:5, filters:8, stride:1, activation:'relu'});
+  layer_defs.push({type:'conv', sx:5, filters:12, stride:1, activation:'relu'});
   layer_defs.push({type:'pool', sx:3, stride:2});
-  layer_defs.push({type:'lrn', k:1,n:3,alpha:0.1,beta:0.75});
-  layer_defs.push({type:'conv', sx:5, filters:16, stride:1, activation:'relu'});
-  layer_defs.push({type:'pool', sx:3, stride:2});
-  layer_defs.push({type:'conv', sx:5, filters:16, stride:1, activation:'relu'});
-  layer_defs.push({type:'pool', sx:3, stride:2});
+  layer_defs.push({type:'conv', sx:5, filters:24, stride:1, activation:'relu'});
+  layer_defs.push({type:'pool', sx:4, stride:4});
   layer_defs.push({type:'softmax', num_classes:10});
 
   document.getElementById('newnet').value = JSON.stringify(layer_defs, undefined, 1);
@@ -213,7 +209,7 @@ $(window).load(function() {
   net = new convnetjs.Net();
   net.makeLayers(layer_defs);
 
-  trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.05, momentum:0.9, batch_size:16, decay:0.001});
+  trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.01, momentum:0.9, batch_size:16, l2_decay:0.001});
 
   update_net_param_display();
 
@@ -452,7 +448,7 @@ var visualize_activations = function(net, elt) {
     layer_div.appendChild(document.createElement('br'));
 
     // number of parameters
-    if(L.layer_type==='conv') {
+    if(L.layer_type==='conv' || L.layer_type==='local') {
       var tot_params = L.sx*L.sy*L.in_depth*L.filters.length + L.filters.length;
       var t = 'parameters: ' + L.filters.length + 'x' + L.sx + 'x' + L.sy + 'x' + L.in_depth + '+' + L.filters.length + ' = ' + tot_params;
       layer_div.appendChild(document.createTextNode(t));
@@ -566,7 +562,7 @@ var step = function(sample) {
   // train on it with network
   var stats = trainer.train(x, y);
   var lossx = stats.cost_loss;
-  var lossw = stats.decay_loss;
+  var lossw = stats.l2_decay_loss;
 
   // keep track of stats such as the average training error and loss
   var yhat = net.getPrediction();
@@ -587,7 +583,7 @@ var step = function(sample) {
   var t = 'Classification loss: ' + f2t(xLossWindow.get_average());
   train_elt.appendChild(document.createTextNode(t));
   train_elt.appendChild(document.createElement('br'));
-  var t = 'Weight decay loss: ' + f2t(wLossWindow.get_average());
+  var t = 'L2 Weight decay loss: ' + f2t(wLossWindow.get_average());
   train_elt.appendChild(document.createTextNode(t));
   train_elt.appendChild(document.createElement('br'));
   var t = 'Training accuracy: ' + f2t(trainAccWindow.get_average());
@@ -740,7 +736,7 @@ var change_net = function() {
       <div>
 
       <br />
-      <textarea id="newnet" style="width:100%"></textarea><br />
+      <textarea id="newnet" style="width:100%; height:200px;"></textarea><br />
       <input id="buttonnn" type="submit" value="change network" onclick="change_net();"/>
       </div>
 

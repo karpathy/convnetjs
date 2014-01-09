@@ -13,7 +13,7 @@ body {
 
 <script src="jquery-1.8.3.min.js"></script>
 <script src="./npgmain.js"></script>
-<script src="../lib/convnet.js"></script>
+<script src="../build/convnet.js"></script>
 <script type="text/javascript">
 
 var N, data, labels;
@@ -31,7 +31,7 @@ layer_defs.push({type:'regression', num_neurons:1});\n\
 net = new convnetjs.Net();\n\
 net.makeLayers(layer_defs);\n\
 \n\
-trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.01, momentum:0.0, batch_size:1, decay:0.001});\n\
+trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.01, momentum:0.0, batch_size:1, l2_decay:0.001});\n\
 ";
 
 var lix=2; // layer id of layer we'd like to draw outputs of

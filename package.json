@@ -1,0 +1,11 @@
+{
+  "name": "convnetjs",
+  "description": "Deep Learning library. Supports Convolutional (and ordinary) Neural Networks",
+  "version": "0.1.4",
+  "author": "Andrej Karpathy <andrej.karpathy@gmail.com>",
+  "main": "./build/convnet",
+  "files": "./build/convnet.js",
+  "license": "MIT",
+  "keywords": ["neural", "network", "networks", "convolutional", "deep", "learning"]
+}
+

@@ -7,6 +7,7 @@
   <meta name="description" content="">
   <meta name="author" content="">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
 </head>
 
 <style>
@@ -97,9 +98,9 @@ h1 {
 </style>
 
 <script src="jquery-1.8.3.min.js"></script>
-<script src="../lib/vis.js"></script>
-<script src="../lib/util.js"></script>
-<script src="../lib/convnet.js"></script>
+<script src="../build/vis.js"></script>
+<script src="../build/util.js"></script>
+<script src="../build/convnet.js"></script>
 
 
 <script src="mnist/mnist_labels.js"></script>
@@ -136,7 +137,7 @@ var sample_training_instance = function() {
   for(var i=0;i<W;i++) {
     var ix = ((W * k) + i) * 4;
     x.w[i] = p[ix]/255.0;
-    if(Math.random() < 0.75) x_corrupted.w[i] = 0.0;
+    if(Math.random() < 0.5) x_corrupted.w[i] = 0.0;
     else x_corrupted.w[i] = x.w[i];
   }
 
@@ -154,8 +155,7 @@ $(window).load(function() {
 
   var layer_defs = [];
   layer_defs.push({type:'input', out_sx:28, out_sy:28, out_depth:1});
-  layer_defs.push({type:'fc', num_neurons:100, activation:'sigmoid'});
-  layer_defs.push({type:'fc', num_neurons:100, activation:'sigmoid'});
+  layer_defs.push({type:'fc', num_neurons:100, activation:'sigmoid', l1_decay_mul:1.0, l2_decay_mul:0.0});
   layer_defs.push({type:'fc', num_neurons:100, activation:'sigmoid'});
   layer_defs.push({type:'regression', num_neurons:28*28});
 
@@ -164,7 +164,7 @@ $(window).load(function() {
   net = new convnetjs.Net();
   net.makeLayers(layer_defs);
 
-  trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.1, momentum:0.9, batch_size:16, decay:0.001});
+  trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.1, momentum:0.9, batch_size:16, l1_decay: 0.001, l2_decay:0.001});
 
   update_net_param_display();
 
@@ -394,18 +394,18 @@ var load_and_step = function() {
 
 var lossGraph = new cnnvis.Graph();
 var xLossWindow = new cnnutil.Window(100);
-var wLossWindow = new cnnutil.Window(100);
+var w2LossWindow = new cnnutil.Window(100);
+var w1LossWindow = new cnnutil.Window(100);
 var step_num = 0;
 var step = function(sample) {
 
   // train on it with network
   var stats = trainer.train(sample.x_corrupted, sample.x.w);
-  var lossx = stats.cost_loss;
-  var lossw = stats.decay_loss;
 
   // keep track of stats such as the average training error and loss  
-  xLossWindow.add(lossx);
-  wLossWindow.add(lossw);
+  xLossWindow.add(stats.cost_loss);
+  w1LossWindow.add(stats.l1_decay_loss);
+  w2LossWindow.add(stats.l2_decay_loss);
 
   // visualize training status
   var train_elt = document.getElementById("trainstats");
@@ -419,7 +419,10 @@ var step = function(sample) {
   var t = 'Regression loss: ' + f2t(xLossWindow.get_average());
   train_elt.appendChild(document.createTextNode(t));
   train_elt.appendChild(document.createElement('br'));
-  var t = 'Weight decay loss: ' + f2t(wLossWindow.get_average());
+  var t = 'L2 Weight decay loss: ' + f2t(w2LossWindow.get_average());
+  train_elt.appendChild(document.createTextNode(t));
+  train_elt.appendChild(document.createElement('br'));
+  var t = 'L1 Weight decay loss: ' + f2t(w1LossWindow.get_average());
   train_elt.appendChild(document.createTextNode(t));
   train_elt.appendChild(document.createElement('br'));
   var t = 'Examples seen: ' + step_num;
@@ -435,9 +438,10 @@ var step = function(sample) {
   // log progress to graph, (full loss)
   if(step_num % 200 === 0) {
     var xa = xLossWindow.get_average();
-    var xw = wLossWindow.get_average();
-    if(xa >= 0 && xw >= 0) { // if they are -1 it means not enough data was accumulated yet for estimates
-      lossGraph.add(step_num, xa + xw);
+    var xw1 = w1LossWindow.get_average();
+    var xw2 = w2LossWindow.get_average();
+    if(xa >= 0 && xw1 >= 0 && xw2 >= 0) { // if they are -1 it means not enough data was accumulated yet for estimates
+      lossGraph.add(step_num, xa + xw1 + xw2);
       lossGraph.drawSelf(document.getElementById("lossgraph"));
     }
   }
@@ -513,7 +517,10 @@ var change_net = function() {
   <h2 style="text-align: center;"><a href="http://cs.stanford.edu/people/karpathy/convnetjs/">ConvNetJS</a> Denoising Autoencoder demo</h2>
   <h1>Description</h1>
   <p>
-    Denoising Autoencoder is a regression task where the network is given a noisy image and asked to predict the pixels of the uncorrupted version. Here we have a 3-layer neural network of 100 sigmoid units at each layer. Unfortunately, we don't get very nice and sparse edge-features for now, because for that you need additional penalties, for example those found in sparse denoising autoencoders. Still kinda cool!
+    All the other demos are examples of Supervised Learning, so in this demo I wanted to show an example of Unsupervised Learning. We are going to train a sparse denoising autoencoder on MNIST digits.
+  </p>
+  <p>
+    A Denoising Autoencoder is a regression task where the network is given a noisy image and asked to predict the pixels of the uncorrupted version. Here we have a 3-layer neural network of 100 sigmoid units at each layer. Unfortunately, we don't get very nice and sparse edge-features for now, because for that you need additional penalties, for example those found in sparse denoising autoencoders. Still kinda cool!
   </p>
   <p>Hint: you can actually get away with learning rates up to 1 in this demo.</p>
   <p>Report questions/bugs/suggestions to <a href="https://twitter.com/karpathy">@karpathy</a>.
