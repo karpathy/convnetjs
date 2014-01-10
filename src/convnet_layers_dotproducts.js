@@ -120,9 +120,9 @@
     getParamsAndGrads: function() {
       var response = [];
       for(var i=0;i<this.out_depth;i++) {
-        response.push({params: this.filters[i].w, grads: this.filters[i].dw, decay_mul: this.decay_mul});
+        response.push({params: this.filters[i].w, grads: this.filters[i].dw, l2_decay_mul: this.l2_decay_mul, l1_decay_mul: this.l1_decay_mul});
       }
-      response.push({params: this.biases.w, grads: this.biases.dw, decay_mul: 0.0});
+      response.push({params: this.biases.w, grads: this.biases.dw, l1_decay_mul: 0.0, l2_decay_mul: 0.0});
       return response;
     },
     toJSON: function() {
@@ -273,9 +273,9 @@
     getParamsAndGrads: function() {
       var response = [];
       for(var i=0;i<this.filters.length;i++) {
-        response.push({params: this.filters[i].w, grads: this.filters[i].dw, decay_mul: this.decay_mul});
+        response.push({params: this.filters[i].w, grads: this.filters[i].dw, l2_decay_mul: this.l2_decay_mul, l1_decay_mul: this.l1_decay_mul});
       }
-      response.push({params: this.biases.w, grads: this.biases.dw, decay_mul: 0.0});
+      response.push({params: this.biases.w, grads: this.biases.dw, l1_decay_mul: 0.0, l2_decay_mul: 0.0});
       return response;
     },
     toJSON: function() {
@@ -378,9 +378,9 @@
     getParamsAndGrads: function() {
       var response = [];
       for(var i=0;i<this.out_depth;i++) {
-        response.push({params: this.filters[i].w, grads: this.filters[i].dw, decay_mul: this.decay_mul});
+        response.push({params: this.filters[i].w, grads: this.filters[i].dw, l1_decay_mul: this.l1_decay_mul, l2_decay_mul: this.l2_decay_mul});
       }
-      response.push({params: this.biases.w, grads: this.biases.dw, decay_mul: 0.0});
+      response.push({params: this.biases.w, grads: this.biases.dw, l1_decay_mul: 0.0, l2_decay_mul: 0.0});
       return response;
     },
     toJSON: function() {
