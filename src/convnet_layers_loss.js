@@ -117,8 +117,18 @@
       var x = this.in_act;
       x.dw = global.zeros(x.w.length); // zero out the gradient of input Vol
       var loss = 0.0;
-      for(var i=0;i<this.out_depth;i++) {
-        var dy = x.w[i] - y[i];
+      if(y instanceof Array) {
+        for(var i=0;i<this.out_depth;i++) {
+          var dy = x.w[i] - y[i];
+          x.dw[i] = dy;
+          loss += 2*dy*dy;
+        }
+      } else {
+        // assume it is a struct with entries .dim and .val
+        // and we pass gradient only along dimension dim to be equal to val
+        var i = y.dim;
+        var yi = y.val;
+        var dy = x.w[i] - yi;
         x.dw[i] = dy;
         loss += 2*dy*dy;
       }

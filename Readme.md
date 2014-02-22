@@ -125,6 +125,24 @@ If you're not dealing with images, the only layer that is of interest is the Ful
 
 If you're dealing with images, your networks should look similar to what you see in the demos.
 
+## Reinforcement Learning
+The library also has a Reinforcement Learning demo that follows a Deep Q - Learning NIPS2013 Workshop Paper [Playing Atari with Deep Reinforcement Learning](http://arxiv.org/abs/1312.5602). In short, a Neural Network is used to model the value function. The API is very simple to use. For example, lets train an agent that observes 3-dimensional states and is asked to do one of two actions. Lets reward the agent only for action 0 for sake of very simple example:
+    
+    var brain = new deepqlearn.Brain(3, 2); // 3 inputs, 2 possible outputs (0,1)
+    var state = [Math.random(), Math.random(), Math.random()];
+    for(var k=0;k<10000;k++) {
+        var action = brain.forward(state); // returns index of chosen action
+        var reward = action === 0 ? 1.0 : 0.0;
+        brain.backward(reward); // <-- learning magic happens here
+        state[Math.floor(Math.random()*3)] += Math.random()*2-0.5;
+    }
+    brain.epsilon_test_time = 0.0; // don't make any more random choices
+    brain.learning = false;
+    // get an optimal action from the learned policy
+    var action = brain.forward(array_with_num_inputs_numbers);
+
+Of course, there are many possible options you can set. have a look at the reinfocement learning demo rldemo.html inside demo/ folder.
+
 ## Use in Node
 1. install: `npm install convnetjs`
 2. `var convnetjs = require("convnetjs");`
