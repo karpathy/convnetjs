@@ -26,7 +26,7 @@
     
     // optional
     this.sy = typeof opt.sy !== 'undefined' ? opt.sy : this.sx;
-    this.stride = typeof opt.sy !== 'undefined' ? opt.stride : 1;
+    this.stride = typeof opt.stride !== 'undefined' ? opt.stride : 1;
     this.l1_decay_mul = typeof opt.l1_decay_mul !== 'undefined' ? opt.l1_decay_mul : 0.0;
     this.l2_decay_mul = typeof opt.l2_decay_mul !== 'undefined' ? opt.l2_decay_mul : 1.0;
 
