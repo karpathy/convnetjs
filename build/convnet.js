@@ -99,12 +99,22 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
       var ix=((this.sx * y)+x)*this.depth+d;
       this.w[ix] = v; 
     },
-    add: function(x, y, d, v) { this.w[((this.sx * y)+x)*this.depth+d] += v; },
-
-    get_grad: function(x, y, d) { return this.dw[((this.sx * y)+x)*this.depth+d]; },
-    set_grad: function(x, y, d, v) { this.dw[((this.sx * y)+x)*this.depth+d] = v; },
-    add_grad: function(x, y, d, v) { this.dw[((this.sx * y)+x)*this.depth+d] += v; },
-
+    add: function(x, y, d, v) { 
+      var ix=((this.sx * y)+x)*this.depth+d;
+      this.w[ix] += v; 
+    },
+    get_grad: function(x, y, d) { 
+      var ix = ((this.sx * y)+x)*this.depth+d;
+      return this.dw[ix]; 
+    },
+    set_grad: function(x, y, d, v) { 
+      var ix = ((this.sx * y)+x)*this.depth+d;
+      this.dw[ix] = v; 
+    },
+    add_grad: function(x, y, d, v) { 
+      var ix = ((this.sx * y)+x)*this.depth+d;
+      this.dw[ix] += v; 
+    },
     cloneAndZero: function() { return new Vol(this.sx, this.sy, this.depth, 0.0)},
     clone: function() {
       var V = new Vol(this.sx, this.sy, this.depth, 0.0);
@@ -254,32 +264,30 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
   // schemes: 
   // - FullyConn is fully connected dot products 
   // - ConvLayer does convolutions (so weight sharing spatially)
-  // - LocallyConn has local connectivity like ConvLayer, but no weight sharing.
-  // putting them together because they are very very similar
-
-  // construct a convolutional layer
-  // currently, we do convolution in 'same' Matlab mode, not 'valid'
-  // and pad with zeros as necessary. (Though this might be an option in future)
-  // The volume is transformed as W1xH1xD1 -> W1/stride x H1/stride x D2
+  // putting them together in one file because they are very similar
   var ConvLayer = function(opt) {
     var opt = opt || {};
 
     // required
     this.out_depth = opt.filters;
-    this.sx = opt.sx; // filter size
+    this.sx = opt.sx; // filter size. Should be odd if possible, it's cleaner.
     this.in_depth = opt.in_depth;
     this.in_sx = opt.in_sx;
     this.in_sy = opt.in_sy;
     
     // optional
     this.sy = typeof opt.sy !== 'undefined' ? opt.sy : this.sx;
-    this.stride = typeof opt.stride !== 'undefined' ? opt.stride : 1;
+    this.stride = typeof opt.stride !== 'undefined' ? opt.stride : 1; // stride at which we apply filters to input volume
+    this.pad = typeof opt.pad !== 'undefined' ? opt.pad : 0; // amount of 0 padding to add around borders of input volume
     this.l1_decay_mul = typeof opt.l1_decay_mul !== 'undefined' ? opt.l1_decay_mul : 0.0;
     this.l2_decay_mul = typeof opt.l2_decay_mul !== 'undefined' ? opt.l2_decay_mul : 1.0;
 
     // computed
-    this.out_sx = Math.floor(this.in_sx / this.stride); // compute size of output volume
-    this.out_sy = Math.floor(this.in_sy / this.stride);
+    // note we are doing floor, so if the strided convolution of the filter doesnt fit into the input
+    // volume exactly, the output volume will be trimmed and not contain the (incomplete) computed
+    // final application.
+    this.out_sx = Math.floor((this.in_sx + this.pad * 2 - this.sx) / this.stride + 1);
+    this.out_sy = Math.floor((this.in_sy + this.pad * 2 - this.sy) / this.stride + 1);
     this.layer_type = 'conv';
 
     // initializations
@@ -292,17 +300,13 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
       this.in_act = V;
 
       var A = new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0);
-      var hx = Math.floor(this.sx/2.0);
-      var hy = Math.floor(this.sy/2.0);
-
       for(var d=0;d<this.out_depth;d++) {
-        
         var f = this.filters[d];
-        var ax=0; // convenience pointers to output array x and y
-        var ay=0;
-        for(var x=0;x<V.sx;x+=this.stride,ax++) {
-          ay = 0;
-          for(var y=0;y<V.sy;y+=this.stride,ay++) {
+        var x = -this.pad;
+        var y = -this.pad;
+        for(var ax=0; ax<this.out_sx; x+=this.stride,ax++) {
+          y = -this.pad;
+          for(var ay=0; ay<this.out_sy; y+=this.stride,ay++) {
 
             // convolve centered at this particular location
             // could be bit more efficient, going for correctness first
@@ -310,10 +314,10 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
             for(var fx=0;fx<f.sx;fx++) {
               for(var fy=0;fy<f.sy;fy++) {
                 for(var fd=0;fd<f.depth;fd++) {
-                  var oy = y+fy-hy;
-                  var ox = x+fx-hx;
+                  var oy = y+fy; // coordinates in the original input array coordinates
+                  var ox = x+fx;
                   if(oy>=0 && oy<V.sy && ox>=0 && ox<V.sx) {
-                    //a += f.get(fx, fy, d) * V.get(ox, oy, d);
+                    //a += f.get(fx, fy, fd) * V.get(ox, oy, fd);
                     // avoid function call overhead for efficiency, compromise modularity :(
                     a += f.w[((f.sx * fy)+fx)*f.depth+fd] * V.w[((V.sx * oy)+ox)*V.depth+fd];
                   }
@@ -333,28 +337,31 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
       // compute gradient wrt weights, biases and input data
       var V = this.in_act;
       V.dw = global.zeros(V.w.length); // zero out gradient wrt bottom data, we're about to fill it
-      var hx = Math.floor(this.sx/2.0);
-      var hy = Math.floor(this.sy/2.0);
-
       for(var d=0;d<this.out_depth;d++) {
         var f = this.filters[d];
-        var ax=0; // convenience pointers to output array x and y
-        var ay=0;
-        for(var x=0;x<V.sx;x+=this.stride,ax++) {
-          ay = 0;
-          for(var y=0;y<V.sy;y+=this.stride,ay++) {
+        var x = -this.pad;
+        var y = -this.pad;
+        for(var ax=0; ax<this.out_sx; x+=this.stride,ax++) {
+          y = -this.pad;
+          for(var ay=0; ay<this.out_sy; y+=this.stride,ay++) {
             // convolve and add up the gradients. 
             // could be more efficient, going for correctness first
             var chain_grad = this.out_act.get_grad(ax,ay,d); // gradient from above, from chain rule
             for(var fx=0;fx<f.sx;fx++) {
               for(var fy=0;fy<f.sy;fy++) {
                 for(var fd=0;fd<f.depth;fd++) {
-                  var oy = y+fy-hy;
-                  var ox = x+fx-hx;
+                  var oy = y+fy;
+                  var ox = x+fx;
                   if(oy>=0 && oy<V.sy && ox>=0 && ox<V.sx) {
+                    // forward prop calculated: a += f.get(fx, fy, fd) * V.get(ox, oy, fd);
+                    //f.add_grad(fx, fy, fd, V.get(ox, oy, fd) * chain_grad);
+                    //V.add_grad(ox, oy, fd, f.get(fx, fy, fd) * chain_grad);
+
                     // avoid function call overhead and use Vols directly for efficiency
-                    f.dw[((f.sx * fy)+fx)*f.depth+fd] += V.w[((V.sx * oy)+ox)*V.depth+fd]*chain_grad;
-                    V.dw[((V.sx * oy)+ox)*V.depth+fd] += f.w[((f.sx * fy)+fx)*f.depth+fd]*chain_grad;
+                    var ix1 = ((V.sx * oy)+ox)*V.depth+fd;
+                    var ix2 = ((f.sx * fy)+fx)*f.depth+fd;
+                    f.dw[ix2] += V.w[ix1]*chain_grad;
+                    V.dw[ix1] += f.w[ix2]*chain_grad;
                   }
                 }
               }
@@ -384,6 +391,7 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
       json.layer_type = this.layer_type;
       json.l1_decay_mul = this.l1_decay_mul;
       json.l2_decay_mul = this.l2_decay_mul;
+      json.pad = this.pad;
       json.filters = [];
       for(var i=0;i<this.filters.length;i++) {
         json.filters.push(this.filters[i].toJSON());
@@ -403,159 +411,7 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
       this.filters = [];
       this.l1_decay_mul = typeof json.l1_decay_mul !== 'undefined' ? json.l1_decay_mul : 1.0;
       this.l2_decay_mul = typeof json.l2_decay_mul !== 'undefined' ? json.l2_decay_mul : 1.0;
-      for(var i=0;i<json.filters.length;i++) {
-        var v = new Vol(0,0,0,0);
-        v.fromJSON(json.filters[i]);
-        this.filters.push(v);
-      }
-      this.biases = new Vol(0,0,0,0);
-      this.biases.fromJSON(json.biases);
-    }
-  }
-
-  var LocallyConnLayer = function(opt) {
-    var opt = opt || {};
-
-    // required
-    this.out_depth = opt.filters;
-    this.sx = opt.sx; // filter size
-    this.in_depth = opt.in_depth;
-    this.in_sx = opt.in_sx;
-    this.in_sy = opt.in_sy;
-    
-    // optional
-    this.sy = typeof opt.sy !== 'undefined' ? opt.sy : this.sx;
-    this.stride = typeof opt.sy !== 'undefined' ? opt.stride : 1;
-    this.l1_decay_mul = typeof opt.l1_decay_mul !== 'undefined' ? opt.l1_decay_mul : 0.0;
-    this.l2_decay_mul = typeof opt.l2_decay_mul !== 'undefined' ? opt.l2_decay_mul : 1.0;
-
-    // computed
-    this.out_sx = Math.floor(this.in_sx / this.stride); // compute size of output volume
-    this.out_sy = Math.floor(this.in_sy / this.stride);
-    this.layer_type = 'local';
-
-    // initializations
-    this.filters = [];
-    var num_filters = this.out_sx * this.out_sy * this.out_depth;
-    for(var i=0;i<num_filters;i++) { this.filters.push(new Vol(this.sx, this.sy, this.in_depth)); }
-    this.biases = new Vol(1, 1, num_filters, 0.1);
-  }
-  LocallyConnLayer.prototype = {
-    forward: function(V, is_training) {
-      this.in_act = V;
-
-      var A = new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0);
-      var hx = Math.floor(this.sx/2.0);
-      var hy = Math.floor(this.sy/2.0);
-
-      var n = 0;
-      for(var d=0;d<this.out_depth;d++) {
-        var ax=0; // convenience pointers to output array x and y
-        var ay=0;
-        for(var x=0;x<V.sx;x+=this.stride,ax++) {
-          ay = 0;
-          for(var y=0;y<V.sy;y+=this.stride,ay++) {
-
-            var f = this.filters[n];
-            var a = 0.0;
-            for(var fx=0;fx<f.sx;fx++) {
-              for(var fy=0;fy<f.sy;fy++) {
-                for(var fd=0;fd<f.depth;fd++) {
-                  var oy = y+fy-hy;
-                  var ox = x+fx-hx;
-                  if(oy>=0 && oy<V.sy && ox>=0 && ox<V.sx) {
-                    //a += f.get(fx, fy, d) * V.get(ox, oy, d);
-                    // avoid function call overhead for efficiency, compromise modularity :(
-                    a += f.w[((f.sx * fy)+fx)*f.depth+fd] * V.w[((V.sx * oy)+ox)*V.depth+fd];
-                  }
-                }
-              }
-            }
-            a += this.biases.w[n];
-            A.set(ax, ay, d, a);
-            n++;
-          }
-        }
-      }
-      this.out_act = A;
-      return this.out_act;
-    },
-    backward: function() { 
-
-      // compute gradient wrt weights, biases and input data
-      var V = this.in_act;
-      V.dw = global.zeros(V.w.length); // zero out gradient wrt bottom data, we're about to fill it
-      var hx = Math.floor(this.sx/2.0);
-      var hy = Math.floor(this.sy/2.0);
-      var n = 0;
-      for(var d=0;d<this.out_depth;d++) {
-        var ax=0; // convenience pointers to output array x and y
-        var ay=0;
-        for(var x=0;x<V.sx;x+=this.stride,ax++) {
-          ay = 0;
-          for(var y=0;y<V.sy;y+=this.stride,ay++) {
-            var f = this.filters[n];
-            // convolve and add up the gradients. 
-            // could be more efficient, going for correctness first
-            var chain_grad = this.out_act.get_grad(ax,ay,d); // gradient from above, from chain rule
-            for(var fx=0;fx<f.sx;fx++) {
-              for(var fy=0;fy<f.sy;fy++) {
-                for(var fd=0;fd<f.depth;fd++) {
-                  var oy = y+fy-hy;
-                  var ox = x+fx-hx;
-                  if(oy>=0 && oy<V.sy && ox>=0 && ox<V.sx) {
-                    // avoid function call overhead and use Vols directly for efficiency
-                    f.dw[((f.sx * fy)+fx)*f.depth+fd] += V.w[((V.sx * oy)+ox)*V.depth+fd]*chain_grad;
-                    V.dw[((V.sx * oy)+ox)*V.depth+fd] += f.w[((f.sx * fy)+fx)*f.depth+fd]*chain_grad;
-                  }
-                }
-              }
-            }
-            this.biases.dw[n] += chain_grad;
-            n++;
-          }
-        }
-      }
-    },
-    getParamsAndGrads: function() {
-      var response = [];
-      for(var i=0;i<this.filters.length;i++) {
-        response.push({params: this.filters[i].w, grads: this.filters[i].dw, l2_decay_mul: this.l2_decay_mul, l1_decay_mul: this.l1_decay_mul});
-      }
-      response.push({params: this.biases.w, grads: this.biases.dw, l1_decay_mul: 0.0, l2_decay_mul: 0.0});
-      return response;
-    },
-    toJSON: function() {
-      var json = {};
-      json.sx = this.sx; // filter size in x, y dims
-      json.sy = this.sy;
-      json.stride = this.stride;
-      json.in_depth = this.in_depth;
-      json.out_depth = this.out_depth;
-      json.out_sx = this.out_sx;
-      json.out_sy = this.out_sy;
-      json.layer_type = this.layer_type;
-      json.l1_decay_mul = this.l1_decay_mul;
-      json.l2_decay_mul = this.l2_decay_mul;
-      json.filters = [];
-      for(var i=0;i<this.filters.length;i++) {
-        json.filters.push(this.filters[i].toJSON());
-      }
-      json.biases = this.biases.toJSON();
-      return json;
-    },
-    fromJSON: function(json) {
-      this.out_depth = json.out_depth;
-      this.out_sx = json.out_sx;
-      this.out_sy = json.out_sy;
-      this.layer_type = json.layer_type;
-      this.sx = json.sx; // filter size in x, y dims
-      this.sy = json.sy;
-      this.stride = json.stride;
-      this.in_depth = json.in_depth; // depth of input volume
-      this.filters = [];
-      this.l1_decay_mul = typeof json.l1_decay_mul !== 'undefined' ? json.l1_decay_mul : 1.0;
-      this.l2_decay_mul = typeof json.l2_decay_mul !== 'undefined' ? json.l2_decay_mul : 1.0;
+      this.pad = typeof json.pad !== 'undefined' ? json.pad : 0;
       for(var i=0;i<json.filters.length;i++) {
         var v = new Vol(0,0,0,0);
         v.fromJSON(json.filters[i]);
@@ -666,7 +522,6 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
   }
 
   global.ConvLayer = ConvLayer;
-  global.LocallyConnLayer = LocallyConnLayer;
   global.FullyConnLayer = FullyConnLayer;
   
 })(convnetjs);
@@ -687,11 +542,12 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
     // optional
     this.sy = typeof opt.sy !== 'undefined' ? opt.sy : this.sx;
     this.stride = typeof opt.stride !== 'undefined' ? opt.stride : 2;
+    this.pad = typeof opt.pad !== 'undefined' ? opt.pad : 0; // amount of 0 padding to add around borders of input volume
 
     // computed
     this.out_depth = this.in_depth;
-    this.out_sx = Math.floor(this.in_sx / this.stride); // compute size of output volume
-    this.out_sy = Math.floor(this.in_sy / this.stride);
+    this.out_sx = Math.floor((this.in_sx + this.pad * 2 - this.sx) / this.stride + 1);
+    this.out_sy = Math.floor((this.in_sy + this.pad * 2 - this.sy) / this.stride + 1);
     this.layer_type = 'pool';
     // store switches for x,y coordinates for where the max comes from, for each output neuron
     this.switchx = global.zeros(this.out_sx*this.out_sy*this.out_depth);
@@ -703,25 +559,22 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
       this.in_act = V;
 
       var A = new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0);
-      var hx = Math.floor(this.sx/2.0);
-      var hy = Math.floor(this.sy/2.0);
       
       var n=0; // a counter for switches
       for(var d=0;d<this.out_depth;d++) {
-        var ax=0; // convenience pointers to output array x and y
-        var ay=0;
-
-        for(var x=0;x<V.sx;x+=this.stride,ax++) {
-          ay = 0;
-          for(var y=0;y<V.sy;y+=this.stride,ay++) {
+        var x = -this.pad;
+        var y = -this.pad;
+        for(var ax=0; ax<this.out_sx; x+=this.stride,ax++) {
+          y = -this.pad;
+          for(var ay=0; ay<this.out_sy; y+=this.stride,ay++) {
 
             // convolve centered at this particular location
             var a = -99999; // hopefully small enough ;\
             var winx=-1,winy=-1;
             for(var fx=0;fx<this.sx;fx++) {
               for(var fy=0;fy<this.sy;fy++) {
-                var oy = y+fy-hy;
-                var ox = x+fx-hx;
+                var oy = y+fy;
+                var ox = x+fx;
                 if(oy>=0 && oy<V.sy && ox>=0 && ox<V.sx) {
                   var v = V.get(ox, oy, d);
                   // perform max pooling and store pointers to where
@@ -748,15 +601,13 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
       V.dw = global.zeros(V.w.length); // zero out gradient wrt data
       var A = this.out_act; // computed in forward pass 
 
-      var hx = Math.floor(this.sx/2.0);
-      var hy = Math.floor(this.sy/2.0);
       var n = 0;
       for(var d=0;d<this.out_depth;d++) {
-        var ax=0; // convenience pointers to output array x and y
-        var ay=0;
-        for(var x=0;x<V.sx;x+=this.stride,ax++) {
-          ay = 0;
-          for(var y=0;y<V.sy;y+=this.stride,ay++) {
+        var x = -this.pad;
+        var y = -this.pad;
+        for(var ax=0; ax<this.out_sx; x+=this.stride,ax++) {
+          y = -this.pad;
+          for(var ay=0; ay<this.out_sy; y+=this.stride,ay++) {
 
             var chain_grad = this.out_act.get_grad(ax,ay,d);
             V.add_grad(this.switchx[n], this.switchy[n], d, chain_grad);
@@ -779,6 +630,7 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
       json.out_sx = this.out_sx;
       json.out_sy = this.out_sy;
       json.layer_type = this.layer_type;
+      json.pad = this.pad;
       return json;
     },
     fromJSON: function(json) {
@@ -790,6 +642,7 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
       this.sy = json.sy;
       this.stride = json.stride;
       this.in_depth = json.in_depth;
+      this.pad = typeof json.pad !== 'undefined' ? json.pad : 0; // backwards compatibility
     }
   }
 
@@ -1385,7 +1238,6 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
           case 'softmax': this.layers.push(new global.SoftmaxLayer(def)); break;
           case 'regression': this.layers.push(new global.RegressionLayer(def)); break;
           case 'conv': this.layers.push(new global.ConvLayer(def)); break;
-          case 'local': this.layers.push(new global.LocallyConnLayer(def)); break;
           case 'pool': this.layers.push(new global.PoolLayer(def)); break;
           case 'relu': this.layers.push(new global.ReluLayer(def)); break;
           case 'sigmoid': this.layers.push(new global.SigmoidLayer(def)); break;
@@ -1453,7 +1305,6 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
         if(t==='sigmoid') { L = new global.SigmoidLayer(); }
         if(t==='dropout') { L = new global.DropoutLayer(); }
         if(t==='conv') { L = new global.ConvLayer(); }
-        if(t==='local') { L = new global.LocallyConnLayer(); }
         if(t==='pool') { L = new global.PoolLayer(); }
         if(t==='lrn') { L = new global.LocalResponseNormalizationLayer(); }
         if(t==='softmax') { L = new global.SoftmaxLayer(); }

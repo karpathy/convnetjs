@@ -198,9 +198,9 @@ $(window).load(function() {
 
   var layer_defs = [];
   layer_defs.push({type:'input', out_sx:32, out_sy:32, out_depth:3});
-  layer_defs.push({type:'conv', sx:5, filters:12, stride:1, activation:'relu'});
+  layer_defs.push({type:'conv', sx:5, filters:12, stride:1, pad:2, activation:'relu'});
   layer_defs.push({type:'pool', sx:3, stride:2});
-  layer_defs.push({type:'conv', sx:5, filters:24, stride:1, activation:'relu'});
+  layer_defs.push({type:'conv', sx:5, filters:24, stride:1, pad:2, activation:'relu'});
   layer_defs.push({type:'pool', sx:4, stride:4});
   layer_defs.push({type:'softmax', num_classes:10});
 

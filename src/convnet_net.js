@@ -78,7 +78,6 @@
           case 'softmax': this.layers.push(new global.SoftmaxLayer(def)); break;
           case 'regression': this.layers.push(new global.RegressionLayer(def)); break;
           case 'conv': this.layers.push(new global.ConvLayer(def)); break;
-          case 'local': this.layers.push(new global.LocallyConnLayer(def)); break;
           case 'pool': this.layers.push(new global.PoolLayer(def)); break;
           case 'relu': this.layers.push(new global.ReluLayer(def)); break;
           case 'sigmoid': this.layers.push(new global.SigmoidLayer(def)); break;
@@ -146,7 +145,6 @@
         if(t==='sigmoid') { L = new global.SigmoidLayer(); }
         if(t==='dropout') { L = new global.DropoutLayer(); }
         if(t==='conv') { L = new global.ConvLayer(); }
-        if(t==='local') { L = new global.LocallyConnLayer(); }
         if(t==='pool') { L = new global.PoolLayer(); }
         if(t==='lrn') { L = new global.LocalResponseNormalizationLayer(); }
         if(t==='softmax') { L = new global.SoftmaxLayer(); }
