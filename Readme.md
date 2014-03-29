@@ -11,6 +11,7 @@ For much more information, see the main page at [convnetjs.com](http://convnetjs
 - [Neural Network with 2 hidden layers on toy 2D data](http://cs.stanford.edu/~karpathy/convnetjs/demo/classify2d.html)
 - [1D regression](http://cs.stanford.edu/~karpathy/convnetjs/demo/regression.html)
 - [Denoising Autoencoder](http://cs.stanford.edu/~karpathy/convnetjs/demo/denoising_autoencoder.html)
+- [Image Painting](http://cs.stanford.edu/~karpathy/convnetjs/demo/image_regression.html)
 
 ## Example code
 A reasonably comprehensive [Getting Started](http://cs.stanford.edu/people/karpathy/convnetjs/started.html) tutorial is also available on main page. But here we go:
@@ -116,6 +117,7 @@ Every layer takes a 3D volume (dimensions of WIDTH x HEIGHT x DEPTH) and transfo
 
 - `ReluLayer`: creates the ReLU (Rectified Linear Unit) activation function. You don't have to add this explicitly, simply use activation:'relu' in a layer def to follow that layer with ReLU.
 - `SigmoidLayer`: can be used as nonlinearity instead of ReluLayer, computes the sigmoid function x->1/(1+e^(-x)) You don't have to add this explicitly, simply use activation:'sigmoid' in a layer def to follow that layer with the Sigmoid.
+- `MaxoutLayer`: Computes max(x) where x is a group of elements in the input. By default, the group size is 2 but this can be changed by passing in a different group_size. Note that the size of the input should divide exactly into group_size. If you are using a convnet, the depth should divide nicely into group_size. If you're using a regular neural net, make sure the number of neurons in the layer before maxout has a multiple of group_size elements. MaxOut enjoys some nice properties computationally because it is linear (like ReLU) so it trains fast, but it isn't as unstable: for example, you don't run the danger of having ReLU units "die" if your learning rate is slightly too high. That's comforting.
 
 ###Objective layers
 
