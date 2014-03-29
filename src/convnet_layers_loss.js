@@ -117,7 +117,7 @@
       var x = this.in_act;
       x.dw = global.zeros(x.w.length); // zero out the gradient of input Vol
       var loss = 0.0;
-      if(y instanceof Array) {
+      if(y instanceof Array || y instanceof Float64Array) {
         for(var i=0;i<this.out_depth;i++) {
           var dy = x.w[i] - y[i];
           x.dw[i] = dy;

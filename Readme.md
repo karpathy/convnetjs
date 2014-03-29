@@ -3,8 +3,7 @@
 
 ConvNetJS implements Deep Learning models and learning algorithms as well as nice browser-based demos, all in Javascript.
 
-For much more information, see the main page at:
-http://cs.stanford.edu/people/karpathy/convnetjs/
+For much more information, see the main page at [convnetjs.com](http://convnetjs.com)
 
 ## Online demos
 - [Convolutional Neural Network on MNIST digits](http://cs.stanford.edu/~karpathy/convnetjs/demo/mnist.html)
@@ -14,6 +13,8 @@ http://cs.stanford.edu/people/karpathy/convnetjs/
 - [Denoising Autoencoder](http://cs.stanford.edu/~karpathy/convnetjs/demo/denoising_autoencoder.html)
 
 ## Example code
+A reasonably comprehensive [Getting Started](http://cs.stanford.edu/people/karpathy/convnetjs/started.html) tutorial is also available on main page. But here we go:
+
 Import convnet.js into your document: `<script src="build/convnet.js"></script>`
 
 ### Creating a net from layer definitions
@@ -21,12 +22,12 @@ We first have to create a network. If you have images, here's an example network
 
     var layer_defs = [];
     layer_defs.push({type:'input', out_sx:32, out_sy:32, out_depth:3});
-    layer_defs.push({type:'conv', sx:5, filters:8, stride:1, activation:'relu'});
-    layer_defs.push({type:'pool', sx:3, stride:2});
+    layer_defs.push({type:'conv', sx:5, filters:8, stride:1, pad:2, activation:'relu'});
+    layer_defs.push({type:'pool', sx:2, stride:2});
     layer_defs.push({type:'fc', num_neurons:20, activation:'relu'});
     layer_defs.push({type:'softmax', num_classes:10});
 
-It takes 32x32x3 images (3 is for RGB), convolves with 8 5x5 filters with stride 1, uses Rectified Linear Unit activation function (i.e. it thresholds all values below zero to zero), then pools spatially, then there is a fully connected layer and finally a classifier with 10 classes.
+It takes 32x32x3 images (3 is for RGB), convolves with 8 5x5 filters with stride 1 (and uses 0 padding of size 2 on each side so that the output is exactly 32x32 spatially), uses Rectified Linear Unit activation function (i.e. it thresholds all values below zero to zero), then pools spatially, then there is a fully connected layer and finally a classifier with 10 classes.
 
 If you don't have images but some 2-D data, for example, your main building block is a FullyConnected layer:
 
@@ -101,7 +102,7 @@ Every layer takes a 3D volume (dimensions of WIDTH x HEIGHT x DEPTH) and transfo
 
 ###Helpful with Images:
 
-- `Convolutional Layer`: convolves input volume with local filters of given size, at given stride.
+- `Convolutional Layer`: convolves input volume with local filters of given size, at given stride. An optional amount of zero padding can also be added.
 - `Locally Connected Layer`: same as Convolutional layer (so local connectivity only to a small region below) but does not share weights across spatial locations (so no convolution).
 - `Pooling Layer`: max-pools neighboring activations in 3D volume, keeping depth the same but reducing width and height of volume
 - `Local Contrast Normalization Layer`: Creates local competition among neurons along depth at specific location, for all locations.
