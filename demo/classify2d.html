@@ -1,6 +1,3 @@
-
-<script src="jquery-1.8.3.min.js"></script>
-
 <html>
 <head>
 <title>ConvNetJS demo: Classify toy 2D data</title>
@@ -14,27 +11,35 @@ body {
 }
 </style>
 
+<script src="jquery-1.8.3.min.js"></script>
 <script src="./npgmain.js"></script>
 <script src="../build/convnet.js"></script>
 <script type="text/javascript">
 
 
-var N= 10; //number of data points
+var N = 10; //number of data points
 var data = new Array(N);
 var labels= new Array(N);
 var ss = 50.0; // scale for drawing
 
 // create neural net
-var layer_defs = [];
-layer_defs.push({type:'input', out_sx:1, out_sy:1, out_depth:2});
-layer_defs.push({type:'fc', num_neurons:20, activation:'relu'});
-layer_defs.push({type:'fc', num_neurons:20, activation:'relu'});
-layer_defs.push({type:'softmax', num_classes:2});
+var layer_defs, net, trainer;
+var t = "\n\
+layer_defs = [];\n\
+layer_defs.push({type:'input', out_sx:1, out_sy:1, out_depth:2});\n\
+layer_defs.push({type:'fc', num_neurons:20, activation: 'relu'});\n\
+layer_defs.push({type:'fc', num_neurons:20, activation: 'relu'});\n\
+layer_defs.push({type:'softmax', num_classes:2});\n\
+\n\
+net = new convnetjs.Net();\n\
+net.makeLayers(layer_defs);\n\
+\n\
+trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.01, momentum:0.0, batch_size:1, l2_decay:0.001});\n\
+";
 
-var net = new convnetjs.Net();
-net.makeLayers(layer_defs);
-
-var trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.01, momentum:0.0, batch_size:1, l2_decay:0.001});
+function reload() {
+  eval($("#layerdef").val());
+}
 
 function myinit(){
   
@@ -143,11 +148,13 @@ function keyDown(key){
 }
 
 function keyUp(key) {
-
 }
 
 $(function() {
-    
+    myinit();
+    $("#layerdef").val(t);
+    reload();
+    NPGinit(10);
 });
 </script>
 
@@ -166,31 +173,25 @@ canvas {
 
 </head>
 
-<body onLoad="NPGinit(10);">
+<body>
 
 <div id="wrap">
 <h1>ConvnetJS demo: toy 2d classification with 2-layer neural network</h1>
 
-<p>The simulation below shows a toy binary problem with a few data points of class 0 (red) and 1 (green). The 2layer network is set up as:</p>
+<p>The simulation below shows a toy binary problem with a few data points of class 0 (red) and 1 (green). The network is set up as:</p>
 
-<pre>
-var layer_defs = [];
-layer_defs.push({type:'input', out_sx:1, out_sy:1, out_depth:2});
-layer_defs.push({type:'fc', num_neurons:20, activation: 'relu'});
-layer_defs.push({type:'fc', num_neurons:20, activation: 'relu'});
-layer_defs.push({type:'softmax', num_classes:2});
+<textarea id="layerdef" style="width:100%; height:200px;">
+</textarea>
+<br><br>
+<input id="buttontp" type="submit" value="change network" onclick="reload();" style="width: 300px; height: 50px;"/>
 
-var net = new convnetjs.Net();
-net.makeLayers(layer_defs);
-
-var trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.01, momentum:0.0, batch_size:1, l2_decay:0.001});
-</pre>
-<p>Every 10th of a second, all points are fed to the network multiple times through the trainer class to train the network. Here's an example for one point:</p>
+<p>Feel free to change this, the text area above gets eval()'d when you hit the button and the network gets reloaded. Every 10th of a second, all points are fed to the network multiple times through the trainer class to train the network. Here's an example for one point:</p>
 <pre>
 var x = new convnetjs.Vol(1,1,2);
 x.w = [1.8636, 1.1677];
 var stats = trainer.train(x, 1);
 </pre>
+<p>The resulting predictions of the network are then "painted" under the data points to show you the generalization.</p>
 
 <canvas id="NPGcanvas" width="500" height="500">Browser not supported for Canvas. Get a real browser.</canvas>
 
@@ -202,4 +203,3 @@ var stats = trainer.train(x, 1);
 
 </body>
 </html>
-
