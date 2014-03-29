@@ -643,6 +643,8 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
       this.stride = json.stride;
       this.in_depth = json.in_depth;
       this.pad = typeof json.pad !== 'undefined' ? json.pad : 0; // backwards compatibility
+      this.switchx = global.zeros(this.out_sx*this.out_sy*this.out_depth); // need to re-init these appropriately
+      this.switchy = global.zeros(this.out_sx*this.out_sy*this.out_depth);
     }
   }
 
@@ -963,7 +965,124 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
       this.layer_type = json.layer_type; 
     }
   }
+
+  // Implements Maxout nnonlinearity that computes
+  // x -> max(x)
+  // where x is a vector of size group_size. Ideally of course,
+  // the input size should be exactly divisible by group_size
+  var MaxoutLayer = function(opt) {
+    var opt = opt || {};
+
+    // required
+    this.group_size = typeof opt.group_size !== 'undefined' ? opt.group_size : 2;
+
+    // computed
+    this.out_sx = opt.in_sx;
+    this.out_sy = opt.in_sy;
+    this.out_depth = Math.floor(opt.in_depth / this.group_size);
+    this.layer_type = 'maxout';
+
+    this.switches = global.zeros(this.out_sx*this.out_sy*this.out_depth); // useful for backprop
+  }
+  MaxoutLayer.prototype = {
+    forward: function(V, is_training) {
+      this.in_act = V;
+      var N = this.out_depth; 
+      var V2 = new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0);
+
+      // optimization branch. If we're operating on 1D arrays we dont have
+      // to worry about keeping track of x,y,d coordinates inside
+      // input volumes. In convnets we do :(
+      if(this.out_sx === 1 && this.out_sy === 1) {
+        for(var i=0;i<N;i++) {
+          var ix = i * this.group_size; // base index offset
+          var a = V.w[ix];
+          var ai = 0;
+          for(var j=1;j<this.group_size;j++) {
+            var a2 = V.w[ix+j];
+            if(a2 > a) {
+              a = a2;
+              ai = j;
+            }
+          }
+          V2.w[i] = a;
+          this.switches[i] = ix + ai;
+        }
+      } else {
+        var n=0; // counter for switches
+        for(var x=0;x<V.sx;x++) {
+          for(var y=0;y<V.sy;y++) {
+            for(var i=0;i<N;i++) {
+              var ix = i * this.group_size;
+              var a = V.get(x, y, ix);
+              var ai = 0;
+              for(var j=1;j<this.group_size;j++) {
+                var a2 = V.get(x, y, ix+j);
+                if(a2 > a) {
+                  a = a2;
+                  ai = j;
+                }
+              }
+              V2.set(x,y,i,a);
+              this.switches[n] = ix + ai;
+              n++;
+            }
+          }
+        }
+
+      }
+      this.out_act = V2;
+      return this.out_act;
+    },
+    backward: function() {
+      var V = this.in_act; // we need to set dw of this
+      var V2 = this.out_act;
+      var N = this.out_depth;
+      V.dw = global.zeros(V.w.length); // zero out gradient wrt data
+
+      // pass the gradient through the appropriate switch
+      if(this.out_sx === 1 && this.out_sy === 1) {
+        for(var i=0;i<N;i++) {
+          var chain_grad = V2.dw[i];
+          V.dw[this.switches[i]] = chain_grad;
+        }
+      } else {
+        // bleh okay, lets do this the hard way
+        var n=0; // counter for switches
+        for(var x=0;x<V2.sx;x++) {
+          for(var y=0;y<V2.sy;y++) {
+            for(var i=0;i<N;i++) {
+              var chain_grad = V2.get_grad(x,y,i);
+              V.set_grad(x,y,this.switches[n],chain_grad);
+              n++;
+            }
+          }
+        }
+      }
+    },
+    getParamsAndGrads: function() {
+      return [];
+    },
+    toJSON: function() {
+      var json = {};
+      json.out_depth = this.out_depth;
+      json.out_sx = this.out_sx;
+      json.out_sy = this.out_sy;
+      json.layer_type = this.layer_type;
+      json.group_size = this.group_size;
+      return json;
+    },
+    fromJSON: function(json) {
+      this.out_depth = json.out_depth;
+      this.out_sx = json.out_sx;
+      this.out_sy = json.out_sy;
+      this.layer_type = json.layer_type; 
+      this.group_size = json.group_size;
+      this.switches = global.zeros(this.group_size);
+    }
+  }
   
+  global.MaxoutLayer = MaxoutLayer;
   global.ReluLayer = ReluLayer;
   global.SigmoidLayer = SigmoidLayer;
 
@@ -1195,7 +1314,7 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
             new_defs.push({type:'fc', num_neurons: def.num_neurons});
           }
 
-          if((def.type==='fc' || def.type==='conv' || def.type==='local') 
+          if((def.type==='fc' || def.type==='conv') 
               && typeof(def.bias_pref) === 'undefined'){
             def.bias_pref = 0.0;
             if(typeof def.activation !== 'undefined' && def.activation === 'relu') {
@@ -1208,6 +1327,11 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
           if(typeof def.activation !== 'undefined') {
             if(def.activation==='relu') { new_defs.push({type:'relu'}); }
             else if (def.activation==='sigmoid') { new_defs.push({type:'sigmoid'}); }
+            else if (def.activation==='maxout') {
+              // create maxout activation, and pass along group size, if provided
+              var gs = def.group_size !== 'undefined' ? def.group_size : 2;
+              new_defs.push({type:'maxout', group_size:gs});
+            }
             else { console.log('ERROR unsupported activation ' + def.activation); }
           }
           if(typeof def.drop_prob !== 'undefined' && def.type !== 'dropout') {
@@ -1241,6 +1365,7 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
           case 'pool': this.layers.push(new global.PoolLayer(def)); break;
           case 'relu': this.layers.push(new global.ReluLayer(def)); break;
           case 'sigmoid': this.layers.push(new global.SigmoidLayer(def)); break;
+          case 'maxout': this.layers.push(new global.MaxoutLayer(def)); break;
           default: console.log('ERROR: UNRECOGNIZED LAYER TYPE!');
         }
       }
@@ -1310,6 +1435,7 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
         if(t==='softmax') { L = new global.SoftmaxLayer(); }
         if(t==='regression') { L = new global.RegressionLayer(); }
         if(t==='fc') { L = new global.FullyConnLayer(); }
+        if(t==='maxout') { L = new global.MaxoutLayer(); }
         L.fromJSON(Lj);
         this.layers.push(L);
       }

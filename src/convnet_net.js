@@ -35,7 +35,7 @@
             new_defs.push({type:'fc', num_neurons: def.num_neurons});
           }
 
-          if((def.type==='fc' || def.type==='conv' || def.type==='local') 
+          if((def.type==='fc' || def.type==='conv') 
               && typeof(def.bias_pref) === 'undefined'){
             def.bias_pref = 0.0;
             if(typeof def.activation !== 'undefined' && def.activation === 'relu') {
@@ -48,6 +48,11 @@
           if(typeof def.activation !== 'undefined') {
             if(def.activation==='relu') { new_defs.push({type:'relu'}); }
             else if (def.activation==='sigmoid') { new_defs.push({type:'sigmoid'}); }
+            else if (def.activation==='maxout') {
+              // create maxout activation, and pass along group size, if provided
+              var gs = def.group_size !== 'undefined' ? def.group_size : 2;
+              new_defs.push({type:'maxout', group_size:gs});
+            }
             else { console.log('ERROR unsupported activation ' + def.activation); }
           }
           if(typeof def.drop_prob !== 'undefined' && def.type !== 'dropout') {
@@ -81,6 +86,7 @@
           case 'pool': this.layers.push(new global.PoolLayer(def)); break;
           case 'relu': this.layers.push(new global.ReluLayer(def)); break;
           case 'sigmoid': this.layers.push(new global.SigmoidLayer(def)); break;
+          case 'maxout': this.layers.push(new global.MaxoutLayer(def)); break;
           default: console.log('ERROR: UNRECOGNIZED LAYER TYPE!');
         }
       }
@@ -150,6 +156,7 @@
         if(t==='softmax') { L = new global.SoftmaxLayer(); }
         if(t==='regression') { L = new global.RegressionLayer(); }
         if(t==='fc') { L = new global.FullyConnLayer(); }
+        if(t==='maxout') { L = new global.MaxoutLayer(); }
         L.fromJSON(Lj);
         this.layers.push(L);
       }

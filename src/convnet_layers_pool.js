@@ -116,6 +116,8 @@
       this.stride = json.stride;
       this.in_depth = json.in_depth;
       this.pad = typeof json.pad !== 'undefined' ? json.pad : 0; // backwards compatibility
+      this.switchx = global.zeros(this.out_sx*this.out_sy*this.out_depth); // need to re-init these appropriately
+      this.switchy = global.zeros(this.out_sx*this.out_sy*this.out_depth);
     }
   }
 
