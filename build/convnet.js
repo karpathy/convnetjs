@@ -1280,6 +1280,93 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
 (function(global) {
   "use strict";
   var Vol = global.Vol; // convenience
+
+  // transforms x-> [x, x_i*x_j forall i,j]
+  // so the fully connected layer afters will essentially be doing tensor multiplies
+  var QuadTransformLayer = function(opt) {
+    var opt = opt || {};
+
+    // computed
+    this.out_sx = opt.in_sx;
+    this.out_sy = opt.in_sy;
+    // linear terms, and then quadratic terms, of which there are 1/2*n*(n+1),
+    // (offdiagonals and the diagonal total) and arithmetic series.
+    // Actually never mind, lets not be fancy here yet and just include
+    // terms x_ix_j and x_jx_i twice. Half as efficient but much less
+    // headache.
+    this.out_depth = opt.in_depth + opt.in_depth * opt.in_depth;
+    this.layer_type = 'quadtransform';
+
+  }
+  QuadTransformLayer.prototype = {
+    forward: function(V, is_training) {
+      this.in_act = V;
+      var N = this.out_depth;
+      var Ni = V.depth;
+      var V2 = new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0);
+      for(var x=0;x<V.sx;x++) {
+        for(var y=0;y<V.sy;y++) {
+          for(var i=0;i<N;i++) {
+            if(i<Ni) {
+              V2.set(x,y,i,V.get(x,y,i)); // copy these over (linear terms)
+            } else {
+              var i0 = Math.floor((i-Ni)/Ni);
+              var i1 = (i-Ni) - i0*Ni;
+              V2.set(x,y,i,V.get(x,y,i0) * V.get(x,y,i1)); // quadratic
+            }
+          }
+        }
+      }
+      this.out_act = V2;
+      return this.out_act; // dummy identity function for now
+    },
+    backward: function() {
+      var V = this.in_act;
+      V.dw = global.zeros(V.w.length); // zero out gradient wrt data
+      var V2 = this.out_act;
+      var N = this.out_depth;
+      var Ni = V.depth;
+      for(var x=0;x<V.sx;x++) {
+        for(var y=0;y<V.sy;y++) {
+          for(var i=0;i<N;i++) {
+            var chain_grad = V2.get_grad(x,y,i);
+            if(i<Ni) {
+              V.add_grad(x,y,i,chain_grad);
+            } else {
+              var i0 = Math.floor((i-Ni)/Ni);
+              var i1 = (i-Ni) - i0*Ni;
+              V.add_grad(x,y,i0,V.get(x,y,i1)*chain_grad);
+              V.add_grad(x,y,i1,V.get(x,y,i0)*chain_grad);
+            }
+          }
+        }
+      }
+    },
+    getParamsAndGrads: function() {
+      return [];
+    },
+    toJSON: function() {
+      var json = {};
+      json.out_depth = this.out_depth;
+      json.out_sx = this.out_sx;
+      json.out_sy = this.out_sy;
+      json.layer_type = this.layer_type;
+      return json;
+    },
+    fromJSON: function(json) {
+      this.out_depth = json.out_depth;
+      this.out_sx = json.out_sx;
+      this.out_sy = json.out_sy;
+      this.layer_type = json.layer_type; 
+    }
+  }
+  
+
+  global.QuadTransformLayer = QuadTransformLayer;
+})(convnetjs);
+(function(global) {
+  "use strict";
+  var Vol = global.Vol; // convenience
   
   // Net manages a set of layers
   // For now constraints: Simple linear order of layers, first layer input last layer a cost layer
@@ -1319,6 +1406,14 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
             def.bias_pref = 0.0;
             if(typeof def.activation !== 'undefined' && def.activation === 'relu') {
               def.bias_pref = 0.1; // relus like a bit of positive bias to get gradients early
+            }
+          }
+
+          if(typeof def.tensor !== 'undefined') {
+            // apply quadratic transform so that the upcoming multiply will include
+            // quadratic terms, equivalent to doing a tensor product
+            if(def.tensor) {
+              new_defs.push({type: 'quadtransform'});
             }
           }
 
@@ -1366,6 +1461,7 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
           case 'relu': this.layers.push(new global.ReluLayer(def)); break;
           case 'sigmoid': this.layers.push(new global.SigmoidLayer(def)); break;
           case 'maxout': this.layers.push(new global.MaxoutLayer(def)); break;
+          case 'quadtransform': this.layers.push(new global.QuadTransformLayer(def)); break;
           default: console.log('ERROR: UNRECOGNIZED LAYER TYPE!');
         }
       }
@@ -1436,6 +1532,7 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
         if(t==='regression') { L = new global.RegressionLayer(); }
         if(t==='fc') { L = new global.FullyConnLayer(); }
         if(t==='maxout') { L = new global.MaxoutLayer(); }
+        if(t==='quadtransform') { L = new global.QuadTransformLayer(); }
         L.fromJSON(Lj);
         this.layers.push(L);
       }

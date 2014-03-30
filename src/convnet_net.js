@@ -43,6 +43,14 @@
             }
           }
 
+          if(typeof def.tensor !== 'undefined') {
+            // apply quadratic transform so that the upcoming multiply will include
+            // quadratic terms, equivalent to doing a tensor product
+            if(def.tensor) {
+              new_defs.push({type: 'quadtransform'});
+            }
+          }
+
           new_defs.push(def);
 
           if(typeof def.activation !== 'undefined') {
@@ -87,6 +95,7 @@
           case 'relu': this.layers.push(new global.ReluLayer(def)); break;
           case 'sigmoid': this.layers.push(new global.SigmoidLayer(def)); break;
           case 'maxout': this.layers.push(new global.MaxoutLayer(def)); break;
+          case 'quadtransform': this.layers.push(new global.QuadTransformLayer(def)); break;
           default: console.log('ERROR: UNRECOGNIZED LAYER TYPE!');
         }
       }
@@ -157,6 +166,7 @@
         if(t==='regression') { L = new global.RegressionLayer(); }
         if(t==='fc') { L = new global.FullyConnLayer(); }
         if(t==='maxout') { L = new global.MaxoutLayer(); }
+        if(t==='quadtransform') { L = new global.QuadTransformLayer(); }
         L.fromJSON(Lj);
         this.layers.push(L);
       }
