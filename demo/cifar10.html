@@ -209,7 +209,7 @@ $(window).load(function() {
   net = new convnetjs.Net();
   net.makeLayers(layer_defs);
 
-  trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.01, momentum:0.9, batch_size:16, l2_decay:0.001});
+  trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.01, momentum:0.9, batch_size:8, l2_decay:0.001});
 
   update_net_param_display();
 

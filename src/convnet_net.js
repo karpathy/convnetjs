@@ -42,7 +42,7 @@
               def.bias_pref = 0.1; // relus like a bit of positive bias to get gradients early
             }
           }
-
+          
           if(typeof def.tensor !== 'undefined') {
             // apply quadratic transform so that the upcoming multiply will include
             // quadratic terms, equivalent to doing a tensor product
@@ -101,7 +101,7 @@
       }
     },
 
-    // forward prop the network
+    // forward prop the network. A trainer will pass in is_training = true
     forward: function(V, is_training) {
       if(typeof(is_training)==='undefined') is_training = false;
       var act = this.layers[0].forward(V, is_training);
@@ -110,7 +110,7 @@
       }
       return act;
     },
-
+    
     // backprop: compute gradients wrt all parameters
     backward: function(y) {
       var N = this.layers.length;

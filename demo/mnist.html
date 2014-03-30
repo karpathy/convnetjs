@@ -8,8 +8,6 @@
   <meta name="author" content="">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-</head>
-
 <style>
 .layer {
   border: 1px solid #999;
@@ -190,8 +188,9 @@ $(window).load(function() {
   net = new convnetjs.Net();
   net.makeLayers(layer_defs);
 
-  trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.1, momentum:0.9, batch_size:16, l2_decay:0.001});
-
+  trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.01, momentum:0.9, batch_size:8, l2_decay:0.001});
+  //trainer = new convnetjs.Trainer(net, {learning_rate:1.0, method: 'adadelta', batch_size:8, l2_decay:0.001});
+  
   update_net_param_display();
 
   for(var k=0;k<loaded.length;k++) { loaded[k] = false; }
@@ -573,7 +572,7 @@ var change_net = function() {
 }
 
 </script>
-
+</head>
 <body>
   <div id="wrap">
   <h2 style="text-align: center;"><a href="http://cs.stanford.edu/people/karpathy/convnetjs/">ConvNetJS</a> MNIST demo</h2>

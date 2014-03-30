@@ -2,7 +2,7 @@
   "use strict";
   var Vol = global.Vol; // convenience
 
-  var SGDTrainer = function(net, options) {
+  var Trainer = function(net, options) {
 
     this.net = net;
 
@@ -11,15 +11,18 @@
     this.l1_decay = typeof options.l1_decay !== 'undefined' ? options.l1_decay : 0.0;
     this.l2_decay = typeof options.l2_decay !== 'undefined' ? options.l2_decay : 0.0;
     this.batch_size = typeof options.batch_size !== 'undefined' ? options.batch_size : 1;
+    this.method = typeof options.method !== 'undefined' ? options.method : 'sgd'; // sgd/adagrad/adadelta/windowgrad
+
     this.momentum = typeof options.momentum !== 'undefined' ? options.momentum : 0.9;
+    this.ro = typeof options.ro !== 'undefined' ? options.ro : 0.95; // used in adadelta
+    this.eps = typeof options.eps !== 'undefined' ? options.eps : 1e-6; // used in adadelta
 
-    if(typeof options.momentum !== 'undefined') this.momentum = options.momentum;
     this.k = 0; // iteration counter
-
-    this.last_gs = []; // last iteration gradients (used for momentum calculations)
+    this.gsum = []; // last iteration gradients (used for momentum calculations)
+    this.xsum = []; // used in adadelta
   }
 
-  SGDTrainer.prototype = {
+  Trainer.prototype = {
     train: function(x, y) {
 
       var start = new Date().getTime();
@@ -37,11 +40,21 @@
       this.k++;
       if(this.k % this.batch_size === 0) {
 
-        // initialize lists for momentum keeping. Will only run first iteration
         var pglist = this.net.getParamsAndGrads();
-        if(this.last_gs.length === 0 && this.momentum > 0.0) {
+
+        // initialize lists for accumulators. Will only be done once on first iteration
+        if(this.gsum.length === 0 && (this.method !== 'sgd' || this.momentum > 0.0)) {
+          // only vanilla sgd doesnt need either lists
+          // momentum needs gsum
+          // adagrad needs gsum
+          // adadelta needs gsum and xsum
           for(var i=0;i<pglist.length;i++) {
-            this.last_gs.push(global.zeros(pglist[i].params.length));
+            this.gsum.push(global.zeros(pglist[i].params.length));
+            if(this.method === 'adadelta') {
+              this.xsum.push(global.zeros(pglist[i].params.length));
+            } else {
+              this.xsum.push([]); // conserve memory
+            }
           }
         }
 
@@ -63,15 +76,42 @@
             l1_decay_loss += l1_decay*Math.abs(p[j]);
             var l1grad = l1_decay * (p[j] > 0 ? 1 : -1);
             var l2grad = l2_decay * (p[j]);
-            if(this.momentum > 0.0) {
-              // back up the last gradients and do weighted update
-              var dir = -this.learning_rate * (l2grad + l1grad + g[j]) / this.batch_size;
-              var dir_adj = this.momentum * this.last_gs[i][j] + (1.0 - this.momentum) * dir;
-              p[j] += dir_adj;
-              this.last_gs[i][j] = dir_adj;
+
+            var gij = (l2grad + l1grad + g[j]) / this.batch_size; // raw batch gradient
+
+            var gsumi = this.gsum[i];
+            var xsumi = this.xsum[i];
+            if(this.method === 'adagrad') {
+              // adagrad update
+              gsumi[j] = gsumi[j] + gij * gij;
+              var dx = - this.learning_rate / Math.sqrt(gsumi[j] + this.eps) * gij;
+              p[j] += dx;
+            } else if(this.method === 'windowgrad') {
+              // this is adagrad but with a moving window weighted average
+              // so the gradient is not accumulated over the entire history of the run. 
+              // it's also referred to as Idea #1 in Zeiler paper on Adadelta. Seems reasonable to me!
+              gsumi[j] = this.ro * gsumi[j] + (1-this.ro) * gij * gij;
+              var dx = - this.learning_rate / Math.sqrt(gsumi[j] + this.eps) * gij; // eps added for better conditioning
+              p[j] += dx;
+            } else if(this.method === 'adadelta') {
+              // assume adadelta if not sgd or adagrad
+              // paper by Zeiler on Adadelta doesnt have the learning rate multiplier 
+              // but I'll include it here. It's cleaner. User can also set to 1.
+              gsumi[j] = this.ro * gsumi[j] + (1-this.ro) * gij * gij;
+              var dx = - this.learning_rate * Math.sqrt((xsumi[j] + this.eps)/(gsumi[j] + this.eps)) * gij;
+              xsumi[j] = this.ro * xsumi[j] + (1-this.ro) * dx * dx; // yes, xsum lags behind gsum by 1.
+              p[j] += dx;
             } else {
-              // vanilla sgd
-              p[j] -= this.learning_rate * (l2grad + l1grad + g[j]) / this.batch_size;
+              // assume SGD
+              if(this.momentum > 0.0) {
+                // momentum update
+                var dx = this.momentum * gsumi[j] - this.learning_rate * gij; // step
+                gsumi[j] = dx; // back this up for next iteration of momentum
+                p[j] += dx; // apply corrected gradient
+              } else {
+                // vanilla sgd
+                p[j] +=  - this.learning_rate * gij;
+              }
             }
             g[j] = 0.0; // zero out gradient so that we can begin accumulating anew
           }
@@ -89,6 +129,7 @@
     }
   }
   
-  global.SGDTrainer = SGDTrainer;
+  global.Trainer = Trainer;
+  global.SGDTrainer = Trainer; // backwards compatibility
 })(convnetjs);
 
