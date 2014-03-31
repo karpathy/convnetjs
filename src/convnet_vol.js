@@ -80,8 +80,14 @@
       this.sx = json.sx;
       this.sy = json.sy;
       this.depth = json.depth;
-      this.w = json.w;
-      this.dw = global.zeros(this.w.length);
+
+      var n = this.sx*this.sy*this.depth;
+      this.w = global.zeros(n);
+      this.dw = global.zeros(n);
+      // copy over the elements.
+      for(var i=0;i<n;i++) {
+        this.w[i] = json.w[i];
+      }
     }
   }
 
