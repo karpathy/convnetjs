@@ -23,7 +23,7 @@
         for(var i=0;i<defs.length;i++) {
           var def = defs[i];
           
-          if(def.type==='softmax') {
+          if(def.type==='softmax' || def.type==='svm') {
             // add an fc layer here, there is no reason the user should
             // have to worry about this and we almost always want to
             new_defs.push({type:'fc', num_neurons: def.num_classes});
@@ -96,6 +96,7 @@
           case 'sigmoid': this.layers.push(new global.SigmoidLayer(def)); break;
           case 'maxout': this.layers.push(new global.MaxoutLayer(def)); break;
           case 'quadtransform': this.layers.push(new global.QuadTransformLayer(def)); break;
+          case 'svm': this.layers.push(new global.SVMLayer(def)); break;
           default: console.log('ERROR: UNRECOGNIZED LAYER TYPE!');
         }
       }
@@ -167,6 +168,7 @@
         if(t==='fc') { L = new global.FullyConnLayer(); }
         if(t==='maxout') { L = new global.MaxoutLayer(); }
         if(t==='quadtransform') { L = new global.QuadTransformLayer(); }
+        if(t==='svm') { L = new global.SVMLayer(); }
         L.fromJSON(Lj);
         this.layers.push(L);
       }
