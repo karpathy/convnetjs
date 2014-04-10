@@ -40,6 +40,8 @@
             def.bias_pref = 0.0;
             if(typeof def.activation !== 'undefined' && def.activation === 'relu') {
               def.bias_pref = 0.1; // relus like a bit of positive bias to get gradients early
+              // otherwise it's technically possible that a relu unit will never turn on (by chance)
+              // and will never get any gradient and never contribute any computation. Dead relu.
             }
           }
           
@@ -56,6 +58,7 @@
           if(typeof def.activation !== 'undefined') {
             if(def.activation==='relu') { new_defs.push({type:'relu'}); }
             else if (def.activation==='sigmoid') { new_defs.push({type:'sigmoid'}); }
+            else if (def.activation==='tanh') { new_defs.push({type:'tanh'}); }
             else if (def.activation==='maxout') {
               // create maxout activation, and pass along group size, if provided
               var gs = def.group_size !== 'undefined' ? def.group_size : 2;
@@ -94,6 +97,7 @@
           case 'pool': this.layers.push(new global.PoolLayer(def)); break;
           case 'relu': this.layers.push(new global.ReluLayer(def)); break;
           case 'sigmoid': this.layers.push(new global.SigmoidLayer(def)); break;
+          case 'tanh': this.layers.push(new global.TanhLayer(def)); break;
           case 'maxout': this.layers.push(new global.MaxoutLayer(def)); break;
           case 'quadtransform': this.layers.push(new global.QuadTransformLayer(def)); break;
           case 'svm': this.layers.push(new global.SVMLayer(def)); break;
@@ -159,6 +163,7 @@
         if(t==='input') { L = new global.InputLayer(); }
         if(t==='relu') { L = new global.ReluLayer(); }
         if(t==='sigmoid') { L = new global.SigmoidLayer(); }
+        if(t==='tanh') { L = new global.TanhLayer(); }
         if(t==='dropout') { L = new global.DropoutLayer(); }
         if(t==='conv') { L = new global.ConvLayer(); }
         if(t==='pool') { L = new global.PoolLayer(); }

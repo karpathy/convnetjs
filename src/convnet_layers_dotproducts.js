@@ -34,9 +34,10 @@
     this.layer_type = 'conv';
 
     // initializations
+    var bias = typeof opt.bias_pref !== 'undefined' ? opt.bias_pref : 0.0;
     this.filters = [];
     for(var i=0;i<this.out_depth;i++) { this.filters.push(new Vol(this.sx, this.sy, this.in_depth)); }
-    this.biases = new Vol(1, 1, this.out_depth, 0.1);
+    this.biases = new Vol(1, 1, this.out_depth, bias);
   }
   ConvLayer.prototype = {
     forward: function(V, is_training) {
@@ -183,7 +184,7 @@
     this.layer_type = 'fc';
 
     // initializations
-    var bias = typeof opt.bias_pref !== 'undefined' ? opt.bias_pref : 0.1;
+    var bias = typeof opt.bias_pref !== 'undefined' ? opt.bias_pref : 0.0;
     this.filters = [];
     for(var i=0;i<this.out_depth ;i++) { this.filters.push(new Vol(1, 1, this.num_inputs)); }
     this.biases = new Vol(1, 1, this.out_depth, bias);
