@@ -6,8 +6,6 @@
   <title>ConvNetJS CIFAR-10 demo</title>
   <meta name="description" content="">
   <meta name="author" content="">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-</head>
 
 <style>
 .layer {
@@ -90,6 +88,9 @@ h1 {
 }
 #testset_vis {
   margin-bottom: 200px;
+}
+body {
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
 }
 </style>
 
@@ -198,10 +199,11 @@ $(window).load(function() {
 
   var layer_defs = [];
   layer_defs.push({type:'input', out_sx:32, out_sy:32, out_depth:3});
-  layer_defs.push({type:'conv', sx:5, filters:12, stride:1, pad:2, activation:'relu'});
+  layer_defs.push({type:'conv', sx:5, filters:16, stride:1, pad:2, activation:'relu'});
   layer_defs.push({type:'pool', sx:2, stride:2});
-  layer_defs.push({type:'conv', sx:5, filters:24, stride:1, pad:2, activation:'relu'});
-  layer_defs.push({type:'pool', sx:4, stride:4});
+  layer_defs.push({type:'conv', sx:5, filters:48, stride:1, pad:2, activation:'relu'});
+  layer_defs.push({type:'pool', sx:2, stride:2});
+  layer_defs.push({type:'fc', filters:400, activation:'relu', drop_prob: 0.5});
   layer_defs.push({type:'softmax', num_classes:10});
 
   document.getElementById('newnet').value = JSON.stringify(layer_defs, undefined, 1);
@@ -209,7 +211,8 @@ $(window).load(function() {
   net = new convnetjs.Net();
   net.makeLayers(layer_defs);
 
-  trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.01, momentum:0.9, batch_size:8, l2_decay:0.001});
+  trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.01, momentum:0.9, batch_size:32, l2_decay:0.001});
+  //trainer = new convnetjs.SGDTrainer(net, {method:'adadelta', momentum:0.0, batch_size:32, l2_decay:0.001});
 
   update_net_param_display();
 
@@ -686,6 +689,7 @@ var change_net = function() {
 
 </script>
 
+</head>
 <body>
   <div id="wrap">
   <h2 style="text-align: center;"><a href="http://cs.stanford.edu/people/karpathy/convnetjs/">ConvNetJS</a> CIFAR-10 demo</h2>

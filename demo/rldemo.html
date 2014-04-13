@@ -23,12 +23,15 @@
     text-align: center;
   }
   h1 {
-  font-size: 16px;
-  color: #333;
-  background-color: #DDD;
-  border-bottom: 1px #999 solid;
-  text-align: center;
-}
+    font-size: 16px;
+    color: #333;
+    background-color: #DDD;
+    border-bottom: 1px #999 solid;
+    text-align: center;
+  }
+  body {
+    font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+  }
   </style>
   
   <script type="application/javascript">
@@ -614,10 +617,11 @@
   <style type="text/css">
       canvas { border: 1px solid white; }
     </style>
+
  </head>
  <body onload="start();">
    <div id="wrap">
-   <h2>ConvNetJS Deep Q Learning Demo</h2>
+   <h2><a href="http://cs.stanford.edu/people/karpathy/convnetjs/">ConvNetJS</a> Deep Q Learning Demo</h2>
    <h1>Description</h1>
    <p>
    This demo follows the description of the Deep Q Learning algorithm described in 
@@ -642,7 +646,7 @@
    <p>
    The textfield below gets eval()'d to produce the Q-learner for this demo. This allows you to fiddle with 
    various parameters and settings and also shows how you can use the API for your own purposes. 
-   All of these settings optional but are listed to give an idea of possibilities.
+   All of these settings are optional but are listed to give an idea of possibilities.
    Feel free to change things around and hit reload! Documentation for all
    options is the paper linked to above, and there are also 
    comments for every option in the source code javascript file.

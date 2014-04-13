@@ -6,7 +6,6 @@
   <title>ConvNetJS MNIST demo</title>
   <meta name="description" content="">
   <meta name="author" content="">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
 <style>
 .layer {
@@ -93,6 +92,9 @@ h1 {
 #testset_acc {
   margin-bottom: 200px;
 }
+body {
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+}
 </style>
 
 <script src="jquery-1.8.3.min.js"></script>
@@ -100,10 +102,24 @@ h1 {
 <script src="../build/util.js"></script>
 <script src="../build/convnet.js"></script>
 
-
 <script src="mnist/mnist_labels.js"></script>
 
 <script>
+
+var layer_defs, net, trainer;
+var t = "layer_defs = [];\n\
+layer_defs.push({type:'input', out_sx:24, out_sy:24, out_depth:1});\n\
+layer_defs.push({type:'conv', sx:5, filters:8, stride:1, pad:2, activation:'relu'});\n\
+layer_defs.push({type:'pool', sx:2, stride:2});\n\
+layer_defs.push({type:'conv', sx:5, filters:16, stride:1, pad:2, activation:'relu'});\n\
+layer_defs.push({type:'pool', sx:3, stride:3});\n\
+layer_defs.push({type:'softmax', num_classes:10});\n\
+\n\
+net = new convnetjs.Net();\n\
+net.makeLayers(layer_defs);\n\
+\n\
+trainer = new convnetjs.SGDTrainer(net, {method:'adadelta', batch_size:20, l2_decay:0.001});\n\
+";
 
 // ------------------------
 // BEGIN MNIST SPECIFIC STUFF
@@ -175,22 +191,9 @@ var loaded_train_batches = [];
 // int main
 $(window).load(function() {
 
-  var layer_defs = [];
-  layer_defs.push({type:'input', out_sx:24, out_sy:24, out_depth:1});
-  layer_defs.push({type:'conv', sx:5, filters:8, stride:1, pad:2, activation:'relu'});
-  layer_defs.push({type:'pool', sx:2, stride:2});
-  layer_defs.push({type:'conv', sx:5, filters:16, stride:1, pad:2, activation:'relu'});
-  layer_defs.push({type:'pool', sx:3, stride:3, drop_prob: 0.5});
-  layer_defs.push({type:'softmax', num_classes:10});
+  $("#newnet").val(t);
+  eval($("#newnet").val());
 
-  document.getElementById('newnet').value = JSON.stringify(layer_defs, undefined, 1);
-
-  net = new convnetjs.Net();
-  net.makeLayers(layer_defs);
-
-  trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.01, momentum:0.9, batch_size:8, l2_decay:0.001});
-  //trainer = new convnetjs.Trainer(net, {learning_rate:1.0, method: 'adadelta', batch_size:8, l2_decay:0.001});
-  
   update_net_param_display();
 
   for(var k=0;k<loaded.length;k++) { loaded[k] = false; }
@@ -544,8 +547,6 @@ var clear_graph = function() {
   lossGraph = new cnnvis.Graph(); // reinit graph too 
 }
 var reset_all = function() {
-  // reinit trainer
-  trainer = new convnetjs.SGDTrainer(net, {learning_rate:trainer.learning_rate, momentum:trainer.momentum, batch_size:trainer.batch_size, decay:trainer.l2_decay});
   update_net_param_display();
 
   // reinit windows that keep track of val/train accuracies
@@ -564,10 +565,7 @@ var load_from_json = function() {
   reset_all();
 }
 var change_net = function() {
-  var layer_defs_txt = document.getElementById('newnet').value;
-  var layer_defs = JSON.parse(layer_defs_txt);
-  net = new convnetjs.Net();
-  net.makeLayers(layer_defs);
+  eval($("#newnet").val());
   reset_all();
 }
 
@@ -583,7 +581,9 @@ var change_net = function() {
   <p>
     This network takes a 28x28 MNIST image and crops a random 24x24 window before training on it (this technique is called data augmentation and improves generalization). Similarly to do prediction, 4 random crops are sampled and the probabilities across all crops are averaged to produce final predictions. The network runs at about 5ms for both forward and backward pass on my reasonably decent Ubuntu+Chrome machine.
   </p>
-  <p>Friendly reminder: You want to gradually decrease learning rate as the training happens, especially when you see that the total cost curve is starting to be very wiggly, or if the validation stops increasing.</p>
+  <p>
+    By default, in this demo we're using Adadelta which is one of per-parameter adaptive step size methods, so we don't have to worry about changing learning rates or momentum over time. However, I still included the text fields for changing these if you'd like to play around with SGD+Momentum trainer.
+  </p>
   <p>Report questions/bugs/suggestions to <a href="https://twitter.com/karpathy">@karpathy</a>.</p>
   <h1>Training Stats</h1>
   <div class="divsec" style="270px;">
@@ -621,15 +621,14 @@ var change_net = function() {
         <br />
         <input id="buttoncg" type="submit" value="clear graph" onclick="clear_graph();"/>
       </div>
-
-      <div>
-      <br />
-      <textarea id="newnet" style="width:100%; height:200px;"></textarea><br />
-      <input id="buttonnn" type="submit" value="change network" onclick="change_net();"/>
-      </div>
-
     </div>
     <div style="clear:both;"></div>
+  </div>
+
+  <h1>Instantiate a Network and Trainer</h1>
+  <div>
+    <textarea id="newnet" style="width:100%; height:200px;"></textarea><br />
+    <input id="buttonnn" type="submit" value="change network" onclick="change_net();" style="width:200px;height:30px;"/>
   </div>
 
   <div class="divsec">

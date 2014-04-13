@@ -3,9 +3,20 @@
 <title>ConvNetJS demo: Classify toy 2D data</title>
 <link href='http://fonts.googleapis.com/css?family=Cabin' rel='stylesheet' type='text/css'>
 
+<script>
+      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
+      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
+      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
+      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+
+      ga('create', 'UA-3698471-21', 'stanford.edu');
+      ga('send', 'pageview');
+
+    </script>
+
 <style>
 body {
-  font-family: 'Cabin', sans-serif;
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
   color: #333;
   padding: 20px;
 }
@@ -194,7 +205,7 @@ canvas {
 <body onLoad="NPGinit(10);">
 
 <div id="wrap">
-<h1>ConvnetJS demo: toy 1d regression</h1>
+<h1><a href="http://cs.stanford.edu/people/karpathy/convnetjs">ConvnetJS</a> demo: toy 1d regression</h1>
 
 <p>The simulation below is a 1-dimensional regression where a neural network is trained to regress to y coordinates for every given point x through an L2 loss. That is, the minimized cost function computes the squared difference between the predicted y-coordinate and the "correct" y coordinate. Every 10th of a second, all points are fed to the network multiple times through the trainer class to train the network.</p>
 

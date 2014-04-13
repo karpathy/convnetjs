@@ -6,7 +6,7 @@
   <title>ConvNetJS MNIST demo</title>
   <meta name="description" content="">
   <meta name="author" content="">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+</head>
 
 <style>
 .layer {
@@ -105,6 +105,24 @@ h1 {
 
 <script>
 
+// globals
+var layer_defs, net, trainer;
+var t = "\
+layer_defs = [];\n\
+layer_defs.push({type:'input', out_sx:28, out_sy:28, out_depth:1});\n\
+layer_defs.push({type:'fc', num_neurons:50, activation:'tanh'});\n\
+layer_defs.push({type:'fc', num_neurons:50, activation:'tanh'});\n\
+layer_defs.push({type:'fc', num_neurons:2});\n\
+layer_defs.push({type:'fc', num_neurons:50, activation:'tanh'});\n\
+layer_defs.push({type:'fc', num_neurons:50, activation:'tanh'});\n\
+layer_defs.push({type:'regression', num_neurons:28*28});\n\
+\n\
+net = new convnetjs.Net();\n\
+net.makeLayers(layer_defs);\n\
+\n\
+trainer = new convnetjs.SGDTrainer(net, {learning_rate:1, method:'adadelta', batch_size:50, l2_decay:0.001, l1_decay:0.001});\n\
+";
+
 // ------------------------
 // BEGIN MNIST SPECIFIC STUFF
 // ------------------------
@@ -130,16 +148,13 @@ var sample_training_instance = function() {
   // fetch the appropriate row of the training image and reshape into a Vol
   var p = img_data[b].data;
   var x = new convnetjs.Vol(28,28,1,0.0);
-  var x_corrupted = new convnetjs.Vol(28,28,1,0.0);
   var W = 28*28;
   for(var i=0;i<W;i++) {
     var ix = ((W * k) + i) * 4;
     x.w[i] = p[ix]/255.0;
-    if(Math.random() < 0.5) x_corrupted.w[i] = 0.0;
-    else x_corrupted.w[i] = x.w[i];
   }
 
-  return {x:x, x_corrupted:x_corrupted};
+  return {x:x, label:labels[n]};
 }
 
 var num_batches = 21; // 20 training batches, 1 test
@@ -151,20 +166,8 @@ var loaded_train_batches = [];
 // int main
 $(window).load(function() {
 
-  var layer_defs = [];
-  layer_defs.push({type:'input', out_sx:28, out_sy:28, out_depth:1});
-  layer_defs.push({type:'fc', num_neurons:100, activation:'sigmoid', l1_decay_mul:1.0, l2_decay_mul:0.0});
-  layer_defs.push({type:'fc', num_neurons:100, activation:'sigmoid'});
-  layer_defs.push({type:'regression', num_neurons:28*28});
-
-  document.getElementById('newnet').value = JSON.stringify(layer_defs, undefined, 1);
-
-  net = new convnetjs.Net();
-  net.makeLayers(layer_defs);
-
-  trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.1, momentum:0.9, batch_size:16, l1_decay: 0.001, l2_decay:0.001});
-
-  update_net_param_display();
+  $("#newnet").val(t);
+  change_net();
 
   for(var k=0;k<loaded.length;k++) { loaded[k] = false; }
 
@@ -205,6 +208,36 @@ var load_data_batch = function(batch_num) {
 
 var maxmin = cnnutil.maxmin;
 var f2t = cnnutil.f2t;
+
+var render_act = function(A) {
+  var w = A.w;
+  var mm = maxmin(w);
+  var s = 1;
+
+  var canv = document.createElement('canvas');
+  canv.className = 'rendera';
+  var W = A.sx * s;
+  var H = A.sy * s;
+  canv.width = W;
+  canv.height = H;
+  var ctx = canv.getContext('2d');
+  var g = ctx.createImageData(W, H);
+  var d = 0;
+  for(var x=0;x<A.sx;x++) {
+    for(var y=0;y<A.sy;y++) {
+      var dval = Math.floor((A.get(x,y,d)-mm.minv)/mm.dv*255);  
+      for(var dx=0;dx<s;dx++) {
+        for(var dy=0;dy<s;dy++) {
+          var pp = ((W * (y*s+dy)) + (dx + x*s)) * 4;
+          for(var i=0;i<3;i++) { g.data[pp + i] = dval; } // rgb
+          g.data[pp+3] = 255; // alpha channel
+        }
+      }
+    }
+  }
+  ctx.putImageData(g, 0, 0);
+  return canv;
+}
 
 // elt is the element to add all the canvas activation drawings into
 // A is the Vol() to use
@@ -383,22 +416,56 @@ var visualize_activations = function(net, elt) {
 
 // loads a training image and trains on it with the network
 var paused = false;
+var embed_samples = [];
+var embed_imgs = [];
 var load_and_step = function() {
   if(paused) return; 
 
+  if(embed_samples.length === 0) { // happens once
+    for(var k=0;k<200;k++) {
+      var s = sample_training_instance();
+      embed_samples.push(s);
+      // render x and save it too
+      var I = render_act(s.x);
+      embed_imgs.push(I);
+    }
+  }
   var sample = sample_training_instance();
   step(sample); // process this image
 }
+
+var lix = 5;
+var d0 = 0;
+var d1 = 1;
+function cycle() {
+  var selected_layer = net.layers[lix];
+  d0 += 1;
+  d1 += 1;
+  if(d1 >= selected_layer.out_depth) d1 = 0; // and wrap
+  if(d0 >= selected_layer.out_depth) d0 = 0; // and wrap
+  $("#cyclestatus").html('drawing neurons ' + d0 + ' and ' + d1 + ' of layer #' + lix + ' (' + net.layers[lix].layer_type + ')');
+}
+function updateLix(newlix) {
+  $("#button"+lix).css('background-color', ''); // erase highlight
+  lix = newlix;
+  d0 = 0;
+  d1 = 1; // reset these
+  $("#button"+lix).css('background-color', '#FFA');
+
+  $("#cyclestatus").html('drawing neurons ' + d0 + ' and ' + d1 + ' of layer with index ' + lix + ' (' + net.layers[lix].layer_type + ')');
+}
+
 
 var lossGraph = new cnnvis.Graph();
 var xLossWindow = new cnnutil.Window(100);
 var w2LossWindow = new cnnutil.Window(100);
 var w1LossWindow = new cnnutil.Window(100);
 var step_num = 0;
+var colors = ["red", "blue", "green", "orange", "magenta", "cyan", "purple", "silver", "olive", "lime", "yellow"];
 var step = function(sample) {
 
   // train on it with network
-  var stats = trainer.train(sample.x_corrupted, sample.x.w);
+  var stats = trainer.train(sample.x, sample.x.w);
 
   // keep track of stats such as the average training error and loss  
   xLossWindow.add(stats.cost_loss);
@@ -433,6 +500,43 @@ var step = function(sample) {
     visualize_activations(net, vis_elt);
   }
 
+  // visualize embedding
+  if(step_num % 100 === 0) {
+
+    var embcanvas = document.getElementById('embedding');
+    var ctx = embcanvas.getContext("2d");
+    var EW = embcanvas.width;
+    var EH = embcanvas.height;
+
+    // propagate a few training examples through the network and grab codes
+    var xcodes = [];
+    var ycodes = [];
+    var ns = embed_samples.length; // number of samples
+    for(var k=0;k<ns;k++) {
+      var sample = embed_samples[k];
+      net.forward(sample.x);
+      var xcode = net.layers[lix].out_act.w[d0];
+      var ycode = net.layers[lix].out_act.w[d1];
+      xcodes.push(xcode);
+      ycodes.push(ycode);
+    }
+    var mmx = cnnutil.maxmin(xcodes);
+    var mmy = cnnutil.maxmin(ycodes);
+
+    // draw every example into the canvas
+    ctx.clearRect(0,0,EW,EH);
+    for(var k=0;k<ns;k++) {
+      var xpos = (EW-28*2)*(xcodes[k]-mmx.minv)/mmx.dv+28;
+      var ypos = (EH-28*2)*(ycodes[k]-mmy.minv)/mmy.dv+28;
+      // draw border according to class
+      ctx.fillStyle = colors[embed_samples[k].label];
+      ctx.fillRect(xpos-2,ypos-2,32,32);
+
+      ctx.drawImage(embed_imgs[k], xpos, ypos );
+    }
+
+  }
+
   // log progress to graph, (full loss)
   if(step_num % 200 === 0) {
     var xa = xLossWindow.get_average();
@@ -452,23 +556,8 @@ var change_lr = function() {
   trainer.learning_rate = parseFloat(document.getElementById("lr_input").value);
   update_net_param_display();
 }
-var change_momentum = function() {
-  trainer.momentum = parseFloat(document.getElementById("momentum_input").value);
-  update_net_param_display();
-}
-var change_batch_size = function() {
-  trainer.batch_size = parseFloat(document.getElementById("batch_size_input").value);
-  update_net_param_display();
-}
-var change_decay = function() {
-  trainer.l2_decay = parseFloat(document.getElementById("decay_input").value);
-  update_net_param_display();
-}
 var update_net_param_display = function() {
   document.getElementById('lr_input').value = trainer.learning_rate;
-  document.getElementById('momentum_input').value = trainer.momentum;
-  document.getElementById('batch_size_input').value = trainer.batch_size;
-  document.getElementById('decay_input').value = trainer.l2_decay;
 }
 var toggle_pause = function() {
   paused = !paused;
@@ -483,15 +572,22 @@ var clear_graph = function() {
   lossGraph = new cnnvis.Graph(); // reinit graph too 
 }
 var reset_all = function() {
-  // reinit trainer
-  trainer = new convnetjs.SGDTrainer(net, {learning_rate:trainer.learning_rate, momentum:trainer.momentum, batch_size:trainer.batch_size, decay:trainer.l2_decay});
   update_net_param_display();
 
   // reinit windows that keep track of val/train accuracies
-  xLossWindow.reset();
-  wLossWindow.reset();
   lossGraph = new cnnvis.Graph(); // reinit graph too
   step_num = 0;
+
+  // enter buttons for layers
+  var t = '';
+  for(var i=1;i<net.layers.length-1;i++) { // ignore input and regression layers (first and last)
+    var butid = "button" + i;
+    t += "<input id=\""+butid+"\" value=\"" + net.layers[i].layer_type + "(" + net.layers[i].out_depth + ")" +"\" type=\"submit\" onclick=\"updateLix("+i+")\" style=\"width:80px; height: 30px; margin:5px;\";>";
+  }
+  $("#layer_ixes").html(t);
+  $("#button"+lix).css('background-color', '#FFA');
+  $("#cyclestatus").html('drawing neurons ' + d0 + ' and ' + d1 + ' of layer with index ' + lix + ' (' + net.layers[lix].layer_type + ')');
+
 }
 var load_from_json = function() {
   var jsonString = document.getElementById("dumpjson").value;
@@ -501,27 +597,22 @@ var load_from_json = function() {
   reset_all();
 }
 var change_net = function() {
-  var layer_defs_txt = document.getElementById('newnet').value;
-  var layer_defs = JSON.parse(layer_defs_txt);
-  net = new convnetjs.Net();
-  net.makeLayers(layer_defs);
+  eval($("#newnet").val());
   reset_all();
 }
 
 </script>
 
-</head>
 <body>
   <div id="wrap">
   <h2 style="text-align: center;"><a href="http://cs.stanford.edu/people/karpathy/convnetjs/">ConvNetJS</a> Denoising Autoencoder demo</h2>
   <h1>Description</h1>
   <p>
-    All the other demos are examples of Supervised Learning, so in this demo I wanted to show an example of Unsupervised Learning. We are going to train a sparse denoising autoencoder on MNIST digits.
+    All the other demos are examples of Supervised Learning, so in this demo I wanted to show an example of Unsupervised Learning. We are going to train an autoencoder on MNIST digits.
   </p>
   <p>
-    A Denoising Autoencoder is a regression task where the network is given a noisy image and asked to predict the pixels of the uncorrupted version. Here we have a 3-layer neural network of 100 sigmoid units at each layer. Unfortunately, we don't get very nice and sparse edge-features for now, because for that you need additional penalties, for example those found in sparse denoising autoencoders. Still kinda cool!
+    An autoencoder is a regression task where the network is asked to predict its input (in other words, model the identity function). Sounds simple enough, except the network has a tight bottleneck of a few neurons in the middle (in the default example only two!), forcing it to create effective representations that compress the input into a low-dimensional code that can be used by the decoder to reproduce the original input.
   </p>
-  <p>Hint: you can actually get away with learning rates up to 1 in this demo.</p>
   <p>Report questions/bugs/suggestions to <a href="https://twitter.com/karpathy">@karpathy</a>.
   </p>
   <h1>Training Stats</h1>
@@ -534,17 +625,6 @@ var change_net = function() {
         Learning rate: <input name="lri" type="text" maxlength="20" id="lr_input"/>
         <input id="buttonlr" type="submit" value="change" onclick="change_lr();"/>
         <br />
-
-        Momentum: <input name="momi" type="text" maxlength="20" id="momentum_input"/>
-        <input id="buttonmom" type="submit" value="change" onclick="change_momentum();"/>
-        <br />
-
-        Batch size: <input name="bsi" type="text" maxlength="20" id="batch_size_input"/>
-        <input id="buttonbs" type="submit" value="change" onclick="change_batch_size();"/>
-        <br />
-
-        Weight decay: <input name="wdi" type="text" maxlength="20" id="decay_input"/>
-        <input id="buttonwd" type="submit" value="change" onclick="change_decay();"/>
       </div>
 
       <input id="buttondj" type="submit" value="save network snapshot as JSON" onclick="dump_json();"/><br />
@@ -561,13 +641,19 @@ var change_net = function() {
         <input id="buttoncg" type="submit" value="clear graph" onclick="clear_graph();"/>
       </div>
 
-      <div>
-      <br />
-      <textarea id="newnet" style="width:100%"></textarea><br />
-      <input id="buttonnn" type="submit" value="change network" onclick="change_net();"/>
-      </div>
-
     </div>
+    <div>
+      <textarea id="newnet" style="width:100%; height:100px;"></textarea><br />
+      <input id="buttonnn" type="submit" value="reload" onclick="change_net();" style="width:200px; height: 40px;"/>
+    </div>
+
+    <div style="margin-top: 1px solid #000; margin-top:20px;">
+      <div id="layer_ixes"></div>
+      <input id="buttoncycle" type="submit" value="cycle through visualized neurons at selected layer (if more than 2)" onclick="cycle();" style="height: 40px;"/>
+      <div id="cyclestatus"></div>
+      <div style="text-align:center;"><canvas id="embedding" width="500" height="500"></canvas></div>
+    </div>
+
     <div style="clear:both;"></div>
   </div>
 
