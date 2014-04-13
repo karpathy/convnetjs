@@ -95,10 +95,8 @@
               p[j] += dx;
             } else if(this.method === 'adadelta') {
               // assume adadelta if not sgd or adagrad
-              // paper by Zeiler on Adadelta doesnt have the learning rate multiplier 
-              // but I'll include it here. It's cleaner. User can also set to 1.
               gsumi[j] = this.ro * gsumi[j] + (1-this.ro) * gij * gij;
-              var dx = - this.learning_rate * Math.sqrt((xsumi[j] + this.eps)/(gsumi[j] + this.eps)) * gij;
+              var dx = - Math.sqrt((xsumi[j] + this.eps)/(gsumi[j] + this.eps)) * gij;
               xsumi[j] = this.ro * xsumi[j] + (1-this.ro) * dx * dx; // yes, xsum lags behind gsum by 1.
               p[j] += dx;
             } else {
