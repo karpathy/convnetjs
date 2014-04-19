@@ -1,0 +1,2 @@
+build/convnet-min.js -diff
+build/convnet.js -diff

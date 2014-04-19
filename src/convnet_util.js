@@ -48,12 +48,25 @@
       if(w[i] < minv) { minv = w[i]; mini = i; } 
     }
     return {maxi: maxi, maxv: maxv, mini: mini, minv: minv, dv:maxv-minv};
-  }
+  };
+
+
+  var bernoulliMask = function(x, y, d, probability) {
+    var weight_mask = new global.Vol(x, y, d, 0);
+    for(var i = 0; i < weight_mask.w.length; i++) {
+      weight_mask.w[i] = randf(0, 1) < probability;
+    }
+    return {
+      weight_mask: weight_mask,
+      bias_mask: randf(0, 1) < probability
+    };
+  };
 
   global.randf = randf;
   global.randi = randi;
   global.randn = randn;
   global.zeros = zeros;
   global.maxmin = maxmin;
+  global.bernoulliMask = bernoulliMask;
   
 })(convnetjs);
