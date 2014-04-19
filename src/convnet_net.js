@@ -35,16 +35,25 @@
             new_defs.push({type:'fc', num_neurons: def.num_neurons});
           }
 
-          if((def.type==='fc' || def.type==='conv') 
+          if((def.type==='fc' || def.type==='conv')
               && typeof(def.bias_pref) === 'undefined'){
             def.bias_pref = 0.0;
-            if(typeof def.activation !== 'undefined' && def.activation === 'relu') {
+            if(typeof def.activation === 'undefined') {
+              continue;
+            }
+            if(typeof def.drop_connect_keep_prop !== 'undefined') {
+              def.drop_connect = {};
+              def.drop_connect.keep_probability = def.drop_connect_keep_prob;
+              def.drop_connect.num_gaussian_samples = def.drop_connect_num_gaussian_samples;
+              def.drop_connect.activation = def.activation;
+            }
+            if(def.activation === 'relu') {
               def.bias_pref = 0.1; // relus like a bit of positive bias to get gradients early
               // otherwise it's technically possible that a relu unit will never turn on (by chance)
               // and will never get any gradient and never contribute any computation. Dead relu.
             }
           }
-          
+
           if(typeof def.tensor !== 'undefined') {
             // apply quadratic transform so that the upcoming multiply will include
             // quadratic terms, equivalent to doing a tensor product
@@ -86,23 +95,7 @@
           def.in_depth = prev.out_depth;
         }
 
-        switch(def.type) {
-          case 'fc': this.layers.push(new global.FullyConnLayer(def)); break;
-          case 'lrn': this.layers.push(new global.LocalResponseNormalizationLayer(def)); break;
-          case 'dropout': this.layers.push(new global.DropoutLayer(def)); break;
-          case 'input': this.layers.push(new global.InputLayer(def)); break;
-          case 'softmax': this.layers.push(new global.SoftmaxLayer(def)); break;
-          case 'regression': this.layers.push(new global.RegressionLayer(def)); break;
-          case 'conv': this.layers.push(new global.ConvLayer(def)); break;
-          case 'pool': this.layers.push(new global.PoolLayer(def)); break;
-          case 'relu': this.layers.push(new global.ReluLayer(def)); break;
-          case 'sigmoid': this.layers.push(new global.SigmoidLayer(def)); break;
-          case 'tanh': this.layers.push(new global.TanhLayer(def)); break;
-          case 'maxout': this.layers.push(new global.MaxoutLayer(def)); break;
-          case 'quadtransform': this.layers.push(new global.QuadTransformLayer(def)); break;
-          case 'svm': this.layers.push(new global.SVMLayer(def)); break;
-          default: console.log('ERROR: UNRECOGNIZED LAYER TYPE!');
-        }
+        this.layers.push(global.build_layer(def));
       }
     },
 
@@ -179,7 +172,27 @@
       }
     }
   }
-  
+
+  var build_layer = function(def) {
+    switch(def.type) {
+    case 'fc': return new global.FullyConnLayer(def);
+    case 'lrn': return new global.LocalResponseNormalizationLayer(def);
+    case 'dropout': return new global.DropoutLayer(def);
+    case 'input': return new global.InputLayer(def);
+    case 'softmax': return new global.SoftmaxLayer(def);
+    case 'regression': return new global.RegressionLayer(def);
+    case 'conv': return new global.ConvLayer(def);
+    case 'pool': return new global.PoolLayer(def);
+    case 'relu': return new global.ReluLayer(def);
+    case 'sigmoid': return new global.SigmoidLayer(def);
+    case 'tanh': return new global.TanhLayer(def);
+    case 'maxout': return new global.MaxoutLayer(def);
+    case 'quadtransform': return new global.QuadTransformLayer(def);
+    case 'svm': return new global.SVMLayer(def);
+    default: console.log('ERROR: UNRECOGNIZED LAYER TYPE!');
+    }
+  };
 
   global.Net = Net;
+  global.build_layer = build_layer;
 })(convnetjs);

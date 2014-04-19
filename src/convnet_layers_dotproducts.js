@@ -4,10 +4,45 @@
 
   // This file contains all layers that do dot products with input,
   // but usually in a different connectivity pattern and weight sharing
-  // schemes: 
-  // - FullyConn is fully connected dot products 
+  // schemes:
+  // - FullyConn is fully connected dot products
   // - ConvLayer does convolutions (so weight sharing spatially)
   // putting them together in one file because they are very similar
+
+  // Encapsulates DropConnect configuration, layers, etc.
+  var DropConnect = function(opt) {
+    var opt = opt || {};
+    this.keep_probability = opt.keep_probability;
+    this.num_gaussian_samples = opt.num_gaussian_samples;
+    this.activation_layer = global.build_layer({
+      // Unused, as we just cal forward()
+      in_sx: 1,
+      in_sy: 1,
+      in_depth: 1,
+      type: opt.activation
+    });
+  };
+
+  DropConnect.prototype = {
+    fromJSON: function(json) {
+      this.keep_probability = json.keep_probability;
+      this.num_gaussian_samples = json.num_gaussian_samples;
+      this.activation_layer = global.build_layer({
+        // Unused, as we just cal forward()
+        in_sx: 1,
+        in_sy: 1,
+        in_depth: 1,
+        type: json.activation
+      });
+    },
+    toJSON: function() {
+      var opt = {};
+      opt.keep_probability = this.keep_probability;
+      opt.num_gaussian_samples = this.num_gaussian_samples;
+      opt.activation_type = this.activation_layer.layer_type;
+    }
+  };
+
   var ConvLayer = function(opt) {
     var opt = opt || {};
 
@@ -141,6 +176,7 @@
         json.filters.push(this.filters[i].toJSON());
       }
       json.biases = this.biases.toJSON();
+      json.drop_connect = this.drop_connect.toJSON();
       return json;
     },
     fromJSON: function(json) {
@@ -173,61 +209,143 @@
     // ok fine we will allow 'filters' as the word as well
     this.out_depth = typeof opt.num_neurons !== 'undefined' ? opt.num_neurons : opt.filters;
 
-    // optional 
+
+    // optional
     this.l1_decay_mul = typeof opt.l1_decay_mul !== 'undefined' ? opt.l1_decay_mul : 0.0;
     this.l2_decay_mul = typeof opt.l2_decay_mul !== 'undefined' ? opt.l2_decay_mul : 1.0;
-
+    this.drop_connect = typeof opt.drop_connect !== 'undefined' ? DropConnect(opt.drop_connect) : null;
     // computed
     this.num_inputs = opt.in_sx * opt.in_sy * opt.in_depth;
     this.out_sx = 1;
     this.out_sy = 1;
     this.layer_type = 'fc';
-
     // initializations
     var bias = typeof opt.bias_pref !== 'undefined' ? opt.bias_pref : 0.0;
     this.filters = [];
     for(var i=0;i<this.out_depth ;i++) { this.filters.push(new Vol(1, 1, this.num_inputs)); }
     this.biases = new Vol(1, 1, this.out_depth, bias);
-  }
+  };
 
   FullyConnLayer.prototype = {
+    dropConnectEnabled: function() {
+      return this.drop_connect !== null;
+    },
+
+    initializeDropConnectMask: function() {
+      this.drop_connect_masks = [];
+      var keep_probability = this.dropConnectEnabled() ? this.drop_connect.keep_probability : 1.0;
+      for(var i = 0; i < this.filters.length; i++) {
+        this.drop_connect_masks[i] =
+          global.bernoulliMask(1, 1, this.num_inputs, keep_probability);
+      }
+    },
+
     forward: function(V, is_training) {
+      if (is_training) {
+        return this.forwardTrain(V);
+      } else {
+        return this.forwardPredict(V);
+      }
+    },
+
+    forwardTrain: function(V) {
       this.in_act = V;
       var A = new Vol(1, 1, this.out_depth, 0.0);
+      this.initializeDropConnectMask();
       var Vw = V.w;
       for(var i=0;i<this.out_depth;i++) {
         var a = 0.0;
         var wi = this.filters[i].w;
+        var weight_mask = this.drop_connect_masks[i].weight_mask.w;
         for(var d=0;d<this.num_inputs;d++) {
-          a += Vw[d] * wi[d]; // for efficiency use Vols directly for now
+          a += Vw[d] * wi[d] * weight_mask[d]; // for efficiency use Vols directly for now
         }
-        a += this.biases.w[i];
+        a += this.biases.w[i] * this.drop_connect_masks[i].bias_mask;
         A.w[i] = a;
       }
       this.out_act = A;
       return this.out_act;
     },
+
+    // Algorithm 2 in Regularization of Neural Networks using
+    // DropConnect - http://cs.nyu.edu/~wanli/dropc/dropc.pdf
+    averageGaussianActivation: function(Vw, wi) {
+      var mu = 0.0;
+      var sigma_squared = 0.0;
+      for(var d = 0; d < this.out_depth; d++) {
+        mu += Vw[d] * wi[d];
+        sigma_squared += (Vw[d] * Vw[d]) * (wi[d] * wi[d]);
+      }
+      var scaled_mu = this.drop_connect_prop * mu;
+      var scaled_sigma = Math.sqrt(this.drop_connect_prop * sigma_squared);
+      var sample_units = new Vol(1, 1, this.drop_connect.num_gaussian_samples, 0.0);
+      for (var d = 0; d < sample_units.w.length; d++) {
+        sample_units.w[d] = global.randn(scaled_mu, scaled_sigma);
+      }
+
+      var output_activations = this.drop_connect.activation_layer.forward(sample_units);
+      var sum_output = 0.0;
+      for (var d = 0; d < output_activations.w.length; d++) {
+        sum_output += output_activations.w[d];
+      }
+      return sum_output / output_activations.w.length;
+    },
+
+    forwardPredict: function(V) {
+      this.in_act = V;
+      var A = new Vol(1, 1, this.out_depth, 0.0);
+      var Vw = V.w;
+      for(var i=0;i<this.out_depth;i++) {
+        var wi = this.filters[i].w;
+        var a = 0.0;
+        if (this.dropConnectEnabled()) {
+          a = this.averageGaussianActivation(Vw, wi);
+        } else {
+          // Simply compute the \sum_j W_ij v_i
+          for(var d=0;d<this.num_inputs;d++) {
+            a += Vw[d] * wi[d]; // for efficiency use Vols directly for now
+          }
+          a += this.biases.w[i];
+        }
+        A.w[i] = a;
+      }
+
+      this.out_act = A;
+      return this.out_act;
+    },
+
     backward: function() {
       var V = this.in_act;
       V.dw = global.zeros(V.w.length); // zero out the gradient in input Vol
-      
+
       // compute gradient wrt weights and data
       for(var i=0;i<this.out_depth;i++) {
         var tfi = this.filters[i];
         var chain_grad = this.out_act.dw[i];
+        var weight_mask = this.drop_connect_masks[i].weight_mask.w;
         for(var d=0;d<this.num_inputs;d++) {
           V.dw[d] += tfi.w[d]*chain_grad; // grad wrt input data
-          tfi.dw[d] += V.w[d]*chain_grad; // grad wrt params
+          tfi.dw[d] += V.w[d]*chain_grad * weight_mask[d]; // grad wrt params
         }
-        this.biases.dw[i] += chain_grad;
+        this.biases.dw[i] += chain_grad * this.drop_connect_masks[i].bias_mask;
       }
     },
     getParamsAndGrads: function() {
       var response = [];
       for(var i=0;i<this.out_depth;i++) {
-        response.push({params: this.filters[i].w, grads: this.filters[i].dw, l1_decay_mul: this.l1_decay_mul, l2_decay_mul: this.l2_decay_mul});
+        response.push({
+          params: this.filters[i].w,
+          grads: this.filters[i].dw,
+          l1_decay_mul: this.l1_decay_mul,
+          l2_decay_mul: this.l2_decay_mul
+        });
       }
-      response.push({params: this.biases.w, grads: this.biases.dw, l1_decay_mul: 0.0, l2_decay_mul: 0.0});
+      response.push({
+        params: this.biases.w,
+        grads: this.biases.dw,
+        l1_decay_mul: 0.0,
+        l2_decay_mul: 0.0
+      });
       return response;
     },
     toJSON: function() {
@@ -239,6 +357,11 @@
       json.num_inputs = this.num_inputs;
       json.l1_decay_mul = this.l1_decay_mul;
       json.l2_decay_mul = this.l2_decay_mul;
+
+      // DropConnect
+      if (this.dropConnectEnabled()) {
+        json.drop_connect = this.drop_connect.toJSON();
+      }
       json.filters = [];
       for(var i=0;i<this.filters.length;i++) {
         json.filters.push(this.filters[i].toJSON());
@@ -254,6 +377,13 @@
       this.num_inputs = json.num_inputs;
       this.l1_decay_mul = typeof json.l1_decay_mul !== 'undefined' ? json.l1_decay_mul : 1.0;
       this.l2_decay_mul = typeof json.l2_decay_mul !== 'undefined' ? json.l2_decay_mul : 1.0;
+
+      // DropConnect
+      if (typeof json.drop_connect !== 'undefined') {
+        this.drop_connect = new DropConnect();
+        this.drop_connect.fromJSON(json.drop_connect);
+      }
+
       this.filters = [];
       for(var i=0;i<json.filters.length;i++) {
         var v = new Vol(0,0,0,0);

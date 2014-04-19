@@ -49,13 +49,26 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
       if(w[i] < minv) { minv = w[i]; mini = i; } 
     }
     return {maxi: maxi, maxv: maxv, mini: mini, minv: minv, dv:maxv-minv};
-  }
+  };
+
+
+  var bernoulliMask = function(x, y, d, probability) {
+    var weight_mask = new global.Vol(x, y, d, 0);
+    for(var i = 0; i < weight_mask.w.length; i++) {
+      weight_mask.w[i] = randf(0, 1) < probability;
+    }
+    return {
+      weight_mask: weight_mask,
+      bias_mask: randf(0, 1) < probability
+    };
+  };
 
   global.randf = randf;
   global.randi = randi;
   global.randn = randn;
   global.zeros = zeros;
   global.maxmin = maxmin;
+  global.bernoulliMask = bernoulliMask;
   
 })(convnetjs);
 (function(global) {
@@ -264,13 +277,47 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
 (function(global) {
   "use strict";
   var Vol = global.Vol; // convenience
-
+    
   // This file contains all layers that do dot products with input,
   // but usually in a different connectivity pattern and weight sharing
   // schemes: 
   // - FullyConn is fully connected dot products 
   // - ConvLayer does convolutions (so weight sharing spatially)
   // putting them together in one file because they are very similar
+  var DropConnect = function(opt) {
+    var opt = opt || {};
+    this.keep_probability = opt.keep_probability;
+    this.num_gaussian_samples = opt.num_gaussian_samples;
+    this.activation_layer = global.build_layer({
+      // Unused, as we just cal forward()
+      in_sx: 1,
+      in_sy: 1,
+      in_depth: 1,
+      type: opt.activation
+    });
+  };
+
+  DropConnect.prototype = {
+    fromJSON: function(json) {
+      this.keep_probability = json.keep_probability;
+      this.num_gaussian_samples = json.num_gaussian_samples;
+      this.activation_layer = global.build_layer({
+        // Unused, as we just cal forward()
+        in_sx: 1,
+        in_sy: 1,
+        in_depth: 1,
+        type: json.activation
+      });
+    },
+
+    toJSON: function() {
+      var opt = {};
+      opt.keep_probability = this.keep_probability;
+      opt.num_gaussian_samples = this.num_gaussian_samples;
+      opt.activation_type = this.activation_layer.layer_type;
+    }
+  };
+
   var ConvLayer = function(opt) {
     var opt = opt || {};
 
@@ -280,7 +327,7 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
     this.in_depth = opt.in_depth;
     this.in_sx = opt.in_sx;
     this.in_sy = opt.in_sy;
-    
+
     // optional
     this.sy = typeof opt.sy !== 'undefined' ? opt.sy : this.sx;
     this.stride = typeof opt.stride !== 'undefined' ? opt.stride : 1; // stride at which we apply filters to input volume
@@ -404,6 +451,7 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
         json.filters.push(this.filters[i].toJSON());
       }
       json.biases = this.biases.toJSON();
+      json.drop_connect = this.drop_connect.toJSON();
       return json;
     },
     fromJSON: function(json) {
@@ -428,7 +476,7 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
       this.biases.fromJSON(json.biases);
     }
   }
-
+      
   var FullyConnLayer = function(opt) {
     var opt = opt || {};
 
@@ -439,13 +487,12 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
     // optional 
     this.l1_decay_mul = typeof opt.l1_decay_mul !== 'undefined' ? opt.l1_decay_mul : 0.0;
     this.l2_decay_mul = typeof opt.l2_decay_mul !== 'undefined' ? opt.l2_decay_mul : 1.0;
-
+    this.drop_connect = typeof opt.drop_connect !== 'undefined' ? DropConnect(opt.drop_connect) : null;
     // computed
     this.num_inputs = opt.in_sx * opt.in_sy * opt.in_depth;
     this.out_sx = 1;
     this.out_sy = 1;
     this.layer_type = 'fc';
-
     // initializations
     var bias = typeof opt.bias_pref !== 'undefined' ? opt.bias_pref : 0.0;
     this.filters = [];
@@ -454,43 +501,126 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
   }
 
   FullyConnLayer.prototype = {
+    dropConnectEnabled: function() {
+      return this.drop_connect !== null;
+    },
+
+    initializeDropConnectMask: function() {
+      this.drop_connect_masks = [];
+      var keep_probability = this.dropConnectEnabled() ? this.drop_connect.keep_probability : 1.0;
+      for(var i = 0; i < this.filters.length; i++) {
+        this.drop_connect_masks[i] =
+          global.bernoulliMask(1, 1, this.num_inputs, keep_probability);
+      }
+    },
+
     forward: function(V, is_training) {
+      if (is_training) {
+        return this.forwardTrain(V);
+      } else {
+        return this.forwardPredict(V);
+      }
+    },
+
+    forwardTrain: function(V) {
       this.in_act = V;
       var A = new Vol(1, 1, this.out_depth, 0.0);
+      this.initializeDropConnectMask();
       var Vw = V.w;
       for(var i=0;i<this.out_depth;i++) {
         var a = 0.0;
         var wi = this.filters[i].w;
+  
+        var weight_mask = this.drop_connect_masks[i].weight_mask.w;
         for(var d=0;d<this.num_inputs;d++) {
-          a += Vw[d] * wi[d]; // for efficiency use Vols directly for now
+          a += Vw[d] * wi[d] * weight_mask[d]; // for efficiency use Vols directly for now
         }
-        a += this.biases.w[i];
+        a += this.biases.w[i] * this.drop_connect_masks[i].bias_mask;
         A.w[i] = a;
       }
       this.out_act = A;
       return this.out_act;
     },
+
+    // Algorithm 2 in Regularization of Neural Networks using
+    // DropConnect - http://cs.nyu.edu/~wanli/dropc/dropc.pdf
+    averageGaussianActivation: function(Vw, wi) {
+      var mu = 0.0;
+      var sigma_squared = 0.0;
+      for(var d = 0; d < this.out_depth; d++) {
+        mu += Vw[d] * wi[d];
+        sigma_squared += (Vw[d] * Vw[d]) * (wi[d] * wi[d]);
+      }
+      var scaled_mu = this.drop_connect_prop * mu;
+      var scaled_sigma = Math.sqrt(this.drop_connect_prop * sigma_squared);
+      var sample_units = new Vol(1, 1, this.drop_connect.num_gaussian_samples, 0.0);
+      for (var d = 0; d < sample_units.w.length; d++) {
+        sample_units.w[d] = global.randn(scaled_mu, scaled_sigma);
+      }
+
+      var output_activations = this.drop_connect.activation_layer.forward(sample_units);
+      var sum_output = 0.0;
+      for (var d = 0; d < output_activations.w.length; d++) {
+        sum_output += output_activations.w[d];
+      }
+      return sum_output / output_activations.w.length;
+    },
+
+    forwardPredict: function(V) {
+      this.in_act = V;
+      var A = new Vol(1, 1, this.out_depth, 0.0);
+      var Vw = V.w;
+      for(var i=0;i<this.out_depth;i++) {
+        var wi = this.filters[i].w;
+        var a = 0.0;
+        if (this.dropConnectEnabled()) {
+          a = this.averageGaussianActivation(Vw, wi);
+        } else {
+          // Simply compute the \sum_j W_ij v_i
+          for(var d=0;d<this.num_inputs;d++) {
+            a += Vw[d] * wi[d]; // for efficiency use Vols directly for now
+          }
+          a += this.biases.w[i];
+        }
+        A.w[i] = a;
+      }
+
+      this.out_act = A;
+      return this.out_act;
+    },
+
     backward: function() {
       var V = this.in_act;
       V.dw = global.zeros(V.w.length); // zero out the gradient in input Vol
-      
+
       // compute gradient wrt weights and data
       for(var i=0;i<this.out_depth;i++) {
         var tfi = this.filters[i];
         var chain_grad = this.out_act.dw[i];
+        var weight_mask = this.drop_connect_masks[i].weight_mask.w;
         for(var d=0;d<this.num_inputs;d++) {
           V.dw[d] += tfi.w[d]*chain_grad; // grad wrt input data
-          tfi.dw[d] += V.w[d]*chain_grad; // grad wrt params
+          tfi.dw[d] += V.w[d]*chain_grad * weight_mask[d]; // grad wrt params
         }
-        this.biases.dw[i] += chain_grad;
+        this.biases.dw[i] += chain_grad * this.drop_connect_masks[i].bias_mask;
       }
     },
     getParamsAndGrads: function() {
       var response = [];
       for(var i=0;i<this.out_depth;i++) {
-        response.push({params: this.filters[i].w, grads: this.filters[i].dw, l1_decay_mul: this.l1_decay_mul, l2_decay_mul: this.l2_decay_mul});
+        response.push({
+          params: this.filters[i].w,
+          grads: this.filters[i].dw,
+          l1_decay_mul: this.l1_decay_mul,
+          l2_decay_mul: this.l2_decay_mul
+        });
       }
-      response.push({params: this.biases.w, grads: this.biases.dw, l1_decay_mul: 0.0, l2_decay_mul: 0.0});
+      response.push({
+        params: this.biases.w,
+        grads: this.biases.dw,
+        l1_decay_mul: 0.0,
+        l2_decay_mul: 0.0
+      });
       return response;
     },
     toJSON: function() {
@@ -502,6 +632,11 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
       json.num_inputs = this.num_inputs;
       json.l1_decay_mul = this.l1_decay_mul;
       json.l2_decay_mul = this.l2_decay_mul;
+
+      // DropConnect
+      if (this.dropConnectEnabled()) {
+        json.drop_connect = this.drop_connect.toJSON();
+      }
       json.filters = [];
       for(var i=0;i<this.filters.length;i++) {
         json.filters.push(this.filters[i].toJSON());
@@ -517,6 +652,13 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
       this.num_inputs = json.num_inputs;
       this.l1_decay_mul = typeof json.l1_decay_mul !== 'undefined' ? json.l1_decay_mul : 1.0;
       this.l2_decay_mul = typeof json.l2_decay_mul !== 'undefined' ? json.l2_decay_mul : 1.0;
+
+      // DropConnect
+      if (typeof json.drop_connect !== 'undefined') {
+        this.drop_connect = new DropConnect();
+        this.drop_connect.fromJSON(json.drop_connect);
+      }
+
       this.filters = [];
       for(var i=0;i<json.filters.length;i++) {
         var v = new Vol(0,0,0,0);
@@ -530,7 +672,6 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
 
   global.ConvLayer = ConvLayer;
   global.FullyConnLayer = FullyConnLayer;
-  
 })(convnetjs);
 (function(global) {
   "use strict";
@@ -1409,93 +1550,6 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
   "use strict";
   var Vol = global.Vol; // convenience
 
-  // transforms x-> [x, x_i*x_j forall i,j]
-  // so the fully connected layer afters will essentially be doing tensor multiplies
-  var QuadTransformLayer = function(opt) {
-    var opt = opt || {};
-
-    // computed
-    this.out_sx = opt.in_sx;
-    this.out_sy = opt.in_sy;
-    // linear terms, and then quadratic terms, of which there are 1/2*n*(n+1),
-    // (offdiagonals and the diagonal total) and arithmetic series.
-    // Actually never mind, lets not be fancy here yet and just include
-    // terms x_ix_j and x_jx_i twice. Half as efficient but much less
-    // headache.
-    this.out_depth = opt.in_depth + opt.in_depth * opt.in_depth;
-    this.layer_type = 'quadtransform';
-
-  }
-  QuadTransformLayer.prototype = {
-    forward: function(V, is_training) {
-      this.in_act = V;
-      var N = this.out_depth;
-      var Ni = V.depth;
-      var V2 = new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0);
-      for(var x=0;x<V.sx;x++) {
-        for(var y=0;y<V.sy;y++) {
-          for(var i=0;i<N;i++) {
-            if(i<Ni) {
-              V2.set(x,y,i,V.get(x,y,i)); // copy these over (linear terms)
-            } else {
-              var i0 = Math.floor((i-Ni)/Ni);
-              var i1 = (i-Ni) - i0*Ni;
-              V2.set(x,y,i,V.get(x,y,i0) * V.get(x,y,i1)); // quadratic
-            }
-          }
-        }
-      }
-      this.out_act = V2;
-      return this.out_act; // dummy identity function for now
-    },
-    backward: function() {
-      var V = this.in_act;
-      V.dw = global.zeros(V.w.length); // zero out gradient wrt data
-      var V2 = this.out_act;
-      var N = this.out_depth;
-      var Ni = V.depth;
-      for(var x=0;x<V.sx;x++) {
-        for(var y=0;y<V.sy;y++) {
-          for(var i=0;i<N;i++) {
-            var chain_grad = V2.get_grad(x,y,i);
-            if(i<Ni) {
-              V.add_grad(x,y,i,chain_grad);
-            } else {
-              var i0 = Math.floor((i-Ni)/Ni);
-              var i1 = (i-Ni) - i0*Ni;
-              V.add_grad(x,y,i0,V.get(x,y,i1)*chain_grad);
-              V.add_grad(x,y,i1,V.get(x,y,i0)*chain_grad);
-            }
-          }
-        }
-      }
-    },
-    getParamsAndGrads: function() {
-      return [];
-    },
-    toJSON: function() {
-      var json = {};
-      json.out_depth = this.out_depth;
-      json.out_sx = this.out_sx;
-      json.out_sy = this.out_sy;
-      json.layer_type = this.layer_type;
-      return json;
-    },
-    fromJSON: function(json) {
-      this.out_depth = json.out_depth;
-      this.out_sx = json.out_sx;
-      this.out_sy = json.out_sy;
-      this.layer_type = json.layer_type; 
-    }
-  }
-  
-
-  global.QuadTransformLayer = QuadTransformLayer;
-})(convnetjs);
-(function(global) {
-  "use strict";
-  var Vol = global.Vol; // convenience
-  
   // Net manages a set of layers
   // For now constraints: Simple linear order of layers, first layer input last layer a cost layer
   var Net = function(options) {
@@ -1503,7 +1557,7 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
   }
 
   Net.prototype = {
-    
+
     // takes a list of layer definitions and creates the network layer objects
     makeLayers: function(defs) {
 
@@ -1516,7 +1570,7 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
         var new_defs = [];
         for(var i=0;i<defs.length;i++) {
           var def = defs[i];
-          
+
           if(def.type==='softmax' || def.type==='svm') {
             // add an fc layer here, there is no reason the user should
             // have to worry about this and we almost always want to
@@ -1529,16 +1583,25 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
             new_defs.push({type:'fc', num_neurons: def.num_neurons});
           }
 
-          if((def.type==='fc' || def.type==='conv') 
+          if((def.type==='fc' || def.type==='conv')
               && typeof(def.bias_pref) === 'undefined'){
             def.bias_pref = 0.0;
-            if(typeof def.activation !== 'undefined' && def.activation === 'relu') {
+            if(typeof def.activation === 'undefined') {
+              continue;
+            }
+            if(typeof def.drop_connect_keep_prop !== 'undefined') {
+              def.drop_connect = {};
+              def.drop_connect.keep_probability = def.drop_connect_keep_prob;
+              def.drop_connect.num_gaussian_samples = def.drop_connect_num_gaussian_samples;
+              def.drop_connect.activation = def.activation;
+            }
+            if(def.activation === 'relu') {
               def.bias_pref = 0.1; // relus like a bit of positive bias to get gradients early
               // otherwise it's technically possible that a relu unit will never turn on (by chance)
               // and will never get any gradient and never contribute any computation. Dead relu.
             }
           }
-          
+
           if(typeof def.tensor !== 'undefined') {
             // apply quadratic transform so that the upcoming multiply will include
             // quadratic terms, equivalent to doing a tensor product
@@ -1563,7 +1626,6 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
           if(typeof def.drop_prob !== 'undefined' && def.type !== 'dropout') {
             new_defs.push({type:'dropout', drop_prob: def.drop_prob});
           }
-
         }
         return new_defs;
       }
@@ -1580,23 +1642,7 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
           def.in_depth = prev.out_depth;
         }
 
-        switch(def.type) {
-          case 'fc': this.layers.push(new global.FullyConnLayer(def)); break;
-          case 'lrn': this.layers.push(new global.LocalResponseNormalizationLayer(def)); break;
-          case 'dropout': this.layers.push(new global.DropoutLayer(def)); break;
-          case 'input': this.layers.push(new global.InputLayer(def)); break;
-          case 'softmax': this.layers.push(new global.SoftmaxLayer(def)); break;
-          case 'regression': this.layers.push(new global.RegressionLayer(def)); break;
-          case 'conv': this.layers.push(new global.ConvLayer(def)); break;
-          case 'pool': this.layers.push(new global.PoolLayer(def)); break;
-          case 'relu': this.layers.push(new global.ReluLayer(def)); break;
-          case 'sigmoid': this.layers.push(new global.SigmoidLayer(def)); break;
-          case 'tanh': this.layers.push(new global.TanhLayer(def)); break;
-          case 'maxout': this.layers.push(new global.MaxoutLayer(def)); break;
-          case 'quadtransform': this.layers.push(new global.QuadTransformLayer(def)); break;
-          case 'svm': this.layers.push(new global.SVMLayer(def)); break;
-          default: console.log('ERROR: UNRECOGNIZED LAYER TYPE!');
-        }
+        this.layers.push(global.build_layer(def));
       }
     },
 
@@ -1673,9 +1719,29 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
       }
     }
   }
-  
+
+  var build_layer = function(def) {
+    switch(def.type) {
+    case 'fc': return new global.FullyConnLayer(def);
+    case 'lrn': return new global.LocalResponseNormalizationLayer(def);
+    case 'dropout': return new global.DropoutLayer(def);
+    case 'input': return new global.InputLayer(def);
+    case 'softmax': return new global.SoftmaxLayer(def);
+    case 'regression': return new global.RegressionLayer(def);
+    case 'conv': return new global.ConvLayer(def);
+    case 'pool': return new global.PoolLayer(def);
+    case 'relu': return new global.ReluLayer(def);
+    case 'sigmoid': return new global.SigmoidLayer(def);
+    case 'tanh': return new global.TanhLayer(def);
+    case 'maxout': return new global.MaxoutLayer(def);
+    case 'quadtransform': return new global.QuadTransformLayer(def);
+    case 'svm': return new global.SVMLayer(def);
+    default: console.log('ERROR: UNRECOGNIZED LAYER TYPE!');
+    }
+  };
 
   global.Net = Net;
+  global.build_layer = build_layer;
 })(convnetjs);
 (function(global) {
   "use strict";
