@@ -12,10 +12,15 @@ For much more information, see the main page at [convnetjs.com](http://convnetjs
 - [1D regression](http://cs.stanford.edu/~karpathy/convnetjs/demo/regression.html)
 - [Denoising Autoencoder](http://cs.stanford.edu/~karpathy/convnetjs/demo/denoising_autoencoder.html)
 - [Image Painting](http://cs.stanford.edu/~karpathy/convnetjs/demo/image_regression.html)
+- [Comparison of Learning Methods](http://cs.stanford.edu/people/karpathy/convnetjs/demo/trainers.html)
+- [MagicNet demo](http://cs.stanford.edu/people/karpathy/convnetjs/demo/automatic.html)
 
 ## Example code
-A reasonably comprehensive [Getting Started](http://cs.stanford.edu/people/karpathy/convnetjs/started.html) tutorial is also available on main page. But here we go:
+A reasonably comprehensive [Getting Started](http://cs.stanford.edu/people/karpathy/convnetjs/started.html) tutorial is also available on main page. 
 
+Also have a look at even more comprehensive [Docs](http://cs.stanford.edu/people/karpathy/convnetjs/docs.html).
+
+But here we go:
 Import convnet.js into your document: `<script src="build/convnet.js"></script>`
 
 ### Creating a net from layer definitions
@@ -127,6 +132,12 @@ Every layer takes a 3D volume (dimensions of WIDTH x HEIGHT x DEPTH) and transfo
 If you're not dealing with images, the only layer that is of interest is the Fully Connected Layer, which you probably want to stack 1/2/3 times on top of your input. (Make sure you have non-linearities in between too). You also may consider using a Dropout layer in places where there are a lot of parameters to control overfitting (overfitting = your validation accuracy is much lower than the training accuracy).
 
 If you're dealing with images, your networks should look similar to what you see in the demos.
+
+## Automatic Learning with MagicNet
+The MagicNet class is great if you're a beginner with Neural Networks and just want to train something completely automatically that works well on your data. The MagicNet class takes a training set (as a list of `convnetjs.Vol`s and training labels) and handles all aspects of the training completely automatically. Internally, it will generate multiple neural networks in turns, try out every one of them on your dataset using n-fold cross-validation, and finally it will create a powerful ensemble of the best neural networks it found to create the final predictor. The MagicNet class strives to be the ultimate black-box predictor: you don't have to worry about any learning rates, weight decays, non-linearities or anything.
+
+Right now, only classification is supported with MagicNet. Regression is planned for later.
+See the [MagicNet demo](http://cs.stanford.edu/people/karpathy/convnetjs/demo/automatic.html) for more details and example code. See the ConvNetJS [documentation](http://cs.stanford.edu/people/karpathy/convnetjs/docs.html) for full details of the class.
 
 ## Reinforcement Learning
 The library also has a Reinforcement Learning demo that follows a Deep Q - Learning NIPS2013 Workshop Paper [Playing Atari with Deep Reinforcement Learning](http://arxiv.org/abs/1312.5602). In short, a Neural Network is used to model the value function. The API is very simple to use. For example, lets train an agent that observes 3-dimensional states and is asked to do one of two actions. Lets reward the agent only for action 0 for sake of very simple example:

@@ -16,6 +16,7 @@
         <file name="convnet_layers_transform.js" />
         <file name="convnet_net.js" />
         <file name="convnet_trainers.js" />
+        <file name="convnet_magicnet.js" />
         <file name="convnet_export.js" />
       </filelist>
     </concat>
