@@ -9,23 +9,39 @@
   // the data. c is optionally a value to initialize the volume
   // with. If c is missing, fills the Vol with random numbers.
   var Vol = function(sx, sy, depth, c) {
-    this.sx = sx;
-    this.sy = sy;
-    this.depth = depth;
-    var n = sx*sy*depth;
-    this.w = global.zeros(n);
-    this.dw = global.zeros(n);
-    if(typeof c === 'undefined') {
-      // weight normalization is done to equalize the output
-      // variance of every neuron, otherwise neurons with a lot
-      // of incoming connections have outputs of larger variance
-      var scale = Math.sqrt(1.0/(sx*sy*depth));
-      for(var i=0;i<n;i++) { 
-        this.w[i] = global.randn(0.0, scale);
+    // this is how you check if a variable is an array. Oh, Javascript :)
+    if(Object.prototype.toString.call(sx) === '[object Array]') {
+      // we were given a list in sx, assume 1D volume and fill it up
+      this.sx = 1;
+      this.sy = 1;
+      this.depth = sx.length;
+      // we have to do the following copy because we want to use
+      // fast typed arrays, not an ordinary javascript array
+      this.w = global.zeros(this.depth);
+      this.dw = global.zeros(this.depth);
+      for(var i=0;i<this.depth;i++) {
+        this.w[i] = sx[i];
       }
     } else {
-      for(var i=0;i<n;i++) { 
-        this.w[i] = c;
+      // we were given dimensions of the vol
+      this.sx = sx;
+      this.sy = sy;
+      this.depth = depth;
+      var n = sx*sy*depth;
+      this.w = global.zeros(n);
+      this.dw = global.zeros(n);
+      if(typeof c === 'undefined') {
+        // weight normalization is done to equalize the output
+        // variance of every neuron, otherwise neurons with a lot
+        // of incoming connections have outputs of larger variance
+        var scale = Math.sqrt(1.0/(sx*sy*depth));
+        for(var i=0;i<n;i++) { 
+          this.w[i] = global.randn(0.0, scale);
+        }
+      } else {
+        for(var i=0;i<n;i++) { 
+          this.w[i] = c;
+        }
       }
     }
   }

@@ -215,8 +215,7 @@
           }
         }
       }
-      var x = new convnetjs.Vol(1,1,xarr.length,0.0);
-      x.w = xarr;
+      var x = new convnetjs.Vol(xarr);
       
       // process the label (last column)
       if(colstats[labelix].numeric) {
