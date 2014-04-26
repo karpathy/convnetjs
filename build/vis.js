@@ -85,7 +85,10 @@ var cnnvis = (function(exports){
   var MultiGraph = function(legend, options) {
     var options = options || {};
     this.step_horizon = options.step_horizon || 1000;
-    
+
+    if(typeof options.maxy !== 'undefined') this.maxy_forced = options.maxy;
+    if(typeof options.miny !== 'undefined') this.miny_forced = options.miny;
+
     this.pts = [];
     
     this.maxy = -9999;
@@ -108,6 +111,9 @@ var cnnvis = (function(exports){
         if(y>this.maxy*0.99) this.maxy = y*1.05;
         if(y<this.miny*1.01) this.miny = y*0.95;
       }
+
+      if(typeof this.maxy_forced !== 'undefined') this.maxy = this.maxy_forced;
+      if(typeof this.miny_forced !== 'undefined') this.miny = this.miny_forced;
 
       this.pts.push({step: step, time: time, yl: yl});
       if(step > this.step_horizon) this.step_horizon *= 2;
