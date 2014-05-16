@@ -1679,6 +1679,13 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
       }
       return act;
     },
+
+    getCostLoss: function(V, y) {
+      this.forward(V, false);
+      var N = this.layers.length;
+      var loss = this.layers[N-1].backward(y);
+      return loss;
+    },
     
     // backprop: compute gradients wrt all parameters
     backward: function(y) {
