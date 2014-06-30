@@ -1,0 +1,31 @@
+{
+  "name": "convnetjs",
+  "version": "0.0.0",
+  "authors": [
+    "Andrej Karpathy <andrej.karpathy@gmail.com>"
+  ],
+  "description": "Deep Learning in Javascript. Train Convolutional Neural Networks (or ordinary ones) in your browser.",
+  "main": "build/convnet.js",
+  "moduleType": [
+    "amd",
+    "es6",
+    "globals",
+    "node",
+    "yui"
+  ],
+  "keywords": [
+    "machine",
+    "learning",
+    "AI",
+    "convnet"
+  ],
+  "license": "MIT",
+  "homepage": "http://cs.stanford.edu/people/karpathy/convnetjs/",
+  "ignore": [
+    "**/.*",
+    "node_modules",
+    "bower_components",
+    "test",
+    "tests"
+  ]
+}
