@@ -15,7 +15,7 @@
   padding: 10px;
 }
 .layer_act {
-  width: 500px;
+  width: 450px;
   float: right;
 }
 .ltconv {
@@ -304,6 +304,18 @@ var visualize_activations = function(net, elt) {
     if(L.layer_type==='softmax' || L.layer_type==='fc') scale = 10; // for softmax
     draw_activations(activations_div, L.out_act, scale);
 
+    // visualize data gradients
+    if(L.layer_type !== 'softmax') {
+      var grad_div = document.createElement('div');
+      grad_div.appendChild(document.createTextNode('Data Gradients:'));
+      grad_div.appendChild(document.createElement('br'));
+      grad_div.className = 'layer_grad';
+      var scale = 2;
+      if(L.layer_type==='softmax' || L.layer_type==='fc') scale = 10; // for softmax
+      draw_activations(grad_div, L.out_act, scale, true);
+      activations_div.appendChild(grad_div);
+    }
+
     // visualize filters if they are of reasonable size
     if(L.layer_type === 'conv') {
       var filters_div = document.createElement('div');
@@ -312,14 +324,18 @@ var visualize_activations = function(net, elt) {
         filters_div.appendChild(document.createTextNode('Weights:'));
         filters_div.appendChild(document.createElement('br'));
         for(var j=0;j<L.filters.length;j++) {
+          filters_div.appendChild(document.createTextNode('('));
           draw_activations(filters_div, L.filters[j], 2);
+          filters_div.appendChild(document.createTextNode(')'));
         }
         // gradients
         filters_div.appendChild(document.createElement('br'));
-        filters_div.appendChild(document.createTextNode('Gradients:'));
+        filters_div.appendChild(document.createTextNode('Weight Gradients:'));
         filters_div.appendChild(document.createElement('br'));
         for(var j=0;j<L.filters.length;j++) {
+          filters_div.appendChild(document.createTextNode('('));
           draw_activations(filters_div, L.filters[j], 2, true);
+          filters_div.appendChild(document.createTextNode(')'));
         }
       } else {
         filters_div.appendChild(document.createTextNode('Weights hidden, too small'));
@@ -350,6 +366,11 @@ var visualize_activations = function(net, elt) {
     // find min, max activations and display them
     var mma = maxmin(L.out_act.w);
     var t = 'max activation: ' + f2t(mma.maxv) + ', min: ' + f2t(mma.minv);
+    layer_div.appendChild(document.createTextNode(t));
+    layer_div.appendChild(document.createElement('br'));
+
+    var mma = maxmin(L.out_act.dw);
+    var t = 'max gradient: ' + f2t(mma.maxv) + ', min: ' + f2t(mma.minv);
     layer_div.appendChild(document.createTextNode(t));
     layer_div.appendChild(document.createElement('br'));
 
@@ -588,7 +609,7 @@ var change_net = function() {
   <h1>Training Stats</h1>
   <div class="divsec" style="270px;">
     <div class="secpart">
-      Current image: <img id="input_image" src=""></img><input id="buttontp" type="submit" value="pause" onclick="toggle_pause();"/>
+      <input id="buttontp" type="submit" value="pause" onclick="toggle_pause();" style="width: 100px; height:30px; background-color: #FCC;"/>
       <div id="trainstats"></div>
 
       <div id="controls">
