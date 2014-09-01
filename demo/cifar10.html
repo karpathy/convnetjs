@@ -103,6 +103,23 @@ body {
 
 <script>
 
+var layer_defs, net, trainer;
+var t = "layer_defs = [];\n\
+layer_defs.push({type:'input', out_sx:32, out_sy:32, out_depth:3});\n\
+layer_defs.push({type:'conv', sx:5, filters:16, stride:1, pad:2, activation:'relu'});\n\
+layer_defs.push({type:'pool', sx:2, stride:2});\n\
+layer_defs.push({type:'conv', sx:5, filters:20, stride:1, pad:2, activation:'relu'});\n\
+layer_defs.push({type:'pool', sx:2, stride:2});\n\
+layer_defs.push({type:'conv', sx:5, filters:20, stride:1, pad:2, activation:'relu'});\n\
+layer_defs.push({type:'pool', sx:2, stride:2});\n\
+layer_defs.push({type:'softmax', num_classes:10});\n\
+\n\
+net = new convnetjs.Net();\n\
+net.makeLayers(layer_defs);\n\
+\n\
+trainer = new convnetjs.SGDTrainer(net, {method:'adadelta', batch_size:4, l2_decay:0.0001});\n\
+";
+
 // ------------------------
 // BEGIN MNIST SPECIFIC STUFF
 // ------------------------
@@ -197,23 +214,9 @@ var loaded_train_batches = [];
 // int main
 $(window).load(function() {
 
-  var layer_defs = [];
-  layer_defs.push({type:'input', out_sx:32, out_sy:32, out_depth:3});
-  layer_defs.push({type:'conv', sx:5, filters:16, stride:1, pad:2, activation:'relu'});
-  layer_defs.push({type:'pool', sx:2, stride:2});
-  layer_defs.push({type:'conv', sx:5, filters:48, stride:1, pad:2, activation:'relu'});
-  layer_defs.push({type:'pool', sx:2, stride:2});
-  layer_defs.push({type:'fc', filters:400, activation:'relu', drop_prob: 0.5});
-  layer_defs.push({type:'softmax', num_classes:10});
-
-  document.getElementById('newnet').value = JSON.stringify(layer_defs, undefined, 1);
-
-  net = new convnetjs.Net();
-  net.makeLayers(layer_defs);
-
-  trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.01, momentum:0.9, batch_size:32, l2_decay:0.001});
-  //trainer = new convnetjs.SGDTrainer(net, {method:'adadelta', momentum:0.0, batch_size:32, l2_decay:0.001});
-
+  $("#newnet").val(t);
+  eval($("#newnet").val());
+  
   update_net_param_display();
 
   for(var k=0;k<loaded.length;k++) { loaded[k] = false; }
@@ -398,6 +401,18 @@ var visualize_activations = function(net, elt) {
       draw_activations(activations_div, L.out_act, scale);
     } 
 
+    // visualize data gradients
+    if(L.layer_type !== 'softmax' && L.layer_type !== 'input' ) {
+      var grad_div = document.createElement('div');
+      grad_div.appendChild(document.createTextNode('Activation Gradients:'));
+      grad_div.appendChild(document.createElement('br'));
+      grad_div.className = 'layer_grad';
+      var scale = 2;
+      if(L.layer_type==='softmax' || L.layer_type==='fc') scale = 10; // for softmax
+      draw_activations(grad_div, L.out_act, scale, true);
+      activations_div.appendChild(grad_div);
+    }
+
     // visualize filters if they are of reasonable size
     if(L.layer_type === 'conv') {
       var filters_div = document.createElement('div');
@@ -407,16 +422,25 @@ var visualize_activations = function(net, elt) {
         filters_div.appendChild(document.createElement('br'));
         for(var j=0;j<L.filters.length;j++) {
           // HACK to draw in color for first layer conv filters
-          if(i===1) draw_activations_COLOR(filters_div, L.filters[j], 2);
-          else draw_activations(filters_div, L.filters[j], 2);
+          if(i===1) {
+            draw_activations_COLOR(filters_div, L.filters[j], 2);
+          } else {
+            filters_div.appendChild(document.createTextNode('('));
+            draw_activations(filters_div, L.filters[j], 2);
+            filters_div.appendChild(document.createTextNode(')'));
+          }
         }
         // gradients
         filters_div.appendChild(document.createElement('br'));
-        filters_div.appendChild(document.createTextNode('Gradients:'));
+        filters_div.appendChild(document.createTextNode('Weight Gradients:'));
         filters_div.appendChild(document.createElement('br'));
         for(var j=0;j<L.filters.length;j++) {
-          if(i===1) draw_activations_COLOR(filters_div, L.filters[j], 2, true);
-          else draw_activations(filters_div, L.filters[j], 2, true);
+          if(i===1) { draw_activations_COLOR(filters_div, L.filters[j], 2, true); }
+          else {
+            filters_div.appendChild(document.createTextNode('('));
+            draw_activations(filters_div, L.filters[j], 2, true);
+            filters_div.appendChild(document.createTextNode(')'));
+          }
         }
       } else {
         filters_div.appendChild(document.createTextNode('Weights hidden, too small'));
@@ -447,6 +471,11 @@ var visualize_activations = function(net, elt) {
     // find min, max activations and display them
     var mma = maxmin(L.out_act.w);
     var t = 'max activation: ' + f2t(mma.maxv) + ', min: ' + f2t(mma.minv);
+    layer_div.appendChild(document.createTextNode(t));
+    layer_div.appendChild(document.createElement('br'));
+
+    var mma = maxmin(L.out_act.dw);
+    var t = 'max gradient: ' + f2t(mma.maxv) + ', min: ' + f2t(mma.minv);
     layer_div.appendChild(document.createTextNode(t));
     layer_div.appendChild(document.createElement('br'));
 
@@ -659,7 +688,7 @@ var clear_graph = function() {
 }
 var reset_all = function() {
   // reinit trainer
-  trainer = new convnetjs.SGDTrainer(net, {learning_rate:trainer.learning_rate, momentum:trainer.momentum, batch_size:trainer.batch_size, decay:trainer.l2_decay});
+  trainer = new convnetjs.SGDTrainer(net, {learning_rate:trainer.learning_rate, momentum:trainer.momentum, batch_size:trainer.batch_size, l2_decay:trainer.l2_decay});
   update_net_param_display();
 
   // reinit windows that keep track of val/train accuracies
@@ -677,13 +706,22 @@ var load_from_json = function() {
   net = new convnetjs.Net();
   net.fromJSON(json);
   reset_all();
-
 }
+
+var load_pretrained = function() {
+  $.getJSON("cifar10_snapshot.json", function(json){
+    net = new convnetjs.Net();
+    net.fromJSON(json);
+    trainer.learning_rate = 0.0001;
+    trainer.momentum = 0.9;
+    trainer.batch_size = 2;
+    trainer.l2_decay = 0.00001;
+    reset_all();
+  });
+}
+
 var change_net = function() {
-  var layer_defs_txt = document.getElementById('newnet').value;
-  var layer_defs = JSON.parse(layer_defs_txt);
-  net = new convnetjs.Net();
-  net.makeLayers(layer_defs);
+  eval($("#newnet").val());
   reset_all();
 }
 
@@ -698,12 +736,14 @@ var change_net = function() {
     This demo trains a Convolutional Neural Network on the <a href="http://www.cs.toronto.edu/~kriz/cifar.html">CIFAR-10 dataset</a> in your browser, with nothing but Javascript. The state of the art on this dataset is about 90% accuracy and human performance is at about 94% (not perfect as the dataset can be a bit ambiguous). I used <a href="cifar10_parse.zip">this python script</a> to parse the <a href="http://www.cs.toronto.edu/~kriz/cifar.html">original files</a> (python version) into batches of images that can be easily loaded into page DOM with img tags.
   </p>
   <p>This dataset is more difficult and it takes longer to train a network. Data augmentation includes random flipping and random image shifts by up to 2px horizontally and verically.</p>
-  <p>Friendly reminder: You want to gradually decrease learning rate as the training happens, especially when you see that the total cost curve is starting to be very wiggly, or if the validation stops increasing.</p>
+  <p>
+    By default, in this demo we're using Adadelta which is one of per-parameter adaptive step size methods, so we don't have to worry about changing learning rates or momentum over time. However, I still included the text fields for changing these if you'd like to play around with SGD+Momentum trainer.
+  </p>
   <p>Report questions/bugs/suggestions to <a href="https://twitter.com/karpathy">@karpathy</a>.</p>
   <h1>Training Stats</h1>
   <div class="divsec" style="270px;">
     <div class="secpart">
-      Current image: <img id="input_image" src=""></img><input id="buttontp" type="submit" value="pause" onclick="toggle_pause();"/>
+      <input id="buttontp" type="submit" value="pause" onclick="toggle_pause();"/>
       <div id="trainstats"></div>
 
       <div id="controls">
@@ -726,6 +766,10 @@ var change_net = function() {
       <input id="buttondj" type="submit" value="save network snapshot as JSON" onclick="dump_json();"/><br />
       <input id="buttonlfj" type="submit" value="init network from JSON snapshot" onclick="load_from_json();"/><br />
       <textarea id="dumpjson"></textarea>
+      <br>
+
+      <input id="buttonpre" type="submit" value="load a pretrained network (achieves ~80% accuracy)" onclick="load_pretrained();" style="height: 30px; width: 400px;"/><br />
+
     </div>
     <div class="secpart">
       
@@ -736,16 +780,14 @@ var change_net = function() {
         <br />
         <input id="buttoncg" type="submit" value="clear graph" onclick="clear_graph();"/>
       </div>
-
-      <div>
-
-      <br />
-      <textarea id="newnet" style="width:100%; height:200px;"></textarea><br />
-      <input id="buttonnn" type="submit" value="change network" onclick="change_net();"/>
-      </div>
-
     </div>
     <div style="clear:both;"></div>
+  </div>
+
+  <h1>Instantiate a Network and Trainer</h1>
+  <div>
+    <textarea id="newnet" style="width:100%; height:200px;"></textarea><br />
+    <input id="buttonnn" type="submit" value="change network" onclick="change_net();" style="width:200px;height:30px;"/>
   </div>
 
   <div class="divsec">
