@@ -41,29 +41,33 @@
   }
   ConvLayer.prototype = {
     forward: function(V, is_training) {
-      this.in_act = V;
+      // optimized code by @mdda that achieves 2x speedup over previous version
 
-      var A = new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0);
+      this.in_act = V;
+      var A = new Vol(this.out_sx |0, this.out_sy |0, this.out_depth |0, 0.0);
+      
+      var V_sx = V.sx |0;
+      var V_sy = V.sy |0;
+      var xy_stride = this.stride |0;
+
       for(var d=0;d<this.out_depth;d++) {
         var f = this.filters[d];
-        var x = -this.pad;
-        var y = -this.pad;
-        for(var ax=0; ax<this.out_sx; x+=this.stride,ax++) {
-          y = -this.pad;
-          for(var ay=0; ay<this.out_sy; y+=this.stride,ay++) {
+        var x = -this.pad |0;
+        var y = -this.pad |0;
+        for(var ay=0; ay<this.out_sy; y+=xy_stride,ay++) {  // xy_stride
+          x = -this.pad |0;
+          for(var ax=0; ax<this.out_sx; x+=xy_stride,ax++) {  // xy_stride
 
             // convolve centered at this particular location
-            // could be bit more efficient, going for correctness first
             var a = 0.0;
-            for(var fx=0;fx<f.sx;fx++) {
-              for(var fy=0;fy<f.sy;fy++) {
-                for(var fd=0;fd<f.depth;fd++) {
-                  var oy = y+fy; // coordinates in the original input array coordinates
-                  var ox = x+fx;
-                  if(oy>=0 && oy<V.sy && ox>=0 && ox<V.sx) {
-                    //a += f.get(fx, fy, fd) * V.get(ox, oy, fd);
-                    // avoid function call overhead for efficiency, compromise modularity :(
-                    a += f.w[((f.sx * fy)+fx)*f.depth+fd] * V.w[((V.sx * oy)+ox)*V.depth+fd];
+            for(var fy=0;fy<f.sy;fy++) {
+              var oy = y+fy; // coordinates in the original input array coordinates
+              for(var fx=0;fx<f.sx;fx++) {
+                var ox = x+fx;
+                if(oy>=0 && oy<V_sy && ox>=0 && ox<V_sx) {
+                  for(var fd=0;fd<f.depth;fd++) {
+                    // avoid function call overhead (x2) for efficiency, compromise modularity :(
+                    a += f.w[((f.sx * fy)+fx)*f.depth+fd] * V.w[((V_sx * oy)+ox)*V.depth+fd];
                   }
                 }
               }
@@ -76,33 +80,33 @@
       this.out_act = A;
       return this.out_act;
     },
-    backward: function() { 
+    backward: function() {
 
-      // compute gradient wrt weights, biases and input data
       var V = this.in_act;
       V.dw = global.zeros(V.w.length); // zero out gradient wrt bottom data, we're about to fill it
+
+      var V_sx = V.sx |0;
+      var V_sy = V.sy |0;
+      var xy_stride = this.stride |0;
+
       for(var d=0;d<this.out_depth;d++) {
         var f = this.filters[d];
-        var x = -this.pad;
-        var y = -this.pad;
-        for(var ax=0; ax<this.out_sx; x+=this.stride,ax++) {
-          y = -this.pad;
-          for(var ay=0; ay<this.out_sy; y+=this.stride,ay++) {
-            // convolve and add up the gradients. 
-            // could be more efficient, going for correctness first
-            var chain_grad = this.out_act.get_grad(ax,ay,d); // gradient from above, from chain rule
-            for(var fx=0;fx<f.sx;fx++) {
-              for(var fy=0;fy<f.sy;fy++) {
-                for(var fd=0;fd<f.depth;fd++) {
-                  var oy = y+fy;
-                  var ox = x+fx;
-                  if(oy>=0 && oy<V.sy && ox>=0 && ox<V.sx) {
-                    // forward prop calculated: a += f.get(fx, fy, fd) * V.get(ox, oy, fd);
-                    //f.add_grad(fx, fy, fd, V.get(ox, oy, fd) * chain_grad);
-                    //V.add_grad(ox, oy, fd, f.get(fx, fy, fd) * chain_grad);
+        var x = -this.pad |0;
+        var y = -this.pad |0;
+        for(var ay=0; ay<this.out_sy; y+=xy_stride,ay++) {  // xy_stride
+          x = -this.pad |0;
+          for(var ax=0; ax<this.out_sx; x+=xy_stride,ax++) {  // xy_stride
 
-                    // avoid function call overhead and use Vols directly for efficiency
-                    var ix1 = ((V.sx * oy)+ox)*V.depth+fd;
+            // convolve centered at this particular location
+            var chain_grad = this.out_act.get_grad(ax,ay,d); // gradient from above, from chain rule
+            for(var fy=0;fy<f.sy;fy++) {
+              var oy = y+fy; // coordinates in the original input array coordinates
+              for(var fx=0;fx<f.sx;fx++) {
+                var ox = x+fx;
+                if(oy>=0 && oy<V_sy && ox>=0 && ox<V_sx) {
+                  for(var fd=0;fd<f.depth;fd++) {
+                    // avoid function call overhead (x2) for efficiency, compromise modularity :(
+                    var ix1 = ((V_sx * oy)+ox)*V.depth+fd;
                     var ix2 = ((f.sx * fy)+fx)*f.depth+fd;
                     f.dw[ix2] += V.w[ix1]*chain_grad;
                     V.dw[ix1] += f.w[ix2]*chain_grad;
