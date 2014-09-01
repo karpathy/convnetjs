@@ -16,12 +16,11 @@ For much more information, see the main page at [convnetjs.com](http://convnetjs
 - [MagicNet demo](http://cs.stanford.edu/people/karpathy/convnetjs/demo/automatic.html)
 
 ## Example code
-A reasonably comprehensive [Getting Started](http://cs.stanford.edu/people/karpathy/convnetjs/started.html) tutorial is also available on main page. 
+A [Getting Started](http://cs.stanford.edu/people/karpathy/convnetjs/started.html) tutorial is available on main page. 
 
 Also have a look at even more comprehensive [Docs](http://cs.stanford.edu/people/karpathy/convnetjs/docs.html).
 
-But here we go:
-Import convnet.js into your document: `<script src="build/convnet.js"></script>`
+To get started, first download the most recent [library release](https://github.com/karpathy/convnetjs/releases), which contains the compiled library inside `build/` directory. To use the library, import convnet.js into your document: `<script src="build/convnet.js"></script>`. If you using convnetjs as just a library and not messing with it in any way, you may also consider using `convnet-min.js` instead, which is much smaller in size and has equivalent functionality.
 
 ### Creating a net from layer definitions
 We first have to create a network. If you have images, here's an example network:
@@ -82,15 +81,20 @@ In example above we'd be regressing to a single output that you must specify in 
     trainer.train(x, [0.5, 1.2, -0.7]);
 
 ## Train your own models
-To run these locally it is recommended that you use Nodejs or you may run into cross-origin security issues and not being able to load images. Chrome will have this problem. Firefox will work fine but I found Chrome to run much faster and more consistently.
+To run these locally it is recommended that you use Nodejs/Python to run a local web server or you may run into cross-origin security issues and not being able to load images or JSON files. Chrome will have this problem. Firefox will work fine but I found Chrome to run much faster and more consistently.
 
-To setup a nodejs server and start training:
+To start a nodejs server:
 
 1. install nodejs: `sudo apt-get install nodejs`
 2. `cd` into convnetjs directory
 3. install the connect library for nodejs to serve static pages `npm install connect`
 4. `node nodejs_server.js`
-5. Access the demos. http://localhost:8080/demo/classify2d.html will just work out of the box, but mnist.html and cifar10.html will require that you download the datasets and parse them into images. (You can also use the ones on my webserver if you're clever enough to see how to change the paths but naturally I'd prefer if you didn't use too much of my bandwidth). The python scripts I used to parse the datasets are linked to from the demo pages and require numpy and scipy.
+
+You can also choose to instead use a Python server:
+
+1. `python -m SimpleHTTPServer`
+
+Then you're set to access the demos. Demos such as http://localhost:8080/demo/classify2d.html will just work out of the box, but mnist.html and cifar10.html will require that you download the datasets and parse them into images. The python scripts I used to parse the datasets are linked to from the demo pages and require numpy and scipy.
 
 If you'd like to use your own images, also don't miss the utility function `convnetjs.img_to_vol(document.getElementById('input_image'))` which takes an image element in the DOM as input and returns a convnetjs.Vol() ready to be consumed by ConvNetJS. Instead of loading images individually, you can also batch them up like I do for MNIST/CIFAR, with every image as a row in a large image. For example, one MNIST batch is a 10,000x768 image that I load once and then I pluck out a row at a time and reshape it into 28x28 image to use in a net.
 
@@ -106,25 +110,25 @@ This will concatenate all files in /src, compile to build/convnet.js and minify 
 ## Layers
 Every layer takes a 3D volume (dimensions of WIDTH x HEIGHT x DEPTH) and transforms it into a different 3D volume using some set of internal parameters. Some layers (such as pooling, dropout) have no parameters. Currently available layers are:
 
-###Helpful with Images:
+### Helpful with Images:
 
 - `Convolutional Layer`: convolves input volume with local filters of given size, at given stride. An optional amount of zero padding can also be added.
 - `Locally Connected Layer`: same as Convolutional layer (so local connectivity only to a small region below) but does not share weights across spatial locations (so no convolution).
 - `Pooling Layer`: max-pools neighboring activations in 3D volume, keeping depth the same but reducing width and height of volume
 - `Local Contrast Normalization Layer`: Creates local competition among neurons along depth at specific location, for all locations.
 
-###Helpful with arbitrary data:
+### Helpful with arbitrary data:
 
 - `Fully Connected Layer`: a number of neurons connected densely to input volume. They each compute dot product with the input.
 - `Dropout Layer`: implements dropout to control overfitting. Can be used after layers that have very large number of nodes for regularization. You don't have to add this explicitly, simply use drop_prob:0.5 (or other amount) in a layer def to automatically add a Dropout layer right after it.
 
-###Non-linearities
+### Non-linearities
 
 - `ReluLayer`: creates the ReLU (Rectified Linear Unit) activation function. You don't have to add this explicitly, simply use activation:'relu' in a layer def to follow that layer with ReLU.
 - `SigmoidLayer`: can be used as nonlinearity instead of ReluLayer, computes the sigmoid function x->1/(1+e^(-x)) You don't have to add this explicitly, simply use activation:'sigmoid' in a layer def to follow that layer with the Sigmoid.
 - `MaxoutLayer`: Computes max(x) where x is a group of elements in the input. By default, the group size is 2 but this can be changed by passing in a different group_size. Note that the size of the input should divide exactly into group_size. If you are using a convnet, the depth should divide nicely into group_size. If you're using a regular neural net, make sure the number of neurons in the layer before maxout has a multiple of group_size elements. MaxOut enjoys some nice properties computationally because it is linear (like ReLU) so it trains fast, but it isn't as unstable: for example, you don't run the danger of having ReLU units "die" if your learning rate is slightly too high. That's comforting.
 
-###Objective layers
+### Objective layers
 
 - `Softmax`: this is a classifier layer that should currently be last. It computes probabilities via dense connections to the input volume and dot product with class weights.
 - `RegressionLayer`: can be replaced with Softmax to do regression instead of classification.
