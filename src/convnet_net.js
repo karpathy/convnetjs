@@ -1,7 +1,8 @@
 (function(global) {
   "use strict";
   var Vol = global.Vol; // convenience
-  
+  var assert = global.assert;
+
   // Net manages a set of layers
   // For now constraints: Simple linear order of layers, first layer input last layer a cost layer
   var Net = function(options) {
@@ -13,11 +14,11 @@
     // takes a list of layer definitions and creates the network layer objects
     makeLayers: function(defs) {
 
-      // few checks for now
-      if(defs.length<2) {console.log('ERROR! For now at least have input and softmax layers.');}
-      if(defs[0].type !== 'input') {console.log('ERROR! For now first layer should be input.');}
+      // few checks
+      assert(defs.length >= 2, 'Error! At least one input layer and one loss layer are required.');
+      assert(defs[0].type === 'input', 'Error! First layer must be the input layer, to declare size of inputs');
 
-      // desugar syntactic for adding activations and dropouts
+      // desugar layer_defs for adding activation, dropout layers etc
       var desugar = function() {
         var new_defs = [];
         for(var i=0;i<defs.length;i++) {
@@ -42,14 +43,6 @@
               def.bias_pref = 0.1; // relus like a bit of positive bias to get gradients early
               // otherwise it's technically possible that a relu unit will never turn on (by chance)
               // and will never get any gradient and never contribute any computation. Dead relu.
-            }
-          }
-          
-          if(typeof def.tensor !== 'undefined') {
-            // apply quadratic transform so that the upcoming multiply will include
-            // quadratic terms, equivalent to doing a tensor product
-            if(def.tensor) {
-              new_defs.push({type: 'quadtransform'});
             }
           }
 
@@ -99,16 +92,17 @@
           case 'sigmoid': this.layers.push(new global.SigmoidLayer(def)); break;
           case 'tanh': this.layers.push(new global.TanhLayer(def)); break;
           case 'maxout': this.layers.push(new global.MaxoutLayer(def)); break;
-          case 'quadtransform': this.layers.push(new global.QuadTransformLayer(def)); break;
           case 'svm': this.layers.push(new global.SVMLayer(def)); break;
-          default: console.log('ERROR: UNRECOGNIZED LAYER TYPE!');
+          default: console.log('ERROR: UNRECOGNIZED LAYER TYPE: ' + def.type);
         }
       }
     },
 
-    // forward prop the network. A trainer will pass in is_training = true
+    // forward prop the network. 
+    // The trainer class passes is_training = true, but when this function is
+    // called from outside (not from the trainer), it defaults to prediction mode
     forward: function(V, is_training) {
-      if(typeof(is_training)==='undefined') is_training = false;
+      if(typeof(is_training) === 'undefined') is_training = false;
       var act = this.layers[0].forward(V, is_training);
       for(var i=1;i<this.layers.length;i++) {
         act = this.layers[i].forward(act, is_training);
@@ -126,7 +120,7 @@
     // backprop: compute gradients wrt all parameters
     backward: function(y) {
       var N = this.layers.length;
-      var loss = this.layers[N-1].backward(y); // last layer assumed softmax
+      var loss = this.layers[N-1].backward(y); // last layer assumed to be loss layer
       for(var i=N-2;i>=0;i--) { // first layer assumed input
         this.layers[i].backward();
       }
@@ -144,14 +138,18 @@
       return response;
     },
     getPrediction: function() {
-      var S = this.layers[this.layers.length-1]; // softmax layer
+      // this is a convenience function for returning the argmax
+      // prediction, assuming the last layer of the net is a softmax
+      var S = this.layers[this.layers.length-1];
+      assert(S.layer_type === 'softmax', 'getPrediction function assumes softmax as last layer of the net!');
+
       var p = S.out_act.w;
       var maxv = p[0];
       var maxi = 0;
       for(var i=1;i<p.length;i++) {
         if(p[i] > maxv) { maxv = p[i]; maxi = i;}
       }
-      return maxi;
+      return maxi; // return index of the class with highest class probability
     },
     toJSON: function() {
       var json = {};
@@ -179,7 +177,6 @@
         if(t==='regression') { L = new global.RegressionLayer(); }
         if(t==='fc') { L = new global.FullyConnLayer(); }
         if(t==='maxout') { L = new global.MaxoutLayer(); }
-        if(t==='quadtransform') { L = new global.QuadTransformLayer(); }
         if(t==='svm') { L = new global.SVMLayer(); }
         L.fromJSON(Lj);
         this.layers.push(L);
@@ -187,6 +184,5 @@
     }
   }
   
-
   global.Net = Net;
 })(convnetjs);
