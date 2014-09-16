@@ -96,7 +96,30 @@
 
   // syntactic sugar function for getting default parameter values
   var getopt = function(opt, field_name, default_value) {
-    return typeof opt[field_name] !== 'undefined' ? opt[field_name] : default_value;
+    if(typeof field_name === 'string') {
+      // case of single string
+      return (typeof opt[field_name] !== 'undefined') ? opt[field_name] : default_value;
+    } else {
+      // assume we are given a list of string instead
+      var ret = default_value;
+      for(var i=0;i<field_name.length;i++) {
+        var f = field_name[i];
+        if (typeof opt[f] !== 'undefined') {
+          ret = opt[f]; // overwrite return value
+        }
+      }
+      return ret;
+    }
+  }
+
+  function assert(condition, message) {
+    if (!condition) {
+      message = message || "Assertion failed";
+      if (typeof Error !== "undefined") {
+        throw new Error(message);
+      }
+      throw message; // Fallback
+    }
   }
 
   global.randf = randf;
@@ -109,5 +132,6 @@
   global.arrUnique = arrUnique;
   global.arrContains = arrContains;
   global.getopt = getopt;
+  global.assert = assert;
   
 })(convnetjs);

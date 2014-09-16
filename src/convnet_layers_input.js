@@ -2,21 +2,26 @@
 (function(global) {
   "use strict";
   var Vol = global.Vol; // convenience
-  
+  var getopt = global.getopt;
+
   var InputLayer = function(opt) {
     var opt = opt || {};
 
-    // this is a bit silly but lets allow people to specify either ins or outs
-    this.out_sx = typeof opt.out_sx !== 'undefined' ? opt.out_sx : opt.in_sx;
-    this.out_sy = typeof opt.out_sy !== 'undefined' ? opt.out_sy : opt.in_sy;
-    this.out_depth = typeof opt.out_depth !== 'undefined' ? opt.out_depth : opt.in_depth;
+    // required: depth
+    this.out_depth = getopt(opt, ['out_depth', 'depth'], 0);
+
+    // optional: default these dimensions to 1
+    this.out_sx = getopt(opt, ['out_sx', 'sx', 'width'], 1);
+    this.out_sy = getopt(opt, ['out_sy', 'sy', 'height'], 1);
+    
+    // computed
     this.layer_type = 'input';
   }
   InputLayer.prototype = {
     forward: function(V, is_training) {
       this.in_act = V;
       this.out_act = V;
-      return this.out_act; // dummy identity function for now
+      return this.out_act; // simply identity function for now
     },
     backward: function() { },
     getParamsAndGrads: function() {
