@@ -111,6 +111,9 @@
       return V; // identity function
     },
     // y is a list here of size num_inputs
+    // or it can be a number if only one value is regressed
+    // or it can be a struct {dim: i, val: x} where we only want to 
+    // regress on dimension i and asking it to have value x
     backward: function(y) { 
 
       // compute and accumulate gradient wrt weights and bias of this layer
@@ -121,8 +124,13 @@
         for(var i=0;i<this.out_depth;i++) {
           var dy = x.w[i] - y[i];
           x.dw[i] = dy;
-          loss += 2*dy*dy;
+          loss += 0.5*dy*dy;
         }
+      } else if(typeof y === 'number') {
+        // lets hope that only one number is being regressed
+        var dy = x.w[0] - y;
+        x.dw[0] = dy;
+        loss += 0.5*dy*dy;
       } else {
         // assume it is a struct with entries .dim and .val
         // and we pass gradient only along dimension dim to be equal to val
@@ -130,7 +138,7 @@
         var yi = y.val;
         var dy = x.w[i] - yi;
         x.dw[i] = dy;
-        loss += 2*dy*dy;
+        loss += 0.5*dy*dy;
       }
       return loss;
     },
@@ -178,19 +186,20 @@
       var x = this.in_act;
       x.dw = global.zeros(x.w.length); // zero out the gradient of input Vol
 
+      // we're using structured loss here, which means that the score
+      // of the ground truth should be higher than the score of any other 
+      // class, by a margin
       var yscore = x.w[y]; // score of ground truth
       var margin = 1.0;
       var loss = 0.0;
       for(var i=0;i<this.out_depth;i++) {
-        if(-yscore + x.w[i] + margin > 0) {
-          // violating example, apply loss
-          // I love hinge loss, by the way. Truly.
-          // Seriously, compare this SVM code with Softmax forward AND backprop code above
-          // it's clear which one is superior, not only in code, simplicity
-          // and beauty, but also in practice.
+        if(y === i) { continue; }
+        var ydiff = -yscore + x.w[i] + margin;
+        if(ydiff > 0) {
+          // violating dimension, apply loss
           x.dw[i] += 1;
           x.dw[y] -= 1;
-          loss += -yscore + x.w[i] + margin;
+          loss += ydiff;
         }
       }
 
