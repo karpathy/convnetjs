@@ -238,11 +238,24 @@
     predict_soft: function(data) {
       // forward prop the best networks
       // and accumulate probabilities at last layer into a an output Vol
-      var nv = Math.min(this.ensemble_size, this.evaluated_candidates.length);
-      if(nv === 0) { return new convnetjs.Vol(0,0,0); } // not sure what to do here? we're not ready yet
+
+      var eval_candidates = [];
+      var nv = 0;
+      if(this.evaluated_candidates.length === 0) {
+        // not sure what to do here, first batch of nets hasnt evaluated yet
+        // lets just predict with current candidates.
+        nv = this.candidates.length;
+        eval_candidates = this.candidates;
+      } else {
+        // forward prop the best networks from evaluated_candidates
+        nv = Math.min(this.ensemble_size, this.evaluated_candidates.length);
+        eval_candidates = this.evaluated_candidates
+      }
+
+      // forward nets of all candidates and average the predictions
       var xout, n;
       for(var j=0;j<nv;j++) {
-        var net = this.evaluated_candidates[j].net;
+        var net = eval_candidates[j].net;
         var x = net.forward(data);
         if(j===0) { 
           xout = x; 
@@ -256,7 +269,7 @@
       }
       // produce average
       for(var d=0;d<n;d++) {
-        xout.w[d] /= n;
+        xout.w[d] /= nv;
       }
       return xout;
     },
