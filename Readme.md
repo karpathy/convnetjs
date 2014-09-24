@@ -112,7 +112,7 @@ The output files will be in `build/`
 ## Use in Node
 The library is also available on *node.js*:
 
-1. intall it: `$ npm install convnetjs`
+1. install it: `$ npm install convnetjs`
 2. use it: `var convnetjs = require("convnetjs");`
 
 ## License
