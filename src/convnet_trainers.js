@@ -11,7 +11,7 @@
     this.l1_decay = typeof options.l1_decay !== 'undefined' ? options.l1_decay : 0.0;
     this.l2_decay = typeof options.l2_decay !== 'undefined' ? options.l2_decay : 0.0;
     this.batch_size = typeof options.batch_size !== 'undefined' ? options.batch_size : 1;
-    this.method = typeof options.method !== 'undefined' ? options.method : 'sgd'; // sgd/adagrad/adadelta/windowgrad
+    this.method = typeof options.method !== 'undefined' ? options.method : 'sgd'; // sgd/adagrad/adadelta/windowgrad/netsterov
 
     this.momentum = typeof options.momentum !== 'undefined' ? options.momentum : 0.9;
     this.ro = typeof options.ro !== 'undefined' ? options.ro : 0.95; // used in adadelta
@@ -99,6 +99,11 @@
               var dx = - Math.sqrt((xsumi[j] + this.eps)/(gsumi[j] + this.eps)) * gij;
               xsumi[j] = this.ro * xsumi[j] + (1-this.ro) * dx * dx; // yes, xsum lags behind gsum by 1.
               p[j] += dx;
+            } else if(this.method === 'nesterov') {
+            	var dx = gsumi[j];
+            	gsumi[j] = gsumi[j] * this.momentum + this.learning_rate * gij;
+                dx = self.momentum * dx - (1.0 + this.momentum) * gsumi[j];
+                p[j] += dx;
             } else {
               // assume SGD
               if(this.momentum > 0.0) {
