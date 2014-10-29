@@ -54,7 +54,7 @@ trainer_defs.push({learning_rate:1.0, method: 'adadelta', eps: 1e-6, ro:0.95, ba
 trainer_defs.push({learning_rate:LR, method: 'nesterov', momentum: 0.9, batch_size:BS, l2_decay:L2});\n\
 \n\
 // names for all trainers above\n\
-legend = ['sgd', 'sgd+momentum', 'adagrad', 'windowgrad', 'adadelta'];\n\
+legend = ['sgd', 'sgd+momentum', 'adagrad', 'windowgrad', 'adadelta', 'nesterov'];\n\
 "
 
 // ------------------------
@@ -247,7 +247,7 @@ var load_and_step = function() {
   <h2 style="text-align: center;"><a href="http://cs.stanford.edu/people/karpathy/convnetjs/">ConvNetJS</a> Trainer demo on MNIST</h2>
   <h1>Description</h1>
   <p>
-    This demo lets you evaluate multiple trainers against each other on MNIST. By default I've set up a little benchmark that puts SGD/SGD with momentum/Adagrad/Adadelta against each other. For reference math and explanations on these refer to Matthew Zeiler's <a href="http://www.matthewzeiler.com/pubs/googleTR2012/googleTR2012.pdf">Adadelta paper</a> (Windowgrad is Idea #1 in the paper). In my own experience, Adagrad/Adadelta are "safer" because they don't depend so strongly on setting of learning rates (with Adadelta being slightly better), but well-tuned SGD+Momentum almost always converges faster and at better final values.
+    This demo lets you evaluate multiple trainers against each other on MNIST. By default I've set up a little benchmark that puts SGD/SGD with momentum/Adagrad/Adadelta/Nesterov against each other. For reference math and explanations on these refer to Matthew Zeiler's <a href="http://www.matthewzeiler.com/pubs/googleTR2012/googleTR2012.pdf">Adadelta paper</a> (Windowgrad is Idea #1 in the paper). In my own experience, Adagrad/Adadelta are "safer" because they don't depend so strongly on setting of learning rates (with Adadelta being slightly better), but well-tuned SGD+Momentum almost always converges faster and at better final values.
   </p>
   <p>Report questions/bugs/suggestions to <a href="https://twitter.com/karpathy">@karpathy</a>.</p>
 

@@ -102,7 +102,7 @@
             } else if(this.method === 'nesterov') {
             	var dx = gsumi[j];
             	gsumi[j] = gsumi[j] * this.momentum + this.learning_rate * gij;
-                dx = self.momentum * dx - (1.0 + this.momentum) * gsumi[j];
+                dx = this.momentum * dx - (1.0 + this.momentum) * gsumi[j];
                 p[j] += dx;
             } else {
               // assume SGD
