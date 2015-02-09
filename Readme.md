@@ -7,11 +7,11 @@ ConvNetJS is a Javascript implementation of Neural networks, together with nice 
 - Classification (SVM/Softmax) and Regression (L2) **cost functions**
 - A **MagicNet class** for fully automatic neural network learning (automatic hyperparameter search and cross-validatations)
 - Ability to specify and train **Convolutional Networks** that process images
-- An experimental **Reinforcement Learning** module, based on Deep Q Learning.
+- An experimental **Reinforcement Learning** module, based on Deep Q Learning
 
 For much more information, see the main page at [convnetjs.com](http://convnetjs.com)
 
-## Online demos
+## Online Demos
 - [Convolutional Neural Network on MNIST digits](http://cs.stanford.edu/~karpathy/convnetjs/demo/mnist.html)
 - [Convolutional Neural Network on CIFAR-10](http://cs.stanford.edu/~karpathy/convnetjs/demo/cifar10.html)
 - [Toy 2D data](http://cs.stanford.edu/~karpathy/convnetjs/demo/classify2d.html)
@@ -23,7 +23,7 @@ For much more information, see the main page at [convnetjs.com](http://convnetjs
 - [Comparison of SGD/Adagrad/Adadelta on MNIST](http://cs.stanford.edu/people/karpathy/convnetjs/demo/trainers.html)
 - [MagicNet classifying arbitary CSV data demo](http://cs.stanford.edu/people/karpathy/convnetjs/demo/automatic.html)
 
-## Example code
+## Example Code
 
 Here's a minimum example of defining a **2-layer neural network** and training
 it on a single data point:
@@ -112,8 +112,8 @@ The output files will be in `build/`
 ## Use in Node
 The library is also available on *node.js*:
 
-1. install it: `$ npm install convnetjs`
-2. use it: `var convnetjs = require("convnetjs");`
+1. Install it: `$ npm install convnetjs`
+2. Use it: `var convnetjs = require("convnetjs");`
 
 ## License
 MIT
