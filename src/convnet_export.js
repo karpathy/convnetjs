@@ -5,4 +5,4 @@
   } else {
     module.exports = lib; // in nodejs
   }
-})(convnetjs);
+})(require('./convnet_init.js'));
