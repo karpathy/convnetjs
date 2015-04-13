@@ -1,0 +1,19 @@
+{
+	"name" : "convnetjs",
+
+	"version" : "0.0.1",
+
+	"homepage" : "http://convnetjs.com/",
+
+	"repository" : "karpathy/convnetjs",
+
+	"main" : "./build/convnet.js",
+
+	"devDependencies" : {
+		"babelify" : "*",
+		"uglify-js" : "*",
+		"browserify" : "*"
+	},
+
+	"license" : "MIT"
+}
