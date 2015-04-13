@@ -1,12 +1,9 @@
+import getopt from "./convnet_util.js";
+import Vol from "./convnet_vol.js";
 
-(function(global) {
-  "use strict";
-  var Vol = global.Vol; // convenience
-  var getopt = global.getopt;
+export default class InputLayer {
 
-  var InputLayer = function(opt) {
-    var opt = opt || {};
-
+  constructor(opt = {}){
     // required: depth
     this.out_depth = getopt(opt, ['out_depth', 'depth'], 0);
 
@@ -17,31 +14,34 @@
     // computed
     this.layer_type = 'input';
   }
-  InputLayer.prototype = {
-    forward: function(V, is_training) {
-      this.in_act = V;
-      this.out_act = V;
-      return this.out_act; // simply identity function for now
-    },
-    backward: function() { },
-    getParamsAndGrads: function() {
-      return [];
-    },
-    toJSON: function() {
-      var json = {};
-      json.out_depth = this.out_depth;
-      json.out_sx = this.out_sx;
-      json.out_sy = this.out_sy;
-      json.layer_type = this.layer_type;
-      return json;
-    },
-    fromJSON: function(json) {
-      this.out_depth = json.out_depth;
-      this.out_sx = json.out_sx;
-      this.out_sy = json.out_sy;
-      this.layer_type = json.layer_type; 
-    }
+
+  forward(V, is_training) {
+    this.in_act = V;
+    this.out_act = V;
+    return this.out_act; // simply identity function for now
   }
 
-  global.InputLayer = InputLayer;
-})(convnetjs);
+  backward() { 
+  }
+
+  getParamsAndGrads() {
+    return [];
+  }
+
+  toJSON() {
+    var json = {};
+    json.out_depth = this.out_depth;
+    json.out_sx = this.out_sx;
+    json.out_sy = this.out_sy;
+    json.layer_type = this.layer_type;
+    return json;
+  }
+
+  fromJSON(json) {
+    this.out_depth = json.out_depth;
+    this.out_sx = json.out_sx;
+    this.out_sy = json.out_sy;
+    this.layer_type = json.layer_type; 
+  }
+
+}
