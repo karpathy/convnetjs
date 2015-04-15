@@ -1,3 +1,5 @@
+import Vol from "./convnet_vol.js";
+
 // Random number utilities
 var return_v = false;
 var v_val = 0.0;
@@ -30,8 +32,7 @@ export function randn(mu, std){
 }
 
 // Array utilities
-export function zeros(n) {
-  if(typeof(n)==='undefined' || isNaN(n)) { return []; }
+export function zeros(n = 0) {
   if(typeof ArrayBuffer === 'undefined') {
     // lacking browser support
     var arr = new Array(n);
@@ -44,21 +45,8 @@ export function zeros(n) {
   }
 }
 
-export function arrContains(arr, elt) {
-  for(var i=0,n=arr.length;i<n;i++) {
-    if(arr[i]===elt) return true;
-  }
-  return false;
-}
-
 export function arrUnique(arr) {
-  var b = [];
-  for(var i=0,n=arr.length;i<n;i++) {
-    if(!arrContains(b, arr[i])) {
-      b.push(arr[i]);
-    }
-  }
-  return b;
+  return arr.filter((x, i) => {return (arr.indexOf(x) >= i)});
 }
 
 // return max and min of a given non-empty array.
@@ -129,4 +117,106 @@ export function assert(condition, message) {
     }
     throw message; // Fallback
   }
+}
+
+export function augment(V, crop, dx = randi(0, V.sx - crop), dy = randi(0, V.sy - crop), fliplr = false) {
+  
+  // randomly sample a crop in the input volume
+  var W;
+  if(crop !== V.sx || dx!==0 || dy!==0) {
+    W = new Vol(crop, crop, V.depth, 0.0);
+    for(var x=0;x<crop;x++) {
+      for(var y=0;y<crop;y++) {
+        if(x+dx<0 || x+dx>=V.sx || y+dy<0 || y+dy>=V.sy) continue; // oob
+        for(var d=0;d<V.depth;d++) {
+         W.set(x,y,d,V.get(x+dx,y+dy,d)); // copy data over
+        }
+      }
+    }
+  } else {
+    W = V;
+  }
+
+  if(fliplr) {
+    // flip volume horziontally
+    var W2 = W.cloneAndZero();
+    for(var x=0;x<W.sx;x++) {
+      for(var y=0;y<W.sy;y++) {
+        for(var d=0;d<W.depth;d++) {
+         W2.set(x,y,d,W.get(W.sx - x - 1,y,d)); // copy data over
+        }
+      }
+    }
+    W = W2; //swap
+  }
+  return W;
+}
+
+export function imageDataToVol(imgdata, convert_grayscale = false){
+  // prepare the input: get pixels and normalize them
+  var p = img_data.data;
+  var W = img_data.width;
+  var H = img_data.height;
+  var pv = new Float64Array(img_data.data.length);
+
+  const tff = SIMD.float32x4.splat(255.0);
+  const mpf = SIMD.float32x4.splat(0.5);
+  const len = p.length / 4;
+
+  // normalize image pixels to [-0.5, 0.5]
+  for(var i=0; i < len; i++) {
+    let res = SIMD.float32x4.sub(SIMD.float32x4.div(SIMD.float32x4(p[i], p[i+1], p[i+2], p[i+3]), tff), mpf);
+    pv[i*4] = res.x;
+    pv[i*4+1] = res.y;
+    pv[i*4+2] = res.z;
+    pv[i*4+3] = res.w;
+  }
+
+  var x = new Vol(W, H, 4, 0.0); //input volume (image)
+  x.w = pv;
+
+  if(convert_grayscale) {
+    // flatten into depth=1 array
+    var x1 = new Vol(W, H, 1, 0.0);
+    for(var i=0;i<W;i++) {
+      for(var j=0;j<H;j++) {
+        x1.set(i,j,0,x.get(i,j,0));
+      }
+    }
+    x = x1;
+  }
+
+  return x;
+}
+
+export function imageToVol(img, convert_grayscale = false) {
+
+  var canvas = document.createElement('canvas');
+  canvas.width = img.width;
+  canvas.height = img.height;
+  var ctx = canvas.getContext("2d");
+
+  // due to a Firefox bug
+  try {
+    ctx.drawImage(img, 0, 0);
+  } catch (e) {
+    if (e.name === "NS_ERROR_NOT_AVAILABLE") {
+      // sometimes happens, lets just abort
+      return false;
+    } else {
+      throw e;
+    }
+  }
+
+  try {
+    var img_data = ctx.getImageData(0, 0, canvas.width, canvas.height);
+  } catch (e) {
+    if(e.name === 'IndexSizeError') {
+      return false; // not sure what causes this sometimes but okay abort
+    } else {
+      throw e;
+    }
+  }
+
+  return imageDataToVol(img_data, convert_grayscale);
 }

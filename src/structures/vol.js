@@ -8,35 +8,33 @@
 
 export default class Vol {
 
-  constructor(sx, sy, depth, c){
-    // this is how you check if a variable is an array. Oh, Javascript :)
-    if(Object.prototype.toString.call(sx) === '[object Array]') {
+  constructor(sx = 1, sy = 1, depth = 1, c){
+    // This is a nice way to check if it's an array
+    if(sx.constructor.name.indexOf('Array') > -1) {
       // we were given a list in sx, assume 1D volume and fill it up
       this.sx = 1;
-      this.sy = 1;
       this.depth = sx.length;
+
       // we have to do the following copy because we want to use
       // fast typed arrays, not an ordinary javascript array
-      this.w = global.zeros(this.depth);
-      this.dw = global.zeros(this.depth);
-      for(var i=0;i<this.depth;i++) {
-        this.w[i] = sx[i];
-      }
+      this.dw = zeros(this.depth);
+      // Passing an array of numbers to a TypedArray constructor 
+      // will fill the array quicker than a for loop.
+      this.w = new Float64Array(sx); 
     } else {
       // we were given dimensions of the vol
       this.sx = sx;
-      this.sy = sy;
       this.depth = depth;
       var n = sx*sy*depth;
-      this.w = global.zeros(n);
-      this.dw = global.zeros(n);
+      this.w = zeros(n);
+      this.dw = zeros(n);
       if(typeof c === 'undefined') {
         // weight normalization is done to equalize the output
         // variance of every neuron, otherwise neurons with a lot
         // of incoming connections have outputs of larger variance
         var scale = Math.sqrt(1.0/(sx*sy*depth));
         for(var i=0;i<n;i++) { 
-          this.w[i] = global.randn(0.0, scale);
+          this.w[i] = randn(0.0, scale);
         }
       } else {
         for(var i=0;i<n;i++) { 
@@ -44,36 +42,31 @@ export default class Vol {
         }
       }
     }
+    this.sy = sy;
   }
 
   get(x, y, d) { 
-    var ix=((this.sx * y)+x)*this.depth+d;
-    return this.w[ix];
+    return this.w[((this.sx * y)+x)*this.depth+d];
   }
 
   set(x, y, d, v) { 
-    var ix=((this.sx * y)+x)*this.depth+d;
-    this.w[ix] = v; 
+    this.w[((this.sx * y)+x)*this.depth+d] = v; 
   }
 
   add(x, y, d, v) { 
-    var ix=((this.sx * y)+x)*this.depth+d;
-    this.w[ix] += v; 
+    this.w[((this.sx * y)+x)*this.depth+d] += v; 
   }
 
-  get_grad(x, y, d) { 
-    var ix = ((this.sx * y)+x)*this.depth+d;
-    return this.dw[ix]; 
+  getGrad(x, y, d) { 
+    return this.dw[((this.sx * y)+x)*this.depth+d]; 
   }
 
-  set_grad(x, y, d, v) { 
-    var ix = ((this.sx * y)+x)*this.depth+d;
-    this.dw[ix] = v; 
+  setGrad(x, y, d, v) { 
+    this.dw[((this.sx * y)+x)*this.depth+d] = v; 
   }
 
-  add_grad(x, y, d, v) { 
-    var ix = ((this.sx * y)+x)*this.depth+d;
-    this.dw[ix] += v; 
+  addGrad(x, y, d, v) { 
+    this.dw[((this.sx * y)+x)*this.depth+d] += v; 
   }
 
   cloneAndZero() { 
@@ -81,11 +74,8 @@ export default class Vol {
   }
 
   clone() {
-    var V = new Vol(this.sx, this.sy, this.depth, 0.0);
-    var n = this.w.length;
-    for(var i=0;i<n;i++) { 
-      V.w[i] = this.w[i]; 
-    }
+    var V = new Vol(this.sx, this.sy, this.depth, 0);
+    V.w = this.w.mapPar(x => x);
     return V;
   }
 
@@ -102,19 +92,17 @@ export default class Vol {
   }
 
   setConst(a) { 
-    for(var k=0;k<this.w.length;k++) { 
-      this.w[k] = a; 
-    }
+    this.w = (new Array(this.w.length)).map(x => a);
   }
 
   toJSON() {
     // todo: we may want to only save d most significant digits to save space
-    var json = {}
-    json.sx = this.sx; 
-    json.sy = this.sy;
-    json.depth = this.depth;
-    json.w = this.w;
-    return json;
+    return {
+      sx : this.sx,
+      sy : this.sy,
+      depth : this.depth,
+      w : this.w
+    };
     // we wont back up gradients to save space
   }
 
@@ -122,13 +110,8 @@ export default class Vol {
     this.sx = json.sx;
     this.sy = json.sy;
     this.depth = json.depth;
-
     var n = this.sx*this.sy*this.depth;
-    this.w = global.zeros(n);
-    this.dw = global.zeros(n);
-    // copy over the elements.
-    for(var i=0;i<n;i++) {
-      this.w[i] = json.w[i];
-    }
+    this.dw = zeros(n);
+    this.w = json.w.map(x => x);
   }
 }

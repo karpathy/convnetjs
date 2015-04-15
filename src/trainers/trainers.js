@@ -50,7 +50,7 @@ export class Trainer {
           if(this.method === 'adadelta') {
             this.xsum.push(global.zeros(pglist[i].params.length));
           } else {
-            this.xsum.push([]); // conserve memory
+            this.xsum.push(new Float64Array(0)); // conserve memory
           }
         }
       }

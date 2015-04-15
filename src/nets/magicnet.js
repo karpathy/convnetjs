@@ -1,6 +1,6 @@
-import {randf, randi, maxmin, randperm, weightedSample, getopt, arrUnique} from "./convnet_util.js";
-import Trainer from "./convnet_trainers.js";
-import Net from "./convnet_net.js";
+import {randf, randi, maxmin, randperm, weightedSample, arrUnique} from "./convnet_util.js";
+import * as Trainer from "../trainers/index.js";
+import * as Net from "./net.js";
 
 /*
 A MagicNet takes data: a list of convnetjs.Vol(), and labels
@@ -11,7 +11,7 @@ which for now are assumed to be class indeces 0..K. MagicNet then:
 - produces predictions by model-averaging the best networks
 */
 
-export default class MagicNet {
+export default class MagicNet extends EventEmitter {
 
   constructor(data = [], labels = [], opt = {}){
 
@@ -20,26 +20,26 @@ export default class MagicNet {
     this.labels = labels;
 
     // optional inputs
-    this.train_ratio = getopt(opt, 'train_ratio', 0.7);
-    this.num_folds = getopt(opt, 'num_folds', 10);
+    this.train_ratio = opt.train_ratio || 0.7;
+    this.num_folds = opt.num_folds || 10;
     this.num_candidates = getopt(opt, 'num_candidates', 50); // we evaluate several in parallel
     // how many epochs of data to train every network? for every fold?
     // higher values mean higher accuracy in final results, but more expensive
-    this.num_epochs = getopt(opt, 'num_epochs', 50); 
+    this.num_epochs = opt.num_epochs || 50; 
     // number of best models to average during prediction. Usually higher = better
-    this.ensemble_size = getopt(opt, 'ensemble_size', 10);
+    this.ensemble_size = opt.ensemble_size || 10;
 
     // candidate parameters
-    this.batch_size_min = getopt(opt, 'batch_size_min', 10);
-    this.batch_size_max = getopt(opt, 'batch_size_max', 300);
-    this.l2_decay_min = getopt(opt, 'l2_decay_min', -4);
-    this.l2_decay_max = getopt(opt, 'l2_decay_max', 2);
-    this.learning_rate_min = getopt(opt, 'learning_rate_min', -4);
-    this.learning_rate_max = getopt(opt, 'learning_rate_max', 0);
-    this.momentum_min = getopt(opt, 'momentum_min', 0.9);
-    this.momentum_max = getopt(opt, 'momentum_max', 0.9);
-    this.neurons_min = getopt(opt, 'neurons_min', 5);
-    this.neurons_max = getopt(opt, 'neurons_max', 30);
+    this.batch_size_min = opt, 'batch_size_min', 10;
+    this.batch_size_max = opt, 'batch_size_max', 300;
+    this.l2_decay_min = getopt(opt, 'l2_decay_min', -4;
+    this.l2_decay_max = getopt(opt, 'l2_decay_max', 2;
+    this.learning_rate_min = getopt(opt, 'learning_rate_min', -4;
+    this.learning_rate_max = getopt(opt, 'learning_rate_max', 0;
+    this.momentum_min = opt.momentum_min || 0.9;
+    this.momentum_max = opt, 'momentum_max', 0.9;
+    this.neurons_min = opt, 'neurons_min', 5;
+    this.neurons_max = opt.neurons_max || 30;
 
     // computed
     this.folds = []; // data fold indices, gets filled by sampleFolds()
@@ -48,10 +48,6 @@ export default class MagicNet {
     this.unique_labels = arrUnique(labels);
     this.iter = 0; // iteration counter, goes from 0 -> num_epochs * num_training_data
     this.foldix = 0; // index of active fold
-
-    // callbacks
-    this.finish_fold_callback = null;
-    this.finish_batch_callback = null;
 
     // initializations
     if(this.data.length > 0) {
@@ -159,9 +155,7 @@ export default class MagicNet {
       this.iter = 0; // reset step number
       this.foldix++; // increment fold
 
-      if(this.finish_fold_callback !== null) {
-        this.finish_fold_callback();
-      }
+      this.emit('finishfold');
 
       if(this.foldix >= this.folds.length) {
         // we finished all folds as well! Record these candidates
@@ -181,9 +175,9 @@ export default class MagicNet {
         if(this.evaluated_candidates.length > 3 * this.ensemble_size) {
           this.evaluated_candidates = this.evaluated_candidates.slice(0, 3 * this.ensemble_size);
         }
-        if(this.finish_batch_callback !== null) {
-          this.finish_batch_callback();
-        }
+        
+        this.emit('finishbatch');
+
         this.sampleCandidates(); // begin with new candidates
         this.foldix = 0; // reset this
       } else {
@@ -295,17 +289,6 @@ export default class MagicNet {
       dummy_candidate.net = net;
       this.evaluated_candidates.push(dummy_candidate);
     }
-  }
-
-  // callback functions
-  // called when a fold is finished, while evaluating a batch
-  onFinishFold(f) { 
-    this.finish_fold_callback = f; 
-  }
-
-  // called when a batch of candidates has finished evaluating
-  onFinishBatch(f) { 
-    this.finish_batch_callback = f; 
   }
 
 }

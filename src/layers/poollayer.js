@@ -1,6 +1,7 @@
-import Vol from "./convnet_vol.js";
+import * as Vol from "../vol/index.js";
+import * as Layer from "./layer.js";
 
-export default class PoolLayer {
+export default class PoolLayer extends Layer {
 
   constructor(opt = {}){
 
@@ -37,7 +38,7 @@ export default class PoolLayer {
       var y = -this.pad;
       for(var ax=0; ax<this.out_sx; x+=this.stride,ax++) {
         y = -this.pad;
-        for(var ay=0; ay<this.out_sy; y+=this.stride,ay++) {
+        for(var ay=0; ay<this.out_sy; y+=this.stride, ay++, n++) {
 
           // convolve centered at this particular location
           var a = -99999; // hopefully small enough ;\
@@ -57,7 +58,6 @@ export default class PoolLayer {
           }
           this.switchx[n] = winx;
           this.switchy[n] = winy;
-          n++;
           A.set(ax, ay, d, a);
         }
       }
@@ -77,35 +77,31 @@ export default class PoolLayer {
     for(var d=0;d<this.out_depth;d++) {
       var x = -this.pad;
       var y = -this.pad;
-      for(var ax=0; ax<this.out_sx; x+=this.stride,ax++) {
+      for(var ax=0; ax < this.out_sx; x+=this.stride, ax++) {
         y = -this.pad;
-        for(var ay=0; ay<this.out_sy; y+=this.stride,ay++) {
-
-          var chain_grad = this.out_act.get_grad(ax,ay,d);
-          V.add_grad(this.switchx[n], this.switchy[n], d, chain_grad);
-          n++;
-
+        for(var ay=0; ay<this.out_sy; y+=this.stride, ay++, n++) {
+          V.add_grad(this.switchx[n], this.switchy[n], d, this.out_act.get_grad(ax,ay,d));
         }
       }
     }
   }
 
   getParamsAndGrads() {
-    return [];
+    return new Float64Array(0);
   }
 
   toJSON() {
-    var json = {};
-    json.sx = this.sx;
-    json.sy = this.sy;
-    json.stride = this.stride;
-    json.in_depth = this.in_depth;
-    json.out_depth = this.out_depth;
-    json.out_sx = this.out_sx;
-    json.out_sy = this.out_sy;
-    json.layer_type = this.layer_type;
-    json.pad = this.pad;
-    return json;
+    return {
+      sx : this.sx,
+      sy : this.sy,
+      stride : this.stride,
+      in_depth : this.in_depth,
+      out_depth : this.out_depth,
+      out_sx : this.out_sx,
+      out_sy : this.out_sy,
+      layer_type : this.layer_type,
+      pad : this.pad
+    };
   }
 
   fromJSON(json) {

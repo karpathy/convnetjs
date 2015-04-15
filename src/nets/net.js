@@ -26,16 +26,11 @@ export default class Net {
           // add an fc layer here, there is no reason the user should
           // have to worry about this and we almost always want to
           new_defs.push({type:'fc', num_neurons: def.num_classes});
-        }
-
-        if(def.type==='regression') {
+        } else if(def.type==='regression') {
           // add an fc layer here, there is no reason the user should
           // have to worry about this and we almost always want to
           new_defs.push({type:'fc', num_neurons: def.num_neurons});
-        }
-
-        if((def.type==='fc' || def.type==='conv') 
-            && typeof(def.bias_pref) === 'undefined'){
+        } else if((def.type==='fc' || def.type==='conv') && typeof(def.bias_pref) === 'undefined'){
           def.bias_pref = 0.0;
           if(typeof def.activation !== 'undefined' && def.activation === 'relu') {
             def.bias_pref = 0.1; // relus like a bit of positive bias to get gradients early
@@ -64,13 +59,13 @@ export default class Net {
       }
       return new_defs;
     }
+
     defs = desugar(defs);
 
     // create the layers
-    this.layers = [];
-    for(var i=0;i<defs.length;i++) {
-      var def = defs[i];
-      if(i>0) {
+    this.layers = defs.mapPar((x, i) => {
+
+      if(i > 0){
         var prev = this.layers[i-1];
         def.in_sx = prev.out_sx;
         def.in_sy = prev.out_sy;
@@ -78,22 +73,50 @@ export default class Net {
       }
 
       switch(def.type) {
-        case 'fc': this.layers.push(new global.FullyConnLayer(def)); break;
-        case 'lrn': this.layers.push(new global.LocalResponseNormalizationLayer(def)); break;
-        case 'dropout': this.layers.push(new global.DropoutLayer(def)); break;
-        case 'input': this.layers.push(new global.InputLayer(def)); break;
-        case 'softmax': this.layers.push(new global.SoftmaxLayer(def)); break;
-        case 'regression': this.layers.push(new global.RegressionLayer(def)); break;
-        case 'conv': this.layers.push(new global.ConvLayer(def)); break;
-        case 'pool': this.layers.push(new global.PoolLayer(def)); break;
-        case 'relu': this.layers.push(new global.ReluLayer(def)); break;
-        case 'sigmoid': this.layers.push(new global.SigmoidLayer(def)); break;
-        case 'tanh': this.layers.push(new global.TanhLayer(def)); break;
-        case 'maxout': this.layers.push(new global.MaxoutLayer(def)); break;
-        case 'svm': this.layers.push(new global.SVMLayer(def)); break;
-        default: console.log('ERROR: UNRECOGNIZED LAYER TYPE: ' + def.type);
+        case 'fc': 
+          return new global.FullyConnLayer(def); 
+          break;
+        case 'lrn': 
+          return new global.LocalResponseNormalizationLayer(def); 
+          break;
+        case 'dropout': 
+          return new global.DropoutLayer(def); 
+          break;
+        case 'input': 
+          return new global.InputLayer(def); 
+          break;
+        case 'softmax': 
+          return new global.SoftmaxLayer(def); 
+          break;
+        case 'regression': 
+          return new global.RegressionLayer(def); 
+          break;
+        case 'conv': 
+          return new global.ConvLayer(def); 
+          break;
+        case 'pool': 
+          return new global.PoolLayer(def); 
+          break;
+        case 'relu': 
+          return new global.ReluLayer(def); 
+          break;
+        case 'sigmoid': 
+          return new global.SigmoidLayer(def); 
+          break;
+        case 'tanh': 
+          return new global.TanhLayer(def); 
+          break;
+        case 'maxout': 
+          return new global.MaxoutLayer(def); 
+          break;
+        case 'svm': 
+          return new global.SVMLayer(def)); 
+          break;
+        default: 
+          console.error('ERROR: Unrecognised layer type: ' + def.type);
       }
-    }
+
+    });
   }
 
   // forward prop the network. 
@@ -162,26 +185,25 @@ export default class Net {
   }
 
   fromJSON(json) {
-    this.layers = [];
-    for(var i=0;i<json.layers.length;i++) {
-      var Lj = json.layers[i]
-      var t = Lj.layer_type;
+    this.layers = json.mapPar(x => {
+      var t = x.layer_type;
       var L;
-      if(t==='input') { L = new global.InputLayer(); }
-      if(t==='relu') { L = new global.ReluLayer(); }
-      if(t==='sigmoid') { L = new global.SigmoidLayer(); }
-      if(t==='tanh') { L = new global.TanhLayer(); }
-      if(t==='dropout') { L = new global.DropoutLayer(); }
-      if(t==='conv') { L = new global.ConvLayer(); }
-      if(t==='pool') { L = new global.PoolLayer(); }
-      if(t==='lrn') { L = new global.LocalResponseNormalizationLayer(); }
-      if(t==='softmax') { L = new global.SoftmaxLayer(); }
-      if(t==='regression') { L = new global.RegressionLayer(); }
-      if(t==='fc') { L = new global.FullyConnLayer(); }
-      if(t==='maxout') { L = new global.MaxoutLayer(); }
-      if(t==='svm') { L = new global.SVMLayer(); }
-      L.fromJSON(Lj);
-      this.layers.push(L);
-    }
+      switch()
+      if(t==='input') { L = new InputLayer(); }
+      if(t==='relu') { L = new ReluLayer(); }
+      if(t==='sigmoid') { L = new SigmoidLayer(); }
+      if(t==='tanh') { L = new TanhLayer(); }
+      if(t==='dropout') { L = new DropoutLayer(); }
+      if(t==='conv') { L = new ConvLayer(); }
+      if(t==='pool') { L = new PoolLayer(); }
+      if(t==='lrn') { L = new LocalResponseNormalizationLayer(); }
+      if(t==='softmax') { L = new SoftmaxLayer(); }
+      if(t==='regression') { L = new RegressionLayer(); }
+      if(t==='fc') { L = new FullyConnLayer(); }
+      if(t==='maxout') { L = new MaxoutLayer(); }
+      if(t==='svm') { L = new SVMLayer(); }
+      L.fromJSON(x);
+      return L;
+    });
   }  
 }
