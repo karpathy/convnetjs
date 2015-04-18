@@ -42,15 +42,19 @@ export default class Net {
         new_defs.push(def);
 
         if(typeof def.activation !== 'undefined') {
-          if(def.activation==='relu') { new_defs.push({type:'relu'}); }
-          else if (def.activation==='sigmoid') { new_defs.push({type:'sigmoid'}); }
-          else if (def.activation==='tanh') { new_defs.push({type:'tanh'}); }
-          else if (def.activation==='maxout') {
+          if(def.activation==='relu') { 
+            new_defs.push({type:'relu'}); 
+          } else if (def.activation==='sigmoid') { 
+            new_defs.push({type:'sigmoid'}); 
+          } else if (def.activation==='tanh') { 
+            new_defs.push({type:'tanh'}); 
+          } else if (def.activation==='maxout') {
             // create maxout activation, and pass along group size, if provided
             var gs = def.group_size !== 'undefined' ? def.group_size : 2;
             new_defs.push({type:'maxout', group_size:gs});
+          } else { 
+            console.log('ERROR unsupported activation ' + def.activation); 
           }
-          else { console.log('ERROR unsupported activation ' + def.activation); }
         }
         if(typeof def.drop_prob !== 'undefined' && def.type !== 'dropout') {
           new_defs.push({type:'dropout', drop_prob: def.drop_prob});

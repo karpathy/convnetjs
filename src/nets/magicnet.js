@@ -14,6 +14,7 @@ which for now are assumed to be class indeces 0..K. MagicNet then:
 export default class MagicNet extends EventEmitter {
 
   constructor(data = [], labels = [], opt = {}){
+    super()
 
     // required inputs
     this.data = data; // store these pointers to data

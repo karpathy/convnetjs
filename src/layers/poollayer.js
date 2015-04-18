@@ -30,7 +30,7 @@ export default class PoolLayer extends Layer {
   forward(V, is_training) {
     this.in_act = V;
 
-    var A = new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0);
+    var A = new (new VolType(this.out_sx, this.out_sy, this.out_depth));
     
     var n=0; // a counter for switches
     for(var d=0;d<this.out_depth;d++) {
@@ -48,17 +48,21 @@ export default class PoolLayer extends Layer {
               var oy = y+fy;
               var ox = x+fx;
               if(oy>=0 && oy<V.sy && ox>=0 && ox<V.sx) {
-                var v = V.get(ox, oy, d);
+                var v = V.w[ox][oy][d];
                 // perform max pooling and store pointers to where
                 // the max came from. This will speed up backprop 
                 // and can help make nice visualizations in future
-                if(v > a) { a = v; winx=ox; winy=oy;}
+                if(v > a) { 
+                  a = v; 
+                  winx=ox; 
+                  winy=oy;
+                }
               }
             }
           }
           this.switchx[n] = winx;
           this.switchy[n] = winy;
-          A.set(ax, ay, d, a);
+          A[ax][ay][d] = a;
         }
       }
     }

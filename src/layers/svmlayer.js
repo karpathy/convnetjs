@@ -1,6 +1,6 @@
-import Vol from "./convnet_vol.js";
+import * as Layer from "./layer.js";
 
-export class SVMLayer {
+export class SVMLayer extends Layer{
 
   constructor(opt = {}){
     // computed
@@ -21,7 +21,7 @@ export class SVMLayer {
 
     // compute and accumulate gradient wrt weights and bias of this layer
     var x = this.in_act;
-    x.dw = global.zeros(x.w.length); // zero out the gradient of input Vol
+    x.dw = new Float64Array(x.w.length); // zero out the gradient of input Vol
 
     // we're using structured loss here, which means that the score
     // of the ground truth should be higher than the score of any other 
@@ -44,17 +44,17 @@ export class SVMLayer {
   }
 
   getParamsAndGrads() { 
-    return [];
+    return new Float64Array();
   }
 
   toJSON() {
-    var json = {};
-    json.out_depth = this.out_depth;
-    json.out_sx = this.out_sx;
-    json.out_sy = this.out_sy;
-    json.layer_type = this.layer_type;
-    json.num_inputs = this.num_inputs;
-    return json;
+    return {
+      out_depth : this.out_depth,
+      out_sx : this.out_sx,
+      out_sy : this.out_sy,
+      layer_type : this.layer_type,
+      num_inputs : this.num_inputs
+    };
   }
 
   fromJSON(json) {

@@ -1,10 +1,10 @@
-import Vol from "./convnet_vol.js";
+import * as Layer from "./layer.js";
 
-// Implements Sigmoid nnonlinearity elementwise
+// Implements Sigmoid nonlinearity elementwise
 // x -> 1/(1+e^(-x))
 // so the output is between 0 and 1.
 
-export class SigmoidLayer {
+export class SigmoidLayer extends Layer {
 
   constructor(opt = {}){
     // computed
@@ -16,13 +16,14 @@ export class SigmoidLayer {
 
   forward(V, is_training) {
     this.in_act = V;
-    var V2 = V.cloneAndZero();
-    var N = V.w.length;
-    var V2w = V2.w;
-    var Vw = V.w;
-    for(var i=0;i<N;i++) { 
-      V2w[i] = 1.0/(1.0+Math.exp(-Vw[i]));
-    }
+    var V2 = new V.constructor();
+    V2.w = V.w.map((sx) => {
+      return sx.map((sy) => {
+        return sy.map((depth) => {
+          return 1.0/(1.0+Math.exp(-depth));
+        });
+      });
+    });
     this.out_act = V2;
     return this.out_act;
   }
@@ -30,32 +31,37 @@ export class SigmoidLayer {
   backward() {
     var V = this.in_act; // we need to set dw of this
     var V2 = this.out_act;
-    var N = V.w.length;
-    V.dw = global.zeros(N); // zero out gradient wrt data
-    for(var i=0;i<N;i++) {
-      var v2wi = V2.w[i];
-      V.dw[i] =  v2wi * (1.0 - v2wi) * V2.dw[i];
-    }
+    V.dw = V2.w.map((sx, x) => {
+      return sx.map((sy, y) => {
+        return sy.map((depth, d) => {
+          return depth * (1.0 - depth) * V2.dw[x][y][d];
+        });
+      });
+    });
   }
 
   getParamsAndGrads() {
-    return [];
+    return new Float64Array(0);
   }
 
   toJSON() {
-    var json = {};
-    json.out_depth = this.out_depth;
-    json.out_sx = this.out_sx;
-    json.out_sy = this.out_sy;
-    json.layer_type = this.layer_type;
-    return json;
+    return {
+      out_depth : this.out_depth,
+      out_sx : this.out_sx,
+      out_sy : this.out_sy,
+      layer_type : this.layer_type
+    };
   }
 
-  fromJSON(json) {
-    this.out_depth = json.out_depth;
-    this.out_sx = json.out_sx;
-    this.out_sy = json.out_sy;
-    this.layer_type = json.layer_type; 
-  }
+}
 
+export function fromJSON(json) {
+  if(typeof json == 'string'){
+    json = JSON.parse(json);
+  }
+  return new SigmoidLayer({
+    out_depth : json.out_depth,
+    out_sx : json.out_sx,
+    out_sy : json.out_sy
+  });
 }

@@ -9,14 +9,16 @@ export function gaussRandom() {
     return_v = false;
     return v_val; 
   }
-  var u = 2*Math.random()-1;
-  var v = 2*Math.random()-1;
+  const [u, v] = [2*Math.random()-1, 2*Math.random()-1];
   var r = u*u + v*v;
-  if(r == 0 || r > 1) return gaussRandom();
-  var c = Math.sqrt(-2*Math.log(r)/r);
-  v_val = v*c; // cache this
-  return_v = true;
-  return u*c;
+  if(r == 0 || r > 1) {
+    return gaussRandom();
+  } else {
+    var c = Math.sqrt(-2*Math.log(r)/r);
+    v_val = v*c; // cache this
+    return_v = true;
+    return u*c;
+  }
 }
 
 export function randf(a, b) { 
@@ -153,6 +155,9 @@ export function augment(V, crop, dx = randi(0, V.sx - crop), dy = randi(0, V.sy 
 }
 
 export function imageDataToVol(imgdata, convert_grayscale = false){
+
+  var ImageDataVol = new VolType(imgdata.width, imgdata.height, 4);
+
   // prepare the input: get pixels and normalize them
   var p = img_data.data;
   var W = img_data.width;
@@ -195,28 +200,65 @@ export function imageToVol(img, convert_grayscale = false) {
   canvas.width = img.width;
   canvas.height = img.height;
   var ctx = canvas.getContext("2d");
+  ctx.drawImage(img, 0, 0);
+  return imageDataToVol(ctx.getImageData(0, 0, canvas.width, canvas.height), convert_grayscale);
+}
 
-  // due to a Firefox bug
-  try {
-    ctx.drawImage(img, 0, 0);
-  } catch (e) {
-    if (e.name === "NS_ERROR_NOT_AVAILABLE") {
-      // sometimes happens, lets just abort
-      return false;
-    } else {
-      throw e;
+// a window stores _size_ number of values
+// and returns averages. Useful for keeping running
+// track of validation or training accuracy during SGD
+
+export class Window {
+
+  constructor(size = 100, minsize = 20){
+    this.v = [];
+    this.size = typeof(size)==='undefined' ? 100 : size;
+    this.minsize = typeof(minsize)==='undefined' ? 20 : minsize;
+    this.sum = 0;
+  }
+
+  add(x) {
+    this.v.push(x);
+    this.sum += x;
+    if(this.v.length>this.size) {
+      var xold = this.v.shift();
+      this.sum -= xold;
     }
   }
 
-  try {
-    var img_data = ctx.getImageData(0, 0, canvas.width, canvas.height);
-  } catch (e) {
-    if(e.name === 'IndexSizeError') {
-      return false; // not sure what causes this sometimes but okay abort
-    } else {
-      throw e;
-    }
+  get_average() {
+    if(this.v.length < this.minsize) return -1;
+    else return this.sum/this.v.length;
   }
 
-  return imageDataToVol(img_data, convert_grayscale);
+  reset(x) {
+    this.v = [];
+    this.sum = 0;
+  }
+
+}
+
+// returns min, max and indices of an array
+
+export function maxmin(w) {
+  if(w.length === 0) { return {}; } // ... ;s
+
+  var maxv = w[0];
+  var minv = w[0];
+  var maxi = 0;
+  var mini = 0;
+  for(var i=1;i<w.length;i++) {
+    if(w[i] > maxv) { maxv = w[i]; maxi = i; } 
+    if(w[i] < minv) { minv = w[i]; mini = i; } 
+  }
+  return {maxi: maxi, maxv: maxv, mini: mini, minv: minv, dv:maxv-minv};
+}
+
+// returns string representation of float
+// but truncated to length of d digits
+
+export function f2t(x, d) {
+  if(typeof(d)==='undefined') { var d = 5; }
+  var dd = 1.0 * Math.pow(10, d);
+  return '' + Math.floor(x*dd)/dd;
 }
