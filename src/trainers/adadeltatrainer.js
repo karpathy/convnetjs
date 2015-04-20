@@ -2,8 +2,11 @@ import * as Trainer from "./trainer.js";
 
 export default class AdadeltaTrainer extends Trainer {
 	
-	constructor(opts = {}){
-		super(opts);
+	constructor(options = {}){
+		super(options);
+    this.xsum = [];
+    this.ro = options.ro || 0.95; // used in adadelta
+    this.eps = options.eps || 1e-6; // used in adadelta
 	}
 
 	train(x, y){
@@ -25,23 +28,16 @@ export default class AdadeltaTrainer extends Trainer {
       var pglist = this.net.getParamsAndGrads();
 
       // initialize lists for accumulators. Will only be done once on first iteration
-      if(this.gsum.length === 0 && (this.method !== 'sgd' || this.momentum > 0.0)) {
-        // only vanilla sgd doesnt need either lists
-        // momentum needs gsum
-        // adagrad needs gsum
+      if(this.gsum.length === 0) {
         // adadelta needs gsum and xsum
         for(var i=0;i<pglist.length;i++) {
           this.gsum.push(new Float64Array(pglist[i].params.length));
-          if(this.method === 'adadelta') {
-            this.xsum.push(new Float64Array(pglist[i].params.length));
-          } else {
-            this.xsum.push(new Float64Array(0)); // conserve memory
-          }
+          this.xsum.push(new Float64Array(pglist[i].params.length));
         }
       }
 
       // perform an update for all sets of weights
-      for(var i=0;i<pglist.length;i++) {
+      for(var i = 0; i < pglist.length; i++) {
         var pg = pglist[i]; // param, gradient, other options in future (custom learning rate etc)
         var p = pg.params;
         var g = pg.grads;
@@ -64,11 +60,10 @@ export default class AdadeltaTrainer extends Trainer {
           var gsumi = this.gsum[i];
           var xsumi = this.xsum[i];
 		    
-	        // assume adadelta if not sgd or adagrad
-            gsumi[j] = this.ro * gsumi[j] + (1-this.ro) * gij * gij;
-            var dx = - Math.sqrt((xsumi[j] + this.eps)/(gsumi[j] + this.eps)) * gij;
-            xsumi[j] = this.ro * xsumi[j] + (1-this.ro) * dx * dx; // yes, xsum lags behind gsum by 1.
-            p[j] += dx;
+          gsumi[j] = this.ro * gsumi[j] + (1-this.ro) * gij * gij;
+          var dx = - Math.sqrt((xsumi[j] + this.eps)/(gsumi[j] + this.eps)) * gij;
+          xsumi[j] = this.ro * xsumi[j] + (1-this.ro) * dx * dx; // yes, xsum lags behind gsum by 1.
+          p[j] += dx;
           
           g[j] = 0.0; // zero out gradient so that we can begin accumulating anew
         }
