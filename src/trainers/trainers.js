@@ -5,15 +5,15 @@ export class Trainer {
   constructor(net, options = {}){
     this.net = net;
 
-    this.learning_rate = typeof options.learning_rate !== 'undefined' ? options.learning_rate : 0.01;
-    this.l1_decay = typeof options.l1_decay !== 'undefined' ? options.l1_decay : 0.0;
-    this.l2_decay = typeof options.l2_decay !== 'undefined' ? options.l2_decay : 0.0;
-    this.batch_size = typeof options.batch_size !== 'undefined' ? options.batch_size : 1;
-    this.method = typeof options.method !== 'undefined' ? options.method : 'sgd'; // sgd/adagrad/adadelta/windowgrad/netsterov
+    this.learning_rate = options.learning_rate || 0.01;
+    this.l1_decay = options.l1_decay || 0.0;
+    this.l2_decay = options.l2_decay || 0.0;
+    this.batch_size = options.batch_size || 1;
+    this.method = options.method || 'sgd'; // sgd/adagrad/adadelta/windowgrad/netsterov
 
-    this.momentum = typeof options.momentum !== 'undefined' ? options.momentum : 0.9;
-    this.ro = typeof options.ro !== 'undefined' ? options.ro : 0.95; // used in adadelta
-    this.eps = typeof options.eps !== 'undefined' ? options.eps : 1e-6; // used in adadelta
+    this.momentum = options.momentum || 0.9;
+    this.ro = options.ro || 0.95; // used in adadelta
+    this.eps = options.eps || 1e-6; // used in adadelta
 
     this.k = 0; // iteration counter
     this.gsum = []; // last iteration gradients (used for momentum calculations)
@@ -24,16 +24,15 @@ export class Trainer {
 
     var start = new Date().getTime();
     this.net.forward(x, true); // also set the flag that lets the net know we're just training
-    var end = new Date().getTime();
-    var fwd_time = end - start;
+    var fwd_time = (new Date().getTime()) - start;
 
     var start = new Date().getTime();
     var cost_loss = this.net.backward(y);
+    var bwd_time = (new Date().getTime()) - start;
+
     var l2_decay_loss = 0.0;
-    var l1_decay_loss = 0.0;
-    var end = new Date().getTime();
-    var bwd_time = end - start;
-    
+    var l1_decay_loss = 0.0; 
+      
     this.k++;
     if(this.k % this.batch_size === 0) {
 
@@ -46,9 +45,9 @@ export class Trainer {
         // adagrad needs gsum
         // adadelta needs gsum and xsum
         for(var i=0;i<pglist.length;i++) {
-          this.gsum.push(global.zeros(pglist[i].params.length));
+          this.gsum.push(new Float64Array(pglist[i].params.length));
           if(this.method === 'adadelta') {
-            this.xsum.push(global.zeros(pglist[i].params.length));
+            this.xsum.push(new Float64Array(pglist[i].params.length));
           } else {
             this.xsum.push(new Float64Array(0)); // conserve memory
           }
@@ -122,10 +121,15 @@ export class Trainer {
     // in future, TODO: have to completely redo the way loss is done around the network as currently 
     // loss is a bit of a hack. Ideally, user should specify arbitrary number of loss functions on any layer
     // and it should all be computed correctly and automatically. 
-    return {fwd_time: fwd_time, bwd_time: bwd_time, 
-            l2_decay_loss: l2_decay_loss, l1_decay_loss: l1_decay_loss,
-            cost_loss: cost_loss, softmax_loss: cost_loss, 
-            loss: cost_loss + l1_decay_loss + l2_decay_loss}
+    return {
+      fwd_time: fwd_time, 
+      bwd_time: bwd_time, 
+      l2_decay_loss: l2_decay_loss, 
+      l1_decay_loss: l1_decay_loss,
+      cost_loss: cost_loss, 
+      softmax_loss: cost_loss, 
+      loss: cost_loss + l1_decay_loss + l2_decay_loss
+    };
   }
 
 }

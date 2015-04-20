@@ -16,11 +16,14 @@ export class TanhLayer {
 
   forward(V, is_training) {
     this.in_act = V;
-    var V2 = V.cloneAndZero();
-    var N = V.w.length;
-    for(var i=0;i<N;i++) { 
-      V2.w[i] = Math.tanh(V.w[i]);
-    }
+    var V2 = new V.constructor();
+    V2.w = V.x.map((sx) => {
+      return sx.map((sy) => {
+        return sy.map((depth) => {
+          return Math.tanh(depth);
+        });
+      });
+    });
     this.out_act = V2;
     return this.out_act;
   }
@@ -28,12 +31,13 @@ export class TanhLayer {
   backward() {
     var V = this.in_act; // we need to set dw of this
     var V2 = this.out_act;
-    var N = V.w.length;
-    V.dw = global.zeros(N); // zero out gradient wrt data
-    for(var i=0;i<N;i++) {
-      var v2wi = V2.w[i];
-      V.dw[i] = (1.0 - v2wi * v2wi) * V2.dw[i];
-    }
+    V.dw = V2.w.map((sx, x) => {
+      return sx.map((sy, y) => {
+        return sy.map((depth, d) => {
+          return (1.0 - depth * depth) * V2.dw[x][y][d];
+        });
+      });
+    });
   }
 
   getParamsAndGrads() {
@@ -41,19 +45,23 @@ export class TanhLayer {
   }
 
   toJSON() {
-    var json = {};
-    json.out_depth = this.out_depth;
-    json.out_sx = this.out_sx;
-    json.out_sy = this.out_sy;
-    json.layer_type = this.layer_type;
-    return json;
+    return {
+      out_depth : this.out_depth,
+      out_sx : this.out_sx,
+      out_sy : this.out_sy,
+      layer_type : this.layer_type
+    };
   }
 
-  fromJSON(json) {
-    this.out_depth = json.out_depth;
-    this.out_sx = json.out_sx;
-    this.out_sy = json.out_sy;
-    this.layer_type = json.layer_type; 
-  }
+}
 
+export function fromJSON(json) {
+  if(typeof json === 'string'){
+    json = JSON.parse(json);
+  }
+  return new TanhLayer({
+    out_depth : json.out_depth,
+    out_sx : json.out_sx,
+    out_sy : json.out_sy,
+  });
 }

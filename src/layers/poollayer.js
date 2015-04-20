@@ -12,9 +12,9 @@ export default class PoolLayer extends Layer {
     this.in_sy = opt.in_sy;
 
     // optional
-    this.sy = typeof opt.sy !== 'undefined' ? opt.sy : this.sx;
-    this.stride = typeof opt.stride !== 'undefined' ? opt.stride : 2;
-    this.pad = typeof opt.pad !== 'undefined' ? opt.pad : 0; // amount of 0 padding to add around borders of input volume
+    this.sy = opt.sy || this.sx;
+    this.stride = opt.stride || 2;
+    this.pad = opt.pad || 0; // amount of 0 padding to add around borders of input volume
 
     // computed
     this.out_depth = this.in_depth;
@@ -22,8 +22,8 @@ export default class PoolLayer extends Layer {
     this.out_sy = Math.floor((this.in_sy + this.pad * 2 - this.sy) / this.stride + 1);
     this.layer_type = 'pool';
     // store switches for x,y coordinates for where the max comes from, for each output neuron
-    this.switchx = global.zeros(this.out_sx*this.out_sy*this.out_depth);
-    this.switchy = global.zeros(this.out_sx*this.out_sy*this.out_depth);
+    this.switchx = new Float64Array(this.out_sx*this.out_sy*this.out_depth);
+    this.switchy = new Float64Array(this.out_sx*this.out_sy*this.out_depth);
 
   }
 

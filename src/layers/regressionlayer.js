@@ -28,8 +28,7 @@ export class RegressionLayer {
   backward(y) { 
 
     // compute and accumulate gradient wrt weights and bias of this layer
-    var x = this.in_act;
-    x.dw = global.zeros(x.w.length); // zero out the gradient of input Vol
+    var x = new this.in_act.constructor({w:this.in_act.w}); // zero out the gradient of input Vol
     var loss = 0.0;
     if(y instanceof Array || y instanceof Float64Array) {
       for(var i=0;i<this.out_depth;i++) {
@@ -55,25 +54,30 @@ export class RegressionLayer {
   }
 
   getParamsAndGrads() { 
-    return [];
+    return new Float64Array();
   }
 
   toJSON() {
-    var json = {};
-    json.out_depth = this.out_depth;
-    json.out_sx = this.out_sx;
-    json.out_sy = this.out_sy;
-    json.layer_type = this.layer_type;
-    json.num_inputs = this.num_inputs;
-    return json;
+    return {
+      out_depth : this.out_depth,
+      out_sx : this.out_sx,
+      out_sy : this.out_sy,
+      layer_type : this.layer_type,
+      num_inputs : this.num_inputs
+    };
   }
 
-  fromJSON(json) {
-    this.out_depth = json.out_depth;
-    this.out_sx = json.out_sx;
-    this.out_sy = json.out_sy;
-    this.layer_type = json.layer_type;
-    this.num_inputs = json.num_inputs;
-  }
+}
 
+export function fromJSON(json) {
+  if(typeof json == 'string'){
+    json = JSON.parse(json);
+  }
+  return new RegressionLayer({
+    out_depth : json.out_depth,
+    out_sx : json.out_sx,
+    out_sy : json.out_sy,
+    layer_type : json.layer_type,
+    num_inputs : json.num_inputs
+  });
 }

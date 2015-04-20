@@ -14,7 +14,13 @@
 
 Generic class for layers. 
 
-### `ConvLayer`
+#### [`Layer.fromJSON`](./layers/layer.md#fromJSON)
+
+The `fromJSON` 
+
+### [`ConvLayer`](./layers/convlayer.md)
+
+`ConvLayer` extends `Layer` and inplements a ...
 
 ### `DropoutLayer`
 
@@ -38,46 +44,37 @@ Generic class for layers.
 
 ### `TanhLayer`
 
+
 ## Vols
 
-### `Vol`
+### `VolType`
 
-#### `Vol#get`
+`VolType` is a constructor that creates a new Typed Object based on the dimensions for a Vol.
 
-#### `Vol#set`
+#### `VolType#fromJSON`
 
-#### `Vol#add`
+Creates a new Vol of a particular type from a JSON representation.
 
-#### `Vol#getGrad`
+### `%Vol%`
 
-#### `Vol#setGrad`
+A Vol represents a three-dimensional array of 64-bit floats.
 
-#### `Vol#addGrad`
+#### [`%Vol%.sx`](./structures/vol.md#sx)
 
-#### `Vol#cloneAndZero`
+The `sx` property returns the size of the 'width' of the Vol.
 
-#### `Vol#clone`
+#### [`%Vol%.sy`](./structures/vol.md#sy)
 
-Clones a `Vol`.
+The `sy` property returns the size of the 'height' of the Vol.
 
-#### `Vol#addFrom`
+#### [`%Vol%.depth`](./structures/vol.md#depth)
 
-#### `Vol#addFromScaled`
+The `depth` property return the size of the 'depth' of the Vol.
 
-#### `Vol#setConst`
+#### [`%Vol%.w`](./structured/vol.md#w)
 
-#### `Vol#toJSON`
+The `w` property is a three dimensional 64-bit float array.
 
-Creates a JSON representation of a `Vol`.
+#### [`%Vol%.dw`](./structured/vol.md#dw)
 
-### `Vol.fromImage`
-
-Creates a new `Vol` from an `<img>` element. This won't work in a Web Worker or in Node.js as it requires the DOM.
-
-### `Vol.fromImageData`
-
-Creates a new `Vol` from an `ImageData` object, such as from a `<canvas>` element.
-
-### [`Vol.fromJSON`](./)
-
-Creates a new `Vol` from a JSON object or string.
+The `dw` property is a three dimensional 64-bit float array.

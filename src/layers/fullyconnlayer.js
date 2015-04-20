@@ -1,6 +1,7 @@
-import Vol from "./convnet_vol.js";
+import * as VolType from "../structures/vol.js";
+import * as Layer from "./layer.js";
 
-export default class FullyConnLayer {
+export default class FullyConnLayer extends Layer {
 
   constructor(opt = {}){
 
@@ -12,11 +13,11 @@ export default class FullyConnLayer {
     this.in_sy = opt.in_sy;
     
     // optional
-    this.sy = typeof opt.sy !== 'undefined' ? opt.sy : this.sx;
-    this.stride = typeof opt.stride !== 'undefined' ? opt.stride : 1; // stride at which we apply filters to input volume
-    this.pad = typeof opt.pad !== 'undefined' ? opt.pad : 0; // amount of 0 padding to add around borders of input volume
-    this.l1_decay_mul = typeof opt.l1_decay_mul !== 'undefined' ? opt.l1_decay_mul : 0.0;
-    this.l2_decay_mul = typeof opt.l2_decay_mul !== 'undefined' ? opt.l2_decay_mul : 1.0;
+    this.sy = opt.sy || this.sx;
+    this.stride = opt.stride || 1; // stride at which we apply filters to input volume
+    this.pad = opt.pad || 0; // amount of 0 padding to add around borders of input volume
+    this.l1_decay_mul = opt.l1_decay_mul || 0.0;
+    this.l2_decay_mul = opt.l2_decay_mul || 1.0;
 
     // computed
     // note we are doing floor, so if the strided convolution of the filter doesnt fit into the input
@@ -27,9 +28,11 @@ export default class FullyConnLayer {
     this.layer_type = 'conv';
 
     // initializations
-    var bias = typeof opt.bias_pref !== 'undefined' ? opt.bias_pref : 0.0;
-    this.filters = [];
-    for(var i=0;i<this.out_depth;i++) { this.filters.push(new Vol(this.sx, this.sy, this.in_depth)); }
+    var bias = opt.bias_pref || 0.0;
+    this.filters = new ;
+    for(var i=0;i<this.out_depth;i++) { 
+      this.filters.push(new Vol(this.sx, this.sy, this.in_depth)); 
+    }
     this.biases = new Vol(1, 1, this.out_depth, bias);
 
   }
@@ -65,41 +68,40 @@ export default class FullyConnLayer {
       }
       this.biases.dw[i] += chain_grad;
     }
+    
   }
 
   getParamsAndGrads() {
-    var response = [];
+    var response = new Array(this.out_depth + 1);
     for(var i=0;i<this.out_depth;i++) {
-      response.push({params: this.filters[i].w, grads: this.filters[i].dw, l1_decay_mul: this.l1_decay_mul, l2_decay_mul: this.l2_decay_mul});
+      response[i] = {
+        params: this.filters[i].w, 
+        grads: this.filters[i].dw, 
+        l1_decay_mul: this.l1_decay_mul, 
+        l2_decay_mul: this.l2_decay_mul
+      };
     }
-    response.push({params: this.biases.w, grads: this.biases.dw, l1_decay_mul: 0.0, l2_decay_mul: 0.0});
+    response[this.out_depth] = {
+      params: this.biases.w, 
+      grads: this.biases.dw, 
+      l1_decay_mul: 0.0, 
+      l2_decay_mul: 0.0
+    };
     return response;
   }
 
   toJSON(){
-    var json = {};
-    json.out_depth = this.out_depth;
-    json.out_sx = this.out_sx;
-    json.out_sy = this.out_sy;
-    json.layer_type = this.layer_type;
-    json.num_inputs = this.num_inputs;
-    json.l1_decay_mul = this.l1_decay_mul;
-    json.l2_decay_mul = this.l2_decay_mul;
-    json.filters = this.filters.mapPar(x => x.toJSON());
-    json.biases = this.biases.toJSON();
-    return json;
-  }
-
-  fromJSON(json){
-    this.out_depth = json.out_depth;
-    this.out_sx = json.out_sx;
-    this.out_sy = json.out_sy;
-    this.layer_type = json.layer_type;
-    this.num_inputs = json.num_inputs;
-    this.l1_decay_mul = typeof json.l1_decay_mul !== 'undefined' ? json.l1_decay_mul : 1.0;
-    this.l2_decay_mul = typeof json.l2_decay_mul !== 'undefined' ? json.l2_decay_mul : 1.0;
-    this.filters = json.filters.mapPar(x => Vol.fromJSON(x));
-    this.biases = Vol.fromJSON(json.biases);
+    return {
+      out_depth : this.out_depth,
+      out_sx : this.out_sx,
+      out_sy : this.out_sy,
+      layer_type : this.layer_type,
+      num_inputs : this.num_inputs,
+      l1_decay_mul : this.l1_decay_mul,
+      l2_decay_mul : this.l2_decay_mul,
+      filters : this.filters.mapPar(x => x.toJSON()),
+      biases : this.biases.toJSON()
+    };
   }
 
 }
@@ -108,5 +110,15 @@ export function fromJSON(json){
   if(typeof json === 'string'){
     json = JSON.parse(json);
   }
-  return new FullyConnLayer(json);
+  return new FullyConnLayer({
+    out_depth : json.out_depth,
+    out_sx : json.out_sx,
+    out_sy : json.out_sy,
+    layer_type : json.layer_type,
+    num_inputs : json.num_inputs,
+    l1_decay_mul : json.l1_decay_mul,
+    l2_decay_mul : json.l2_decay_mul,
+    filters : json.filters.mapPar(x => VolType.fromJSON(x)),
+    biases : VolType.fromJSON(json.biases)
+  });
 }

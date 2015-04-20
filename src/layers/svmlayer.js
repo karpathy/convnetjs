@@ -30,7 +30,9 @@ export class SVMLayer extends Layer{
     var margin = 1.0;
     var loss = 0.0;
     for(var i=0;i<this.out_depth;i++) {
-      if(y === i) { continue; }
+      if(y === i) { 
+        continue; 
+      }
       var ydiff = -yscore + x.w[i] + margin;
       if(ydiff > 0) {
         // violating dimension, apply loss

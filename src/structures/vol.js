@@ -15,6 +15,22 @@ export default function VolType(sx = 1, sy = 1, depth = 1){
   VolType.prototype.sx = sx;
   VolType.prototype.sy = sy;
   VolType.prototype.depth = depth;
+  Voltype.prototype.toJSON = function toJSON(){
+  	return {
+  		sx : this.sx,
+  		sy : this.sy,
+  		depth : this.depth,
+  		w : this.w,
+  		dw : this.dw
+  	}
+  };
 
   return VolType;
+}
+
+export function fromJSON(json){
+	if(typeof json === 'string'){
+		json = JSON.parse(json);
+	}
+	return new (new VolType(json.sx, json.sy, json.depth))({w:json.w, dw:json.dw});
 }

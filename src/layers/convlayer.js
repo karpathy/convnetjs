@@ -1,6 +1,7 @@
-import Vol from "./convnet_vol.js";
+import * as VolType from "../structures/vol.js";
+import * as Layer from "./layer.js";
 
-export default class ConvLayer {
+export default class ConvLayer extends Layer{
 
   constructor(opt = {}){
 
@@ -12,11 +13,11 @@ export default class ConvLayer {
     this.in_sy = opt.in_sy;
     
     // optional
-    this.sy = typeof opt.sy !== 'undefined' ? opt.sy : this.sx;
-    this.stride = typeof opt.stride !== 'undefined' ? opt.stride : 1; // stride at which we apply filters to input volume
-    this.pad = typeof opt.pad !== 'undefined' ? opt.pad : 0; // amount of 0 padding to add around borders of input volume
-    this.l1_decay_mul = typeof opt.l1_decay_mul !== 'undefined' ? opt.l1_decay_mul : 0.0;
-    this.l2_decay_mul = typeof opt.l2_decay_mul !== 'undefined' ? opt.l2_decay_mul : 1.0;
+    this.sy = opt.sy || this.sx;
+    this.stride = opt.stride || 1; // stride at which we apply filters to input volume
+    this.pad = opt.pad || 0; // amount of 0 padding to add around borders of input volume
+    this.l1_decay_mul = opt.l1_decay_mul || 0.0;
+    this.l2_decay_mul = opt.l2_decay_mul || 1.0;
 
     // computed
     // note we are doing floor, so if the strided convolution of the filter doesnt fit into the input
@@ -40,7 +41,7 @@ export default class ConvLayer {
     // optimized code by @mdda that achieves 2x speedup over previous version
 
     this.in_act = V;
-    var A = new Vol(this.out_sx |0, this.out_sy |0, this.out_depth |0, 0.0);
+    var A = new (new VolType(this.out_sx | 0, this.out_sy | 0, this.out_depth | 0));
     
     var V_sx = V.sx |0;
     var V_sy = V.sy |0;
@@ -82,26 +83,26 @@ export default class ConvLayer {
     var V = this.in_act;
     V.dw = global.zeros(V.w.length); // zero out gradient wrt bottom data, we're about to fill it
 
-    var V_sx = V.sx |0;
-    var V_sy = V.sy |0;
-    var xy_stride = this.stride |0;
+    var V_sx = V.sx | 0;
+    var V_sy = V.sy | 0;
+    var xy_stride = this.stride | 0;
 
     for(var d=0;d<this.out_depth;d++) {
       var f = this.filters[d];
-      var x = -this.pad |0;
-      var y = -this.pad |0;
+      var x = -this.pad | 0;
+      var y = -this.pad | 0;
       for(var ay=0; ay<this.out_sy; y+=xy_stride,ay++) {  // xy_stride
-        x = -this.pad |0;
+        x = -this.pad | 0;
         for(var ax=0; ax<this.out_sx; x+=xy_stride,ax++) {  // xy_stride
 
           // convolve centered at this particular location
-          var chain_grad = this.out_act.get_grad(ax,ay,d); // gradient from above, from chain rule
-          for(var fy=0;fy<f.sy;fy++) {
-            var oy = y+fy; // coordinates in the original input array coordinates
-            for(var fx=0;fx<f.sx;fx++) {
-              var ox = x+fx;
-              if(oy>=0 && oy<V_sy && ox>=0 && ox<V_sx) {
-                for(var fd=0;fd<f.depth;fd++) {
+          var chain_grad = this.out_act.dw[ax][ay][d]; // gradient from above, from chain rule
+          for(var fy = 0; fy < f.sy; fy++) {
+            var oy = y + fy; // coordinates in the original input array coordinates
+            for(var fx = 0; fx < f.sx; fx++) {
+              var ox = x + fx;
+              if(oy >= 0 && oy < V_sy && ox >= 0 && ox < V_sx) {
+                for(var fd = 0; fd < f.depth; fd++) {
                   // avoid function call overhead (x2) for efficiency, compromise modularity :(
                   var ix1 = ((V_sx * oy)+ox)*V.depth+fd;
                   var ix2 = ((f.sx * fy)+fx)*f.depth+fd;
@@ -118,7 +119,7 @@ export default class ConvLayer {
   }
 
   getParamsAndGrads() {
-    var response = [];
+    var response = new Array(this.out_depth + 1);
     for(var i=0;i<this.out_depth;i++) {
       response.push({params: this.filters[i].w, grads: this.filters[i].dw, l2_decay_mul: this.l2_decay_mul, l1_decay_mul: this.l1_decay_mul});
     }
@@ -127,43 +128,42 @@ export default class ConvLayer {
   }
 
   toJSON() {
-    var json = {};
-    json.sx = this.sx; // filter size in x, y dims
-    json.sy = this.sy;
-    json.stride = this.stride;
-    json.in_depth = this.in_depth;
-    json.out_depth = this.out_depth;
-    json.out_sx = this.out_sx;
-    json.out_sy = this.out_sy;
-    json.layer_type = this.layer_type;
-    json.l1_decay_mul = this.l1_decay_mul;
-    json.l2_decay_mul = this.l2_decay_mul;
-    json.pad = this.pad;
-    json.filters = this.filters.mapPar(x => x.toJSON());
-    json.biases = this.biases.toJSON();
-    return json;
+    return {
+      sx : this.sx, // filter size in x, y dims
+      sy : this.sy,
+      stride : this.stride,
+      in_depth : this.in_depth,
+      out_depth : this.out_depth,
+      out_sx : this.out_sx,
+      out_sy : this.out_sy,
+      layer_type : this.layer_type,
+      l1_decay_mul : this.l1_decay_mul,
+      l2_decay_mul : this.l2_decay_mul,
+      pad : this.pad,
+      filters : this.filters.mapPar(x => x.toJSON()),
+      biases : this.biases.toJSON()
+    };
   }
 
 }
 
 export function fromJSON(json) {
-    this.out_depth = json.out_depth;
-    this.out_sx = json.out_sx;
-    this.out_sy = json.out_sy;
-    this.layer_type = json.layer_type;
-    this.sx = json.sx; // filter size in x, y dims
-    this.sy = json.sy;
-    this.stride = json.stride;
-    this.in_depth = json.in_depth; // depth of input volume
-    this.filters = [];
-    this.l1_decay_mul = typeof json.l1_decay_mul !== 'undefined' ? json.l1_decay_mul : 1.0;
-    this.l2_decay_mul = typeof json.l2_decay_mul !== 'undefined' ? json.l2_decay_mul : 1.0;
-    this.pad = typeof json.pad !== 'undefined' ? json.pad : 0;
-    this.filters = json.filters.mapPar(x => {
-      let v = new Vol(0,0,0,0);
-      v.fromJSON(x);
-      return v;
-    });
-    this.biases = new Vol(0,0,0,0);
-    this.biases.fromJSON(json.biases);
+  if(typeof json === 'string'){
+    json = JSON.parse(json);
   }
+  return new ConvLayer({
+    out_depth : json.out_depth,
+    out_sx : json.out_sx,
+    out_sy : json.out_sy,
+    layer_type : json.layer_type,
+    sx : json.sx, // filter size in x, y dims
+    sy : json.sy,
+    stride : json.stride,
+    in_depth : json.in_depth, // depth of input volume
+    l1_decay_mul : json.l1_decay_mul,
+    l2_decay_mul : json.l2_decay_mul,
+    pad : json.pad,
+    filters : json.filters.mapPar(x => VolType.fromJSON(x)),
+    biases : VolType.fromJSON(json.biases)
+  });
+}

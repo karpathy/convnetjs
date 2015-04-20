@@ -17,13 +17,13 @@ export class MaxoutLayer {
     this.out_depth = Math.floor(opt.in_depth / this.group_size);
     this.layer_type = 'maxout';
 
-    this.switches = global.zeros(this.out_sx*this.out_sy*this.out_depth); // useful for backprop
+    this.switches = new Float64Array(this.out_sx*this.out_sy*this.out_depth); // useful for backprop
   }
 
   forward(V, is_training) {
     this.in_act = V;
-    var N = this.out_depth; 
-    var V2 = new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0);
+    var N = this.out_depth;
+    var V2 = new V.constructor();
 
     // optimization branch. If we're operating on 1D arrays we dont have
     // to worry about keeping track of x,y,d coordinates inside
@@ -49,23 +49,23 @@ export class MaxoutLayer {
         for(var y=0;y<V.sy;y++) {
           for(var i=0;i<N;i++) {
             var ix = i * this.group_size;
-            var a = V.get(x, y, ix);
+            var a = V.w[x][y][ix];
             var ai = 0;
             for(var j=1;j<this.group_size;j++) {
-              var a2 = V.get(x, y, ix+j);
+              var a2 = V.w[x][y][ix+j];
               if(a2 > a) {
                 a = a2;
                 ai = j;
               }
             }
-            V2.set(x,y,i,a);
+            V2.w[x][y][i] = a;
             this.switches[n] = ix + ai;
             n++;
           }
         }
       }
-
     }
+
     this.out_act = V2;
     return this.out_act;
   }
