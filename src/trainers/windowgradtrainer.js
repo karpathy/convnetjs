@@ -1,28 +1,14 @@
-import Vol from "./convnet_vol.js";
+import * as Trainer from "./trainer.js";
 
-export class Trainer {
+export default class WindowgradTrainer extends Trainer {
+	
+	constructor(opts = {}){
+		super(opts);
+	}
 
-  constructor(net, options = {}){
-    this.net = net;
+	train(x, y){
 
-    this.learning_rate = options.learning_rate || 0.01;
-    this.l1_decay = options.l1_decay || 0.0;
-    this.l2_decay = options.l2_decay || 0.0;
-    this.batch_size = options.batch_size || 1;
-    this.method = options.method || 'sgd'; // sgd/adagrad/adadelta/windowgrad/netsterov
-
-    this.momentum = options.momentum || 0.9;
-    this.ro = options.ro || 0.95; // used in adadelta
-    this.eps = options.eps || 1e-6; // used in adadelta
-
-    this.k = 0; // iteration counter
-    this.gsum = []; // last iteration gradients (used for momentum calculations)
-    this.xsum = []; // used in adadelta
-  }
-
-  train(x, y) {
-
-    var start = new Date().getTime();
+		var start = new Date().getTime();
     this.net.forward(x, true); // also set the flag that lets the net know we're just training
     var fwd_time = (new Date().getTime()) - start;
 
@@ -61,8 +47,8 @@ export class Trainer {
         var g = pg.grads;
 
         // learning rate for some parameters.
-        var l2_decay_mul = typeof pg.l2_decay_mul !== 'undefined' ? pg.l2_decay_mul : 1.0;
-        var l1_decay_mul = typeof pg.l1_decay_mul !== 'undefined' ? pg.l1_decay_mul : 1.0;
+        var l2_decay_mul = pg.l2_decay_mul || 1.0;
+        var l1_decay_mul = pg.l1_decay_mul || 1.0;
         var l2_decay = this.l2_decay * l2_decay_mul;
         var l1_decay = this.l1_decay * l1_decay_mul;
 
@@ -77,41 +63,14 @@ export class Trainer {
 
           var gsumi = this.gsum[i];
           var xsumi = this.xsum[i];
-          if(this.method === 'adagrad') {
-            // adagrad update
-            gsumi[j] = gsumi[j] + gij * gij;
-            var dx = - this.learning_rate / Math.sqrt(gsumi[j] + this.eps) * gij;
-            p[j] += dx;
-          } else if(this.method === 'windowgrad') {
-            // this is adagrad but with a moving window weighted average
+		    
+	        // this is adagrad but with a moving window weighted average
             // so the gradient is not accumulated over the entire history of the run. 
             // it's also referred to as Idea #1 in Zeiler paper on Adadelta. Seems reasonable to me!
             gsumi[j] = this.ro * gsumi[j] + (1-this.ro) * gij * gij;
             var dx = - this.learning_rate / Math.sqrt(gsumi[j] + this.eps) * gij; // eps added for better conditioning
             p[j] += dx;
-          } else if(this.method === 'adadelta') {
-            // assume adadelta if not sgd or adagrad
-            gsumi[j] = this.ro * gsumi[j] + (1-this.ro) * gij * gij;
-            var dx = - Math.sqrt((xsumi[j] + this.eps)/(gsumi[j] + this.eps)) * gij;
-            xsumi[j] = this.ro * xsumi[j] + (1-this.ro) * dx * dx; // yes, xsum lags behind gsum by 1.
-            p[j] += dx;
-          } else if(this.method === 'nesterov') {
-            var dx = gsumi[j];
-            gsumi[j] = gsumi[j] * this.momentum + this.learning_rate * gij;
-              dx = this.momentum * dx - (1.0 + this.momentum) * gsumi[j];
-              p[j] += dx;
-          } else {
-            // assume SGD
-            if(this.momentum > 0.0) {
-              // momentum update
-              var dx = this.momentum * gsumi[j] - this.learning_rate * gij; // step
-              gsumi[j] = dx; // back this up for next iteration of momentum
-              p[j] += dx; // apply corrected gradient
-            } else {
-              // vanilla sgd
-              p[j] +=  - this.learning_rate * gij;
-            }
-          }
+          
           g[j] = 0.0; // zero out gradient so that we can begin accumulating anew
         }
       }
@@ -130,14 +89,7 @@ export class Trainer {
       softmax_loss: cost_loss, 
       loss: cost_loss + l1_decay_loss + l2_decay_loss
     };
-  }
 
-}
-
-export class SGDTrainer extends Trainer {
-
-  constructor(net, opt = {}){
-    super(net, opt);
-  }
+	}
 
 }
