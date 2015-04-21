@@ -4,6 +4,7 @@ import * as Layer from "./layer.js";
 export default class FullyConnLayer extends Layer {
 
   constructor(opt = {}){
+    super(opt);
 
     // required
     this.out_depth = opt.filters;

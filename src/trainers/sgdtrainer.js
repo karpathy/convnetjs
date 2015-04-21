@@ -8,11 +8,11 @@ export default class SGDTrainer extends Trainer {
 
 	train(x, y){
 
-		var start = new Date().getTime();
+		var start_1 = new Date().getTime();
     this.net.forward(x, true); // also set the flag that lets the net know we're just training
     var fwd_time = (new Date().getTime()) - start;
 
-    var start = new Date().getTime();
+    var start_2 = new Date().getTime();
     var cost_loss = this.net.backward(y);
     var bwd_time = (new Date().getTime()) - start;
 

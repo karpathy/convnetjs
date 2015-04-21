@@ -3,8 +3,7 @@
 // width (sx), height (sy), and depth (depth).
 // it is used to hold data for all filters, all volumes,
 // all weights, and also stores all gradients w.r.t. 
-// the data. c is optionally a value to initialize the volume
-// with. If c is missing, fills the Vol with random numbers.
+// the data. 
 
 export default function VolType(sx = 1, sy = 1, depth = 1){
   let VolType = new TypedObject.StructType({

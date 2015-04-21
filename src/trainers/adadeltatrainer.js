@@ -11,11 +11,11 @@ export default class AdadeltaTrainer extends Trainer {
 
 	train(x, y){
 
-		var start = new Date().getTime();
+		var start_1 = new Date().getTime();
     this.net.forward(x, true); // also set the flag that lets the net know we're just training
     var fwd_time = (new Date().getTime()) - start;
 
-    var start = new Date().getTime();
+    var start_2 = new Date().getTime();
     var cost_loss = this.net.backward(y);
     var bwd_time = (new Date().getTime()) - start;
 
@@ -30,38 +30,38 @@ export default class AdadeltaTrainer extends Trainer {
       // initialize lists for accumulators. Will only be done once on first iteration
       if(this.gsum.length === 0) {
         // adadelta needs gsum and xsum
-        for(var i=0;i<pglist.length;i++) {
+        for(var i = 0; i < pglist.length; i++) {
           this.gsum.push(new Float64Array(pglist[i].params.length));
           this.xsum.push(new Float64Array(pglist[i].params.length));
         }
       }
 
+      let pglen = (pglist.length|0);
+
       // perform an update for all sets of weights
-      for(var i = 0; i < pglist.length; i++) {
-        var pg = pglist[i]; // param, gradient, other options in future (custom learning rate etc)
-        var p = pg.params;
-        var g = pg.grads;
+      for(var i = 0; i < pglen; i++) {
+        let {p, g, ...pg} = pglist[i]; // param, gradient, other options in future (custom learning rate etc)
 
         // learning rate for some parameters.
-        var l2_decay_mul = pg.l2_decay_mul || 1.0;
-        var l1_decay_mul = pg.l1_decay_mul || 1.0;
-        var l2_decay = this.l2_decay * l2_decay_mul;
-        var l1_decay = this.l1_decay * l1_decay_mul;
+        let l2_decay = this.l2_decay * (pg.l2_decay_mul || 1.0);
+        let l1_decay = this.l1_decay * (pg.l1_decay_mul || 1.0);
 
-        var plen = p.length;
-        for(var j=0;j<plen;j++) {
-          l2_decay_loss += l2_decay*p[j]*p[j]/2; // accumulate weight decay loss
-          l1_decay_loss += l1_decay*Math.abs(p[j]);
-          var l1grad = l1_decay * (p[j] > 0 ? 1 : -1);
-          var l2grad = l2_decay * (p[j]);
+        let plen = (p.length|0);
 
-          var gij = (l2grad + l1grad + g[j]) / this.batch_size; // raw batch gradient
+        for(var j = 0; j < plen; j++) {
 
-          var gsumi = this.gsum[i];
-          var xsumi = this.xsum[i];
+          l2_decay_loss += +(l2_decay*p[j]*p[j]/2); // accumulate weight decay loss
+          l1_decay_loss += +(l1_decay*Math.abs(p[j]));
+          let l1grad = l1_decay * (p[j] > 0 ? 1 : -1);
+          let l2grad = l2_decay * (p[j]);
+
+          let gij = (l2grad + l1grad + g[j]) / this.batch_size; // raw batch gradient
+
+          let gsumi = this.gsum[i];
+          let xsumi = this.xsum[i];
 		    
           gsumi[j] = this.ro * gsumi[j] + (1-this.ro) * gij * gij;
-          var dx = - Math.sqrt((xsumi[j] + this.eps)/(gsumi[j] + this.eps)) * gij;
+          let dx = - Math.sqrt((xsumi[j] + this.eps)/(gsumi[j] + this.eps)) * gij;
           xsumi[j] = this.ro * xsumi[j] + (1-this.ro) * dx * dx; // yes, xsum lags behind gsum by 1.
           p[j] += dx;
           

@@ -20,11 +20,15 @@ The `fromJSON`
 
 ### [`ConvLayer`](./layers/convlayer.md)
 
-`ConvLayer` extends `Layer` and inplements a ...
+`ConvLayer` extends `Layer` and implements a ...
 
 ### `DropoutLayer`
 
+`DropoutLayer` extends `Layer` and implements a
+
 ### `FullyConnLayer`
+
+`FullyConnLayer` extends `Layer` and implements a 
 
 ### `InputLayer`
 
@@ -45,7 +49,7 @@ The `fromJSON`
 ### `TanhLayer`
 
 
-## Vols
+## Structures
 
 ### `VolType`
 

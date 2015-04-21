@@ -1,35 +1,45 @@
 import * as Layer from "./layer.js";
+import * as Vol from "../structures/vol.js";
 
 export default class DropoutLayer extends Layer {
 
   constructor(opt = {}){
-    super();
+    super(opt);
     // computed
     this.out_sx = opt.in_sx;
     this.out_sy = opt.in_sy;
     this.out_depth = opt.in_depth;
     this.layer_type = 'dropout';
-    this.drop_prob = typeof opt.drop_prob !== 'undefined' ? opt.drop_prob : 0.5;
+    this.drop_prob = opt.drop_prob || 0.5;
     this.dropped = new Float64Array(this.out_sx*this.out_sy*this.out_depth);
   }
 
   forward(V, is_training = false) {
     this.in_act = V;
-    let V2 = V.clone();
-    const N = V.w.length;
+    let V2 = new V.constructor();
+    const [N0, N1, N2] = [V.w.length, V.w[0].length, V.w[0][0].length];
     if(is_training) {
       // do dropout
-      for(var i=0;i<N;i++) {
-        if(Math.random()<this.drop_prob) { 
-          V2.w[i]=0; this.dropped[i] = true; // drop! 
-        } else {
-          this.dropped[i] = false;
+      for(var x = 0; x < N0; x++) {
+        for(var y = 0; y < N1; y++) {
+          for(var d = 0; d < N2; d++) {
+            if(Math.random() < this.drop_prob) { 
+              V2.w[x][y][d] = 0; 
+              this.dropped[i] = true; // drop! 
+            } else {
+              this.dropped[i] = false;
+            }
+          }
         }
       }
     } else {
       // scale the activations during prediction
-      for(var i=0;i<N;i++) { 
-        V2.w[i]*=this.drop_prob; 
+      for(var x = 0; x < N0; x++) {
+        for(var y = 0; y < N1; y++) {
+          for(var d = 0; d < N2; d++) {
+            V2.w[x][y][d] *= +(this.drop_prob);
+          }
+        }
       }
     }
     this.out_act = V2;
@@ -39,11 +49,16 @@ export default class DropoutLayer extends Layer {
   backward() {
     let V = this.in_act; // we need to set dw of this
     let chain_grad = this.out_act;
-    const N = V.w.length;
-    V.dw = new Float64Array(N); // zero out gradient wrt data
-    for(var i=0;i<N;i++) {
-      if(!(this.dropped[i])) { 
-        V.dw[i] = chain_grad.dw[i]; // copy over the gradient
+    const [N0, N1, N2] = [V.w.length, V.w[0].length, V.w[0][0].length];
+    for(var x = 0; x < N0; x++) {
+      for(var y = 0; y < N1; y++) {
+        for(var d = 0; d < N2; d++) {
+          if(!(this.dropped[i])) { 
+            V.dw[x][y][d] = chain_grad.dw[x][y][d]; // copy over the gradient
+          }else{
+            V.dw[x][y][d] = 0;
+          }
+        }
       }
     }
   }
