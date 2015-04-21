@@ -21,6 +21,10 @@
 		"browserify" : "*"
 	},
 
+	"scripts" : {
+		"test" : "./test/index.js"
+	},
+
 	"license" : "MIT",
 
 	"keywords": [

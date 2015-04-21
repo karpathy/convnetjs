@@ -1,73 +1,98 @@
 # ConvNetJS Documentation
 
-## Nets
+## [Nets](./nets/contents.md)
 
-### `MagicNet`
+### [`MagicNet`](./nets/magicnet.md)
 
-### `Net`
+The `MagicNet` class 
 
-### `Brain`
+### [`Net`](./nets/net.md)
 
-## Layers
+A `Net` is essentially a set of layers. Passing a `Vol` forward through the `Net` passes it through each of the `Net`'s layers.
 
-### `Layer`
+### [`Brain`](./nets/brain.md)
 
-Generic class for layers. 
+A `Brain` is a 
+
+## [Layers](./layers/contents.md)
+
+A neural network is composed of a series of layers.
+
+### [`Layer`](./layers/layer.md)
+
+`Layer` is a generic class for layers. All layers extend from this class.
 
 #### [`Layer.fromJSON`](./layers/layer.md#fromJSON)
 
-The `fromJSON` 
+The `fromJSON` method creates a new `Layer` from a JSON serialisation of a layer.
 
 ### [`ConvLayer`](./layers/convlayer.md)
 
-`ConvLayer` extends `Layer` and implements a ...
+`ConvLayer` extends `Layer` and implements a [Convolutional layer](https://en.wikipedia.org/wiki/Convolutional_neural_network#Convolutional_layer).
 
-### `DropoutLayer`
+### [`DropoutLayer`](./layers/dropoutlayer.md)
 
-`DropoutLayer` extends `Layer` and implements a
+`DropoutLayer` extends `Layer` and implements a [Dropout layer](https://en.wikipedia.org/wiki/Convolutional_neural_network#Dropout_.22layer.22). 
 
-### `FullyConnLayer`
+### [`FullyConnLayer`](./layers/fullyconnlayer.md)
 
-`FullyConnLayer` extends `Layer` and implements a 
+`FullyConnLayer` extends `Layer` and implements a Fully Connected layer.
 
-### `InputLayer`
+### [`InputLayer`](./layers/inputlayer.md)
 
-### `MaxoutLayer`
+`InputLayer` extends `Layer` and implements a dummy layer that declares the size of the input Vols to a network.
 
-### `PoolLayer`
+### [`MaxoutLayer`](./layers/maxoutlayer.md)
 
-### `RegressionLayer`
+`MaxoutLayer` extends `Layer` and implements a []()
 
-### `ReluLayer`
+### [`PoolLayer`](./layers/poollayer.md)
 
-### `SigmoidLayer`
+`PoolLayer` extends `Layer` and implements a [pooling layer](https://en.wikipedia.org/wiki/Convolutional_neural_network#Pooling_layer).
 
-### `SoftMaxLayer`
+### [`RegressionLayer`](./layers/regressionlayer.md)
 
-### `SVMLayer`
+`RegressionLayer` extends `Layer` and implements a []().
 
-### `TanhLayer`
+### [`ReluLayer`](./layers/relulayer.md)
 
+`ReluLayer` extends `Layer` and implements a [rectified linear units layer](https://en.wikipedia.org/wiki/Convolutional_neural_network#ReLU_layer).
 
-## Structures
+### [`SigmoidLayer`](./layers/sigmoidlayer.md)
 
-### `VolType`
+`SigmoidLayer` extends `Layer` and implements a 
+
+### [`SoftMaxLayer`](./softmaxlayer.md)
+
+`SoftMaxLayer` extends `Layer`.
+
+### [`SVMLayer`](./svmlayer.md)
+
+`SVMLayer` extends `Layer`.
+
+### [`TanhLayer`](./layers/tanhlayer.md)
+
+`TanhLayer` extends `Layer`. 
+
+## [Structures](./structures/contents.md)
+
+### [`VolType`](./structures/voltype.md)
 
 `VolType` is a constructor that creates a new Typed Object based on the dimensions for a Vol.
 
-#### `VolType#fromJSON`
+#### [`VolType#fromJSON`](./structures/voltype.md#voltypefromjson)
 
 Creates a new Vol of a particular type from a JSON representation.
 
-### `%Vol%`
+### [`%Vol%`](./structured/vol.md)
 
 A Vol represents a three-dimensional array of 64-bit floats.
 
-#### [`%Vol%.sx`](./structures/vol.md#sx)
+#### [`%Vol%.sx`](./structures/vol.md#volsx)
 
 The `sx` property returns the size of the 'width' of the Vol.
 
-#### [`%Vol%.sy`](./structures/vol.md#sy)
+#### [`%Vol%.sy`](./structures/vol.md#volsy)
 
 The `sy` property returns the size of the 'height' of the Vol.
 

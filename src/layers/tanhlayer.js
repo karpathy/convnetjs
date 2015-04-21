@@ -1,10 +1,10 @@
-import Vol from "./convnet_vol.js";
+import * as Layer from "./layer.js"
 
 // Implements Tanh nnonlinearity elementwise
 // x -> tanh(x) 
 // so the output is between -1 and 1.
 
-export class TanhLayer {
+export class TanhLayer extends {
 
   constructor(opt = {}){
     // computed
@@ -17,27 +17,29 @@ export class TanhLayer {
   forward(V, is_training) {
     this.in_act = V;
     var V2 = new V.constructor();
-    V2.w = V.x.map((sx) => {
-      return sx.map((sy) => {
-        return sy.map((depth) => {
-          return Math.tanh(depth);
-        });
-      });
-    });
+    let [N0, N1, N2] = [V.w.length, V.w[0].length, V.w[0][0].length]
+    
+    for(let x = 0; x < N0; x++){
+      for(let y = 0; y < N1; y++){
+        for(let d = 0; d < N2; d++){
+          V2.w[x][y][d] = +(Math.tanh(V.w[x][y][d]));
+        }
+      }
+    }
+
     this.out_act = V2;
     return this.out_act;
   }
 
   backward() {
-    var V = this.in_act; // we need to set dw of this
-    var V2 = this.out_act;
-    V.dw = V2.w.map((sx, x) => {
-      return sx.map((sy, y) => {
-        return sy.map((depth, d) => {
-          return (1.0 - depth * depth) * V2.dw[x][y][d];
-        });
-      });
-    });
+    let [N0, N1, N2] = [this.out_act.w.length, this.out_act.w[0].length, this.out_act.w[0][0].length]
+    for(let x = 0; x < N0; x++){
+      for(let y = 0; y < N1; y++){
+        for(let d = 0; d < N2; d++){
+          this.in_act.dw[x][y][d] = +((1.0 - depth * depth) * this.out_act.dw[x][y][d]);
+        }
+      }
+    }
   }
 
   getParamsAndGrads() {
