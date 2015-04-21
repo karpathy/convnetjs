@@ -32,11 +32,7 @@ export default class NesterovTrainer extends Trainer {
         // adadelta needs gsum and xsum
         for(var i=0;i<pglist.length;i++) {
           this.gsum.push(new Float64Array(pglist[i].params.length));
-          if(this.method === 'adadelta') {
-            this.xsum.push(new Float64Array(pglist[i].params.length));
-          } else {
-            this.xsum.push(new Float64Array(0)); // conserve memory
-          }
+          this.xsum.push(new Float64Array(pglist[i].params.length));
         }
       }
 
@@ -65,9 +61,9 @@ export default class NesterovTrainer extends Trainer {
           var xsumi = this.xsum[i];
 		    
 	        var dx = gsumi[j];
-            gsumi[j] = gsumi[j] * this.momentum + this.learning_rate * gij;
-              dx = this.momentum * dx - (1.0 + this.momentum) * gsumi[j];
-              p[j] += dx;
+          gsumi[j] = gsumi[j] * this.momentum + this.learning_rate * gij;
+          dx = this.momentum * dx - (1.0 + this.momentum) * gsumi[j];
+          p[j] += dx;
           
           g[j] = 0.0; // zero out gradient so that we can begin accumulating anew
         }

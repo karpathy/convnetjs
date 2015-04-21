@@ -32,11 +32,7 @@ export default class WindowgradTrainer extends Trainer {
         // adadelta needs gsum and xsum
         for(var i=0;i<pglist.length;i++) {
           this.gsum.push(new Float64Array(pglist[i].params.length));
-          if(this.method === 'adadelta') {
-            this.xsum.push(new Float64Array(pglist[i].params.length));
-          } else {
-            this.xsum.push(new Float64Array(0)); // conserve memory
-          }
+          this.xsum.push(new Float64Array(pglist[i].params.length));
         }
       }
 

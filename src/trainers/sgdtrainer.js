@@ -25,18 +25,11 @@ export default class SGDTrainer extends Trainer {
       var pglist = this.net.getParamsAndGrads();
 
       // initialize lists for accumulators. Will only be done once on first iteration
-      if(this.gsum.length === 0 && (this.method !== 'sgd' || this.momentum > 0.0)) {
+      if(this.gsum.length === 0 && this.momentum > 0.0) {
         // only vanilla sgd doesnt need either lists
         // momentum needs gsum
-        // adagrad needs gsum
-        // adadelta needs gsum and xsum
         for(var i=0;i<pglist.length;i++) {
           this.gsum.push(new Float64Array(pglist[i].params.length));
-          if(this.method === 'adadelta') {
-            this.xsum.push(new Float64Array(pglist[i].params.length));
-          } else {
-            this.xsum.push(new Float64Array(0)); // conserve memory
-          }
         }
       }
 
