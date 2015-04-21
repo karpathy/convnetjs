@@ -77,6 +77,7 @@ export default class SGDTrainer extends Trainer {
             pj = SIMD.float32x4.add(pj, dx); 
 	        } else {
 	          // vanilla sgd
+            pj = SIMD.float32x4.add(pj, SIMD.float32x4.neg(SIMD.float32x4.mul(lr, gij)))
           }
           
           p[j] += pj.x; p[j+1] += pj.y; p[j+2] += pj.z; p[j+3] += pj.w;
