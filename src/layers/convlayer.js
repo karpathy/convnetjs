@@ -41,7 +41,10 @@ export default class ConvLayer extends Layer{
     // optimized code by @mdda that achieves 2x speedup over previous version
 
     this.in_act = V;
-    var A = new (new VolType(this.out_sx | 0, this.out_sy | 0, this.out_depth | 0));
+    var A = new (new VolType((this.out_sx | 0), (this.out_sy | 0), (this.out_depth | 0)))();
+
+    let [A0, A1, A2] = [(this.out_sx | 0), (this.out_sy | 0), (this.out_depth | 0)];
+    let [V0, V1, V2] = [(V.sx | 0), (V.sy | 0), (V.depth | 0)];
     
     var V_sx = V.sx | 0;
     var V_sy = V.sy | 0;
@@ -51,17 +54,17 @@ export default class ConvLayer extends Layer{
       var f = this.filters[d];
       var x = -this.pad | 0;
       var y = -this.pad | 0;
-      for(var ay=0; ay<this.out_sy; y+=xy_stride,ay++) {  // xy_stride
+      for(var ay = 0; ay < this.out_sy; y += xy_stride, ay++) {  // xy_stride
         x = -this.pad | 0;
-        for(var ax=0; ax<this.out_sx; x+=xy_stride,ax++) {  // xy_stride
+        for(var ax = 0; ax < this.out_sx; x += xy_stride, ax++) {  // xy_stride
           // convolve centered at this particular location
           var a = 0.0;
-          for(var fy=0;fy<f.sy;fy++) {
-            var oy = y+fy; // coordinates in the original input array coordinates
-            for(var fx=0;fx<f.sx;fx++) {
-              var ox = x+fx;
-              if(oy>=0 && oy<V_sy && ox>=0 && ox<V_sx) {
-                for(var fd=0;fd<f.depth;fd++) {
+          for(var fy = 0; fy < f.sy; fy++) {
+            var oy = y + fy; // coordinates in the original input array coordinates
+            for(var fx = 0; fx < f.sx; fx++) {
+              var ox = x + fx;
+              if(oy >= 0 && oy < V_sy && ox >= 0 && ox < V_sx) {
+                for(var fd = 0; fd < f.depth; fd++) {
                   // avoid function call overhead (x2) for efficiency, compromise modularity :(
                   a += f.w[fx][fy][fd] * V.w[ox][oy][fd];
                 }

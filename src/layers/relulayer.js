@@ -16,37 +16,47 @@ export class ReluLayer extends Layer {
 
   forward(V, is_training) {
     this.in_act = V;
-    var V2 = new V.constructor(V);
-    V2.w = V2.w.map((sx, x) => {
-      return sx.map((sy, y) => { 
-        return sy.map((depth, d) => {
-          if(depth < 0){ 
-            return 0; // threshold at 0
-          } else {
-            return depth;
-          }
-        });
-      });
-    });
+    let V2 = new V.constructor(V);
+
+    let {sx, sy, depth} = V;
+
+    let zeroes = SIMD.splat(0.0);
+    
+    for(let x = 0; x < sx; x++){
+      for(let y = 0; y < sy; y++){
+        for(let d = 0; d < depth; d += 4){
+          let vv2 = SIMD.float32x4.max(SIMD.float32x4(V.w[x][y][d], V.w[x][y][d+1], V.w[x][y][d+2], V.w[x][y][d+3]), zeroes);
+          V2.w[x][y][d] = vv2.x;
+          V2.w[x][y][d+1] = vv2.y;
+          V2.w[x][y][d+2] = vv2.z;
+          V2.w[x][y][d+3] = vv2.w;
+        }
+      }
+    }
+
     this.out_act = V2;
     return this.out_act;
   }
 
   backward() {
-    var V = this.in_act; // we need to set dw of this
-    var V2 = this.out_act;
-    // zero out gradient wrt data
-    V.dw = V.dw.map((sx, x) => {
-      return x.map((sy, y) => {
-        return y.map((depth, d) => {
-          if(V2.w[x][y][d] <= 0){ 
-            return 0; // threshold
-          } else {
-            return V2.dw[x][y][d];
-          }
-        })
-      })
-    });
+    let V = this.in_act; // we need to set dw of this
+    let V2 = this.out_act;
+
+    let {sx, sy, depth} = V;
+
+    let zeroes = SIMD.splat(0.0);
+
+    for(let x = 0; x < sx; x++){
+      for(let y = 0; y < sy; y++){
+        for(let d = 0; d < depth; d += 4){
+          let vv2 = SIMD.float32x4.max(SIMD.float32x4(V.dw[x][y][d], V.dw[x][y][d+1], V.dw[x][y][d+2], V.dw[x][y][d+3]), zeroes);
+          V2.dw[x][y][d] = vv2.x;
+          V2.dw[x][y][d+1] = vv2.y;
+          V2.dw[x][y][d+2] = vv2.z;
+          V2.dw[x][y][d+3] = vv2.w;
+        }
+      }
+    }
   }
 
   getParamsAndGrads() {
