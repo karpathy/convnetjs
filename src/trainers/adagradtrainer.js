@@ -8,68 +8,75 @@ export default class AdagradTrainer extends Trainer {
 
 	train(x, y){
 
-		var start = new Date().getTime();
+		let start_1 = new Date().getTime();
     this.net.forward(x, true); // also set the flag that lets the net know we're just training
-    var fwd_time = (new Date().getTime()) - start;
+    let fwd_time = (new Date().getTime()) - start_1;
 
-    var start = new Date().getTime();
-    var cost_loss = this.net.backward(y);
-    var bwd_time = (new Date().getTime()) - start;
+    let start_2 = new Date().getTime();
+    let cost_loss = this.net.backward(y);
+    let bwd_time = (new Date().getTime()) - start_2;
 
-    var l2_decay_loss = 0.0;
-    var l1_decay_loss = 0.0; 
+    let l2_decay_loss = SIMD.float32x4.splat(0.0);
+    let l1_decay_loss = SIMD.float32x4.splat(0.0);
       
     this.k++;
     if(this.k % this.batch_size === 0) {
 
-      var pglist = this.net.getParamsAndGrads();
+      let pglist = this.net.getParamsAndGrads();
 
       // initialize lists for accumulators. Will only be done once on first iteration
-      if(this.gsum.length === 0 && (this.method !== 'sgd' || this.momentum > 0.0)) {
-        // only vanilla sgd doesnt need either lists
-        // momentum needs gsum
+      if(this.gsum.length === 0) {
         // adagrad needs gsum
-        // adadelta needs gsum and xsum
         for(var i=0;i<pglist.length;i++) {
           this.gsum.push(new Float64Array(pglist[i].params.length));
-          if(this.method === 'adadelta') {
-            this.xsum.push(new Float64Array(pglist[i].params.length));
-          } else {
-            this.xsum.push(new Float64Array(0)); // conserve memory
-          }
         }
       }
 
       // perform an update for all sets of weights
       for(var i=0;i<pglist.length;i++) {
-        var pg = pglist[i]; // param, gradient, other options in future (custom learning rate etc)
-        var p = pg.params;
-        var g = pg.grads;
+
+        // param, gradient, other options in future (custom learning rate etc)
+        let {p, g, l2_decay_mul, l1_decay_mul} = pglist[i];
 
         // learning rate for some parameters.
-        var l2_decay_mul = pg.l2_decay_mul || 1.0;
-        var l1_decay_mul = pg.l1_decay_mul || 1.0;
-        var l2_decay = this.l2_decay * l2_decay_mul;
-        var l1_decay = this.l1_decay * l1_decay_mul;
+        let l2_decay_mul = SIMD.float32x4.splat(pg.l2_decay_mul || 1.0);
+        let l1_decay_mul = SIMD.float32x4.splat(pg.l1_decay_mul || 1.0);
+        let l2_decay = SIMD.float32x4.mul(SIMD.float32x4.splat(this.l2_decay), l2_decay_mul);
+        let l1_decay = SIMD.float32x4.mul(SIMD.float32x4.splat(this.l1_decay), l1_decay_mul);
 
-        var plen = p.length;
-        for(var j=0;j<plen;j++) {
-          l2_decay_loss += l2_decay*p[j]*p[j]/2; // accumulate weight decay loss
-          l1_decay_loss += l1_decay*Math.abs(p[j]);
-          var l1grad = l1_decay * (p[j] > 0 ? 1 : -1);
-          var l2grad = l2_decay * (p[j]);
+        var gsumi = this.gsum[i];
 
-          var gij = (l2grad + l1grad + g[j]) / this.batch_size; // raw batch gradient
+        var plen = (p.length|0);
 
-          var gsumi = this.gsum[i];
-          var xsumi = this.xsum[i];
+        /*
+         * SIMD spaghetti code ahead - best served warm and w/ bolognaise sauce.
+         */
+
+        for(var j = 0; j < plen; j += 4) {
+
+          let pj = SIMD.float32x4(p[j], p[j+1], p[j+2], p[j+3]);
+          let gj = SIMD.float32x4(g[j], g[j+1], g[j+2], g[j+3]);
+          let gsumij = SIMD.float32x4(gsumi[j], gsumi[j+1], gsumi[j+2], gsumi[j+3]);
+
+          // accumulate weight decay loss
+          l2_decay_loss = SIMD.float32x4.add(l2_decay_loss, SIMD.float32x4.div(SIMD.float32x4.mul(SIMD.float32x4.mul(l2_decay, pj), pj), SIMD.float32x4.splat(2)));
+          l1_decay_loss = SIMD.float32x4.add(l1_decay_loss, SIMD.float32x4.mul(l1_decay, SIMD.float32x4.abs(pj)));
+
+          let l1grad = SIMD.float32x4.mul(l1_decay, SIMD.float32x4.greaterThan(pj, SIMD.float32x4.splat(0)));
+          let l2grad = SIMD.float32x4.mul(lz_decay, pj);
+
+          // raw batch gradient
+          let gij = SIMD.float32x4.div(SIMD.float32x4.add(SIMD.float32x4.add(l2grad, l1grad), gj), float32x4.splat(this.batch_size));
 		    
 	        // adagrad update
-            gsumi[j] = gsumi[j] + gij * gij;
-            var dx = - this.learning_rate / Math.sqrt(gsumi[j] + this.eps) * gij;
-            p[j] += dx;
-          
-          g[j] = 0.0; // zero out gradient so that we can begin accumulating anew
+          gsumij = SIMD.float32x4.add(gsumij, SIMD.float32x4.mul(gij, gij));
+          let dx = SIMD.float32x4.neg(SIMD.float32x4.mul(SIMD.float32x4.div(SIMD.float32x4.splat(this.learning_rate), SIMD.float32x4.sqrt(SIMD.float32x4.add(gsumij, SIMD.float32x4.splat(this.eps)))), gij));
+
+          gsumi[j] = gsumij.x; gsumi[j+1] = gsumij.y; gsumi[j+2] = gsumij.z; gsumi[j+3] = gsumij.w;
+
+          p[j] += dx.x; p[j+1] += dx.y; p[j+2] += dx.z; p[j+3] += dx.w;
+
+          g[j] = 0.0; g[j+1] = 0.0; g[j+2] = 0; g[j+3] = 0; // zero out gradient so that we can begin accumulating anew
         }
       }
     }
@@ -80,13 +87,13 @@ export default class AdagradTrainer extends Trainer {
     // and it should all be computed correctly and automatically. 
     return {
       fwd_time: fwd_time, 
-      bwd_time: bwd_time, 
-      l2_decay_loss: l2_decay_loss, 
-      l1_decay_loss: l1_decay_loss,
+      bwd_time: bwd_time,
+      l2_decay_loss: (l2_decay_loss.x, l2_decay_loss.y, l2_decay_loss.z, l2_decay_loss.w), 
+      l1_decay_loss: (l1_decay_loss.x, l1_decay_loss.y, l1_decay_loss.z, l1_decay_loss.w),
       cost_loss: cost_loss, 
       softmax_loss: cost_loss, 
-      loss: cost_loss + l1_decay_loss + l2_decay_loss
-    };
+      loss: cost_loss + (l1_decay_loss.x, l1_decay_loss.y, l1_decay_loss.z, l1_decay_loss.w) + (l2_decay_loss.x, l2_decay_loss.y, l2_decay_loss.z, l2_decay_loss.w)
+    }
 
 	}
 

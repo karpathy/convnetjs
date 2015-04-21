@@ -54,13 +54,13 @@ export default class AdadeltaTrainer extends Trainer {
         let gsumi = this.gsum[i];
         let xsumi = this.xsum[i];
 
-        let plen = (p.length/4|0); 
+        let plen = (p.length|0); 
 
         /*
          * SIMD spaghetti code ahead - best served warm and w/ bolognaise sauce.
          */
 
-        for(let j = 0; j < plen; j++) {
+        for(let j = 0; j < plen; j += 4) {
 
           let pj = SIMD.float32x4(p[j], p[j+1], p[j+2], p[j+3]);
           let gj = SIMD.float32x4(g[j], g[j+1], g[j+2], g[j+3]);
