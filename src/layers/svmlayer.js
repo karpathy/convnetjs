@@ -59,12 +59,16 @@ export class SVMLayer extends Layer{
     };
   }
 
-  fromJSON(json) {
-    this.out_depth = json.out_depth;
-    this.out_sx = json.out_sx;
-    this.out_sy = json.out_sy;
-    this.layer_type = json.layer_type;
-    this.num_inputs = json.num_inputs;
-  }
+}
 
+export function fromJSON(json) {
+  if(typeof json === 'string'){
+    json = JSON.parse(json);
+  }
+  return new SVMLayer({
+    out_depth : json.out_depth,
+    out_sx : json.out_sx,
+    out_sy : json.out_sy,
+    num_inputs : json.num_inputs
+  });
 }
