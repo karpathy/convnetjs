@@ -28,7 +28,7 @@ export default class ConvLayer extends Layer{
     this.layer_type = 'conv';
 
     // initializations
-    var bias = typeof opt.bias_pref !== 'undefined' ? opt.bias_pref : 0.0;
+    let bias = opt.bias_pref || 0.0;
     this.filters = [];
     for(var i=0;i<this.out_depth;i++) { 
       this.filters.push(new Vol(this.sx, this.sy, this.in_depth)); 
@@ -43,18 +43,17 @@ export default class ConvLayer extends Layer{
     this.in_act = V;
     var A = new (new VolType(this.out_sx | 0, this.out_sy | 0, this.out_depth | 0));
     
-    var V_sx = V.sx |0;
-    var V_sy = V.sy |0;
-    var xy_stride = this.stride |0;
+    var V_sx = V.sx | 0;
+    var V_sy = V.sy | 0;
+    var xy_stride = this.stride | 0;
 
     for(var d=0;d<this.out_depth;d++) {
       var f = this.filters[d];
-      var x = -this.pad |0;
-      var y = -this.pad |0;
+      var x = -this.pad | 0;
+      var y = -this.pad | 0;
       for(var ay=0; ay<this.out_sy; y+=xy_stride,ay++) {  // xy_stride
-        x = -this.pad |0;
+        x = -this.pad | 0;
         for(var ax=0; ax<this.out_sx; x+=xy_stride,ax++) {  // xy_stride
-
           // convolve centered at this particular location
           var a = 0.0;
           for(var fy=0;fy<f.sy;fy++) {
@@ -64,13 +63,13 @@ export default class ConvLayer extends Layer{
               if(oy>=0 && oy<V_sy && ox>=0 && ox<V_sx) {
                 for(var fd=0;fd<f.depth;fd++) {
                   // avoid function call overhead (x2) for efficiency, compromise modularity :(
-                  a += f.w[((f.sx * fy)+fx)*f.depth+fd] * V.w[((V_sx * oy)+ox)*V.depth+fd];
+                  a += f.w[fx][fy][fd] * V.w[ox][oy][fd];
                 }
               }
             }
           }
           a += this.biases.w[d];
-          A.set(ax, ay, d, a);
+          A[ax][ay][d] = a;
         }
       }
     }
@@ -94,7 +93,6 @@ export default class ConvLayer extends Layer{
       for(var ay=0; ay<this.out_sy; y+=xy_stride,ay++) {  // xy_stride
         x = -this.pad | 0;
         for(var ax=0; ax<this.out_sx; x+=xy_stride,ax++) {  // xy_stride
-
           // convolve centered at this particular location
           var chain_grad = this.out_act.dw[ax][ay][d]; // gradient from above, from chain rule
           for(var fy = 0; fy < f.sy; fy++) {
@@ -104,10 +102,8 @@ export default class ConvLayer extends Layer{
               if(oy >= 0 && oy < V_sy && ox >= 0 && ox < V_sx) {
                 for(var fd = 0; fd < f.depth; fd++) {
                   // avoid function call overhead (x2) for efficiency, compromise modularity :(
-                  var ix1 = ((V_sx * oy)+ox)*V.depth+fd;
-                  var ix2 = ((f.sx * fy)+fx)*f.depth+fd;
-                  f.dw[ix2] += V.w[ix1]*chain_grad;
-                  V.dw[ix1] += f.w[ix2]*chain_grad;
+                  f.dw[ox][oy][fd] += V.w[ox][oy][fd]*chain_grad;
+                  V.dw[ox][oy][fd] += f.w[ox][oy][fd]*chain_grad;
                 }
               }
             }

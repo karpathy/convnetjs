@@ -33,11 +33,17 @@ export default class DropoutLayer extends Layer {
         }
       }
     } else {
+      let dp = SIMD.float32x4.splat(this.drop_prob);
       // scale the activations during prediction
       for(var x = 0; x < N0; x++) {
         for(var y = 0; y < N1; y++) {
-          for(var d = 0; d < N2; d++) {
-            V2.w[x][y][d] *= +(this.drop_prob);
+          for(var d = 0; d < N2; d += 4) {
+            let Vd = SIMD.float32x4(V2.w[x][y][d], V2.w[x][y][d+1], V2.w[x][y][d+2], V2.w[x][y][d+3]);
+            Vd = SIMD.float32x4.mul(Vd, dp);
+            V2.w[x][y][d] = Vd.x;
+            V2.w[x][y][d+1] = Vd.y;
+            V2.w[x][y][d+2] = Vd.z;
+            V2.w[x][y][d+3] = Vd.w;
           }
         }
       }
