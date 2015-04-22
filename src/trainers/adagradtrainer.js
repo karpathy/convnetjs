@@ -54,9 +54,9 @@ export default class AdagradTrainer extends Trainer {
 
         for(var j = 0; j < plen; j += 4) {
 
-          let pj = SIMD.float32x4(p[j], p[j+1], p[j+2], p[j+3]);
-          let gj = SIMD.float32x4(g[j], g[j+1], g[j+2], g[j+3]);
-          let gsumij = SIMD.float32x4(gsumi[j], gsumi[j+1], gsumi[j+2], gsumi[j+3]);
+          let pj = SIMD.float32x4.load(p, j);
+          let gj = SIMD.float32x4.load(p, j);
+          let gsumij = SIMD.float32x4.load(gsumi, j);
 
           // accumulate weight decay loss
           l2_decay_loss = SIMD.float32x4.add(l2_decay_loss, SIMD.float32x4.div(SIMD.float32x4.mul(SIMD.float32x4.mul(l2_decay, pj), pj), SIMD.float32x4.splat(2)));
@@ -71,12 +71,11 @@ export default class AdagradTrainer extends Trainer {
 	        // adagrad update
           gsumij = SIMD.float32x4.add(gsumij, SIMD.float32x4.mul(gij, gij));
           let dx = SIMD.float32x4.neg(SIMD.float32x4.mul(SIMD.float32x4.div(SIMD.float32x4.splat(this.learning_rate), SIMD.float32x4.sqrt(SIMD.float32x4.add(gsumij, SIMD.float32x4.splat(this.eps)))), gij));
+          SIMD.float32x4.store(gsumi, j, gsumik);
 
-          gsumi[j] = gsumij.x; gsumi[j+1] = gsumij.y; gsumi[j+2] = gsumij.z; gsumi[j+3] = gsumij.w;
+          SIMD.float32x4.store(p, j, SIMD.float32x4.add(pj, dx));
 
-          p[j] += dx.x; p[j+1] += dx.y; p[j+2] += dx.z; p[j+3] += dx.w;
-
-          g[j] = 0.0; g[j+1] = 0.0; g[j+2] = 0; g[j+3] = 0; // zero out gradient so that we can begin accumulating anew
+          SIMD.float32x4.store(g, j, SIMD.float32x4.zero()); // zero out gradient so that we can begin accumulating anew
         }
       }
     }

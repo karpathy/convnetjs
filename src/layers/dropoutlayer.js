@@ -11,15 +11,18 @@ export default class DropoutLayer extends Layer {
     this.out_depth = opt.in_depth;
     this.layer_type = 'dropout';
     this.drop_prob = opt.drop_prob || 0.5;
-    this.dropped = new Float64Array(this.out_sx*this.out_sy*this.out_depth);
+    this.dropped = new Array(this.out_sx*this.out_sy*this.out_depth);
   }
 
   forward(V, is_training = false) {
     this.in_act = V;
-    let V2 = new V.constructor();
-    const [N0, N1, N2] = [V.w.length, V.w[0].length, V.w[0][0].length];
+    this.out_act = new V.constructor();
+    let v = new Float32Array(TypedObject.storage(this.in_act).buffer);
+    let v2 = new Float32Array(TypedObject.storage(this.out_act).buffer);
+      
     if(is_training) {
       // do dropout
+      const [N0, N1, N2] = [V.w.length, V.w[0].length, V.w[0][0].length];
       for(var x = 0; x < N0; x++) {
         for(var y = 0; y < N1; y++) {
           for(var d = 0; d < N2; d++) {
@@ -33,22 +36,11 @@ export default class DropoutLayer extends Layer {
         }
       }
     } else {
-      let dp = SIMD.float32x4.splat(this.drop_prob);
       // scale the activations during prediction
-      for(var x = 0; x < N0; x++) {
-        for(var y = 0; y < N1; y++) {
-          for(var d = 0; d < N2; d += 4) {
-            let Vd = SIMD.float32x4(V2.w[x][y][d], V2.w[x][y][d+1], V2.w[x][y][d+2], V2.w[x][y][d+3]);
-            Vd = SIMD.float32x4.mul(Vd, dp);
-            V2.w[x][y][d] = Vd.x;
-            V2.w[x][y][d+1] = Vd.y;
-            V2.w[x][y][d+2] = Vd.z;
-            V2.w[x][y][d+3] = Vd.w;
-          }
-        }
+      for(let i = 0; i < v.length; i += 4){
+        SIMD.float32x4.store(v2, i, SIMD.float32x4.mul(SIMD.float32x4.splat(this.drop_prob), SIMD.float32x4.load(v, i)));
       }
     }
-    this.out_act = V2;
     return this.out_act; // dummy identity function for now
   }
 

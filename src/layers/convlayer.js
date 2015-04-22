@@ -50,7 +50,7 @@ export default class ConvLayer extends Layer{
     var V_sy = V.sy | 0;
     var xy_stride = this.stride | 0;
 
-    for(var d=0;d<this.out_depth;d++) {
+    for(var d = 0 ; d < this.out_depth; d++) {
       var f = this.filters[d];
       var x = -this.pad | 0;
       var y = -this.pad | 0;

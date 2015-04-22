@@ -54,9 +54,9 @@ export default class NesterovTrainer extends Trainer {
 
         for(let j = 0; j < plen; j += 4) {
           
-          let pj = SIMD.float32x4(p[j], p[j+1], p[j+2], p[j+3]);
-          let gj = SIMD.float32x4(g[j], g[j+1], g[j+2], g[j+3]);
-          let gsumij = SIMD.float32x4(gsumi[j], gsumi[j+1], gsumi[j+2], gsumi[j+3]);
+          let pj = SIMD.float32x4.load(p, j);
+          let gj = SIMD.float32x4.load(g, j);
+          let gsumij = SIMD.float32x4.load(gsumi, j);
 
           // accumulate weight decay loss
           l2_decay_loss = SIMD.float32x4.add(l2_decay_loss, SIMD.float32x4.div(SIMD.float32x4.mul(l1_decay, SIMD.float32x4.mul(pj, pj)), SIMD.float32x4.splat(2)));
@@ -66,19 +66,16 @@ export default class NesterovTrainer extends Trainer {
           let l2grad = SIMD.float32x4.mul(l2_decay, pj)
 
           let gij = SIMD.float32x4.div(SIMD.float32x4.add(l2grad, SIMD.float32x4.add(l1grad, gj)), SIMD.float32x4.splat(this.batch_size)); // raw batch gradient
-	   
           let dx = gsumij;
 
           gsumij = SIMD.float32x4.add(SIMD.float32x4.mul(gsumij, mom), SIMD.float32x4.mul(lr, gij));
 
-          dx = SIMD.float32x4.sub(SIMD.float32x4.mul(mom, dx), SIMD.float32x4.mul(momm, gsumij));
+          SIMD.float32x4.store(gsumi, j, gsumij);
 
-          gsumi[j] = gsumij.x; gsumi[j+1] = gsumij.y; gsumi[j+2] = gsumij.z; gsumi[j+3] = gsumij.w;
-          
-          p[j] += dx.x; p[j+1] += dx.y; p[j+2] += dx.z; p[j+3] += dx.w;
-          
+          SIMD.float32x4.store(p, j, SIMD.float32x4.add(SIMD.float32x4.sub(SIMD.float32x4.mul(mom, dx), SIMD.float32x4.mul(momm, gsumij)), pj));          
+
           // zero out gradient so that we can begin accumulating anew
-          g[j] = 0.0; g[j+1] = 0.0; g[j+2] = 0.0; g[j+3] = 0.0;
+          SIMD.float32x4.store(g, j, SIMD.float32x4.zero());
         }
       }
     }

@@ -17,13 +17,13 @@ export default class Brain {
     this.gamma = opt.gamma || 0.8;
     
     // number of steps we will learn for
-    this.learning_steps_total = typeof opt.learning_steps_total !== 'undefined' ? opt.learning_steps_total : 100000;
+    this.learning_steps_total = opt.learning_steps_total || 100000;
     // how many steps of the above to perform only random actions (in the beginning)?
-    this.learning_steps_burnin = typeof opt.learning_steps_burnin !== 'undefined' ? opt.learning_steps_burnin : 3000;
+    this.learning_steps_burnin = opt.learning_steps_burnin || 3000;
     // what epsilon value do we bottom out on? 0.0 => purely deterministic policy at end
-    this.epsilon_min = typeof opt.epsilon_min !== 'undefined' ? opt.epsilon_min : 0.05;
+    this.epsilon_min = opt.epsilon_min || 0.05;
     // what epsilon to use at test time? (i.e. when learning is disabled)
-    this.epsilon_test_time = typeof opt.epsilon_test_time !== 'undefined' ? opt.epsilon_test_time : 0.01;
+    this.epsilon_test_time = opt.epsilon_test_time || 0.01;
     
     // advanced feature. Sometimes a random action should be biased towards some values
     // for example in flappy bird, we may want to choose to not flap more often
@@ -34,8 +34,12 @@ export default class Brain {
         console.log('TROUBLE. random_action_distribution should be same length as num_actions.');
       }
       var a = this.random_action_distribution;
-      var s = 0.0; for(var k=0;k<a.length;k++) { s+= a[k]; }
-      if(Math.abs(s-1.0)>0.0001) { console.log('TROUBLE. random_action_distribution should sum to 1!'); }
+      var s = 0.0; for(var k = 0; k < a.length; k++) { 
+        s+= a[k]; 
+      }
+      if(Math.abs(s - 1.0) > 0.0001) { 
+        console.log('TROUBLE. random_action_distribution should sum to 1!'); 
+      }
     } else {
       this.random_action_distribution = [];
     }

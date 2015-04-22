@@ -20,7 +20,7 @@ export class ReluLayer extends Layer {
 
     let {sx, sy, depth} = V;
 
-    let zeroes = SIMD.splat(0.0);
+    let zeroes = SIMD.float32x4.splat(0.0);
     
     for(let x = 0; x < sx; x++){
       for(let y = 0; y < sy; y++){
@@ -44,7 +44,7 @@ export class ReluLayer extends Layer {
 
     let {sx, sy, depth} = V;
 
-    let zeroes = SIMD.splat(0.0);
+    let zeroes = SIMD.float32x4.splat(0.0);
 
     for(let x = 0; x < sx; x++){
       for(let y = 0; y < sy; y++){

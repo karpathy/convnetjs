@@ -1,4 +1,5 @@
 import * as Layer from "./layer.js";
+import * as VolType from "../structres/vol.js";
 
 // This is a classifier, with N discrete classes from 0 to N-1
 // it gets a stream of N incoming numbers and computes the softmax
@@ -12,36 +13,44 @@ export class SoftmaxLayer extends Layer {
     this.out_depth = this.num_inputs;
     this.out_sx = 1;
     this.out_sy = 1;
+    this.out_type = new VolType(1, 1, this.out_depth);
     this.layer_type = 'softmax';
   }
 
   forward(V, is_training) {
     this.in_act = V;
 
-    var A = new (new VolType(1, 1, this.out_depth));
+    let A = new this.out_type();
 
     // compute max activation
-    var as = V.w;
-    var amax = V.w[0];
-    for(var i=1;i<this.out_depth;i++) {
-      if(as[i] > amax){ 
-        amax = as[i];
-      }
+    let {sx, sy, depth} = V;
+    let amax = SIMD.float32x4.splat(0.0);
+    for(let x = 0, i = 0; x < sx, i < this.out_depth; x++, i++){
+      for(let y = 0; y < sy, i < this.out_depth; y++, i++){
+        for(let d = 0; d < depth, i < this.out_depth; d++, i++){
+          amax = SIMD.float32x4.max(amax, SIMD.float32x4(V.w[x][y][d], V.w[x][y][d+1], V.w[x][y][d+2], V.w[x][y][d+3]))
+        }
+      } 
     }
+    let max = Math.max(Math.max(amax.x, amax.y), Math.max(amax.z, amax.w));
 
     // compute exponentials (carefully to not blow up)
-    var es = new Float64Array(this.out_depth);
-    var esum = 0.0;
+    let es = new Float32Array(this.out_depth);
+    let esum = SIMD.float32x4.splat(0.0);
+
     for(var i=0;i<this.out_depth;i++) {
-      var e = Math.exp(as[i] - amax);
-      esum += e;
-      es[i] = e;
+      var e = SIMD.float32x4(Math.exp(as[i] - max), Math.exp(as[i+1] - max), Math.exp(as[i+2] - max), Math.exp(as[i+3] - max));
+      esum = SIMD.float32x4.add(esum, e);
+      es[i] = e.x; es[i+1] = e.y; es[i+2] = e.z; es[i+3] = e.w; 
     }
 
+    let sum = (esum.x + esum.y + esum.z + esum.w); 
+
+    // SIMDifying this part probably wouldn't bring any benefits.
     // normalize and output to sum to one
-    for(var i=0;i<this.out_depth;i++) {
+    for(var i = 0; i < this.out_depth; i++) {
       es[i] /= esum;
-      A.w[i] = es[i];
+      A.w[0][0][i] = es[i];
     }
 
     this.es = es; // save these for backprop

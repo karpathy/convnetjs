@@ -20,7 +20,7 @@ export class SVMLayer extends Layer{
   backward(y) {
 
     // compute and accumulate gradient wrt weights and bias of this layer
-    var x = this.in_act;
+    let x = this.in_act;
     x.dw = new Float64Array(x.w.length); // zero out the gradient of input Vol
 
     // we're using structured loss here, which means that the score

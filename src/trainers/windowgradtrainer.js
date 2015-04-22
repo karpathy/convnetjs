@@ -59,10 +59,9 @@ export default class WindowgradTrainer extends Trainer {
 
         for(var j = 0; j < plen; j++) {
 
-          let pj = SIMD.float32x4(p[j], p[j+1], p[j+2], p[j+3]);
-          let gj = SIMD.float32x4(g[j], g[j+1], g[j+2], g[j+3]);
-          let gsumij = SIMD.float32x4(gsumi[j], gsumi[j+1], gsumi[j+2], gsumi[j+3]);
-          let xsumij = SIMD.float32x4(xsumi[j], xsumi[j+1], xsumi[j+2], xsumi[j+3]);
+          let pj = SIMD.float32x4.load(p, j);
+          let gj = SIMD.float32x4.load(g, j);
+          let gsumij = SIMD.float32x4.load(gsumi, j);
 
           // accumulate weight decay loss
           l2_decay_loss = SIMD.float32x4.add(l2_decay_loss, SIMD.float32x4.div(SIMD.float32x4.mul(l1_decay, SIMD.float32x4.mul(pj, pj)), SIMD.float32x4.splat(2)));
@@ -81,12 +80,12 @@ export default class WindowgradTrainer extends Trainer {
           // eps added for better conditioning
           let dx = SIMD.float32x4.neg(SIMD.float32x4.mul(SIMD.float32x4.div(lr, SIMD.float32x4.sqrt(SIMD.float32x4.add(gsumik, eps))), gij))
           
-          gsumi[j] = gsumij.x; gsumi[j+1] = gsumij.y; gsumi[j+2] = gsumij.z; gsumi[j+3] = gsumij.w;
+          SIMD.float32x4.store(gsumi, j, gsumij);
 
-          p[j] += dx.x; p[j+1] += dx.y; p[j+2] += dx.z; p[j+3] += dx.w;
+          SIMD.float32x4.store(p, j, SIMD.float32x4.add(pj, dx));
           
           // zero out gradient so that we can begin accumulating anew
-          g[j] = 0.0; g[j+1] = 0.0; g[j+2] = 0.0; g[j+3] = 0.0;
+          SIMD.float32x4.store(g, j, SIMD.float32x4.zero());
         }
       }
     }

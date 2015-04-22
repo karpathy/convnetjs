@@ -48,16 +48,14 @@ export default class SGDTrainer extends Trainer {
         let l1_decay = SIMD.float32x4.mul(SIMD.float32x4.splat(this.l1_decay), l1_decay_mul);
 
         let gsumi = this.gsum[i];
-        let xsumi = this.xsum[i];
 
         let plen = (p.length|0);
 
         for(let j = 0; j < plen; j += 4) {
 
-          let pj = SIMD.float32x4(p[j], p[j+1], p[j+2], p[j+3]);
-          let gj = SIMD.float32x4(g[j], g[j+1], g[j+2], g[j+3]);
-          let gsumij = SIMD.float32x4(gsumi[j], gsumi[j+1], gsumi[j+2], gsumi[j+3]);
-          let xsumij = SIMD.float32x4(xsumi[j], xsumi[j+1], xsumi[j+2], xsumi[j+3]);
+          let pj = SIMD.float32x4.load(p, j);
+          let gj = SIMD.float32x4.load(g, j);
+          let gsumij = SIMD.float32x4.load(gsumi, j);
 
           // accumulate weight decay loss
           l2_decay_loss = SIMD.float32x4.add(l2_decay_loss, SIMD.float32x4.div(SIMD.float32x4.mul(l1_decay, SIMD.float32x4.mul(pj, pj)), SIMD.float32x4.splat(2)));
@@ -72,17 +70,15 @@ export default class SGDTrainer extends Trainer {
 	          // momentum update
             let dx = SIMD.float32x4.sub(SIMD.float32x4.mul(mom, gsumij), SIMD.float32x4.mul(lr, gji));
 	          // back this up for next iteration of momentum
-            gsumi[j] = dx.x; gsumi[j+1] = dx.y; gsumi[j+2] = dx.z; gsumi[j+3] = dx.w;
+            SIMD.float32x4.store(gsumi, j, dx);
             // apply corrected gradient
-            pj = SIMD.float32x4.add(pj, dx); 
+            SIMD.float32x4.store(p, j, SIMD.float32x4.add(pj, dx)); 
 	        } else {
 	          // vanilla sgd
-            pj = SIMD.float32x4.add(pj, SIMD.float32x4.neg(SIMD.float32x4.mul(lr, gij)))
+            SIMD.float32x4.store(p, j, pj);
           }
           
-          p[j] += pj.x; p[j+1] += pj.y; p[j+2] += pj.z; p[j+3] += pj.w;
-
-          g[j] = g[j+1] = g[j+2] = g[j+3] = 0.0; // zero out gradient so that we can begin accumulating anew
+          SIMD.float32x4.store(g, j, SIMD.float32x4.zero()); // zero out gradient so that we can begin accumulating anew
         }
       }
     }
