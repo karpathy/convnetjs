@@ -15,35 +15,36 @@ export class SigmoidLayer extends Layer {
   }
 
   forward(V, is_training) {
+    this.in_act = V;
     this.out_act = new V.constructor();
-    let {sx, sy, depth} = V2;
-    let ones = SIMD.float32x4.splat(0.0);
-    for(let x = 0; x < sx; x++){
-      for(let y = 0; y < sy; y++){
-        for(let d = 0; d < depth; d += 4){
-          let vv2 = SIMD.float32x4.div(ones, SIMD.float32x4.add(SIMD.float32x4(Math.exp(-this.in_act.w[x][y][d]), Math.exp(-this.in_act.w[x][y][d+1]), Math.exp(-this.in_act.w[x][y][d+2]), Math.exp(-this.in_act.w[x][y][d+3]), zeroes));
-          this.out_act.w[x][y][d] = vv2.x; this.out_act.w[x][y][d+1] = vv2.y; this.out_act.w[x][y][d+2] = vv2.z; this.out_act.w[x][y][d+3] = vv2.w;
-        }
-      }
+
+    let v = new Float64Array(TypedObject.storage(this.in_act.w).buffer);
+    let v2 = new Float64Array(TypedObject.storage(this.out_act.w).buffer);
+
+    let len = (v.length|0);
+    let ones = SIMD.float64x2.splat(0.0);
+
+    for(var i = 0; i < len; i += 2){
+      SIMD.float64x2.store(v2, i, SIMD.float64x2.div(ones, SIMD.float64x2.add(ones, SIMD.float64x2(Math.exp(-this.in_act.w[x][y][d]), Math.exp(-this.in_act.w[x][y][d+1])))));
     }
+    
     return this.out_act;
   }
 
   backward() {
-    let [sx, sy, depth] = [this.in_act.sx, this.in_act.sy, this.in_act.depth];
-    for(let x = 0; x < sx; x++){
-      for(let y = 0; y < sy; y++){
-        for(let d = 0; y < depth; d++){
-          let dep = SIMD.float32x4(this.out_act.w[x][y][d], this.out_act.w[x][y][d+1], this.out_act.w[x][y][d+2], this.out_act.w[x][y][d+3]);
-          let res = SIMD.float32x4.mul(SIMD.float32x4.mul(dep, SIMD.float32x4.sub(SIMD.float32x4.splat(1.0), dep)), SIMD.float32x4(this.out_act.dw[x][y][d], this.out_act.dw[x][y][d+1], this.out_act.dw[x][y][d+2], this.out_act.dw[x][y][d+3]););
-          this.in_act.dw[x][y][d] = res.x; this.in_act.dw[x][y][d+1] = res.y; this.in_act.dw[x][y][d+2] = res.z; this.in_act.dw[x][y][d+3] = res.w;
-        }
-      }
+    let v = new Float64Array(TypedObject.storage(this.in_act.dw).buffer);
+    let v2 = new Float64Array(TypedObject.storage(this.out_act.w).buffer);
+    let vw2 = new Float64Array(TypedObject.storage(this.out_act.dw).buffer);
+    let ones = SIMD.float64x2.splat(1.0);
+    let len = (v.length|0);
+    for(let i = 0; i < len; i += 2){
+      let dep = SIMD.float64x2.load(v2, i);
+      SIMD.float64x2.store(v, i, SIMD.float64x2.mul(SIMD.float64x2.mul(dep, SIMD.float64x2.sub(ones, dep)), vw2));
     }
   }
 
   getParamsAndGrads() {
-    return new Float64Array(0);
+    return [];
   }
 
   toJSON() {

@@ -16,36 +16,33 @@ export class TanhLayer extends Layer{
 
   forward(V, is_training) {
     this.in_act = V;
-    var V2 = new V.constructor();
-    let [N0, N1, N2] = [V.w.length, V.w[0].length, V.w[0][0].length]
+    this.out_act = new V.constructor();
+
+    let v = new Float64Array(TypedObject.storage(this.in_act.w).buffer);
+    let v2 = new Float64Array(TypedObject.storage(this.out_act.w).buffer);
+
+    let len = (v.length|0)
     
-    for(let x = 0; x < N0; x++){
-      for(let y = 0; y < N1; y++){
-        for(let d = 0; d < N2; d++){
-          V2.w[x][y][d] = +(Math.tanh(V.w[x][y][d]));
-        }
-      }
+    for(let i = 0; i < len; i += 2){
+      SIMD.float64x2.store(v2, i, SIMD.float64x2(Math.tanh(v[i]), Math.tanh(v[i+1])));
     }
 
-    this.out_act = V2;
     return this.out_act;
   }
 
   backward() {
-    let [N0, N1, N2] = [this.out_act.w.length, this.out_act.w[0].length, this.out_act.w[0][0].length]
-    let ones = SIMD.float32x4.splat(1.0);
-    for(let x = 0; x < N0; x++){
-      for(let y = 0; y < N1; y++){
-        for(let d = 0; d < N2; d += 4){
-          let out = SIMD.float32x4(this.out_act.dw[x][y][d], this.out_act.dw[x][y][d+1], this.out_act.dw[x][y][d+2], this.out_act.dw[x][y][d+3]);
-          let res = SIMD.float32x4.mul(SIMD.float32x4.sub(ones, SIMD.float32x4.mul(out, out)), out);
-          this.in_act.dw[x][y][d] = res.x;
-          this.in_act.dw[x][y][d+1] = res.y;
-          this.in_act.dw[x][y][d+2] = res.z;
-          this.in_act.dw[x][y][d+3] = res.w;
-        }
-      }
+
+    let v = new Float64Array(TypedObject.storage(this.in_act.dw).buffer);
+    let v2 = new Float64Array(TypedObject.storage(this.out_act.dw).buffer);
+
+    let len = (v.length|0);
+    let ones = SIMD.float64x2.splat(1.0);
+
+    for(let i = 0; i < len; i += 2){
+      let out = SIMD.float64x2.load(v2, i);
+      SIMD.float64x2.store(v, i, SIMD.float64x2.mul(SIMD.float64x2.sub(ones, SIMD.float64x2.mul(out, out)), out));
     }
+
   }
 
   getParamsAndGrads() {

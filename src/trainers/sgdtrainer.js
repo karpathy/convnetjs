@@ -16,10 +16,10 @@ export default class SGDTrainer extends Trainer {
     let cost_loss = this.net.backward(y);
     let bwd_time = (new Date().getTime()) - start_2;
 
-    let l2_decay_loss = SIMD.float32x4.splat(0.0);
-    let l1_decay_loss = SIMD.float32x4.splat(0.0); 
-    let lr = SIMD.float32x4.splat(this.learning_rate);
-    let mom = SIMD.float32x4.splat(this.momentum);
+    let l2_decay_loss = SIMD.float64x2.splat(0.0);
+    let l1_decay_loss = SIMD.float64x2.splat(0.0); 
+    let lr = SIMD.float64x2.splat(this.learning_rate);
+    let mom = SIMD.float64x2.splat(this.momentum);
       
     this.k++;
     if(this.k % this.batch_size === 0) {
@@ -42,43 +42,43 @@ export default class SGDTrainer extends Trainer {
         let {p, g, l2_decay_mul, l1_decay_mul} = pglist[i];
 
         // learning rate for some parameters.
-        l2_decay_mul = SIMD.float32x4.splat(l2_decay_mul || 1.0);
-        l1_decay_mul = SIMD.float32x4.splat(l1_decay_mul || 1.0);
-        let l2_decay = SIMD.float32x4.mul(SIMD.float32x4.splat(this.l2_decay), l2_decay_mul);
-        let l1_decay = SIMD.float32x4.mul(SIMD.float32x4.splat(this.l1_decay), l1_decay_mul);
+        l2_decay_mul = SIMD.float64x2.splat(l2_decay_mul || 1.0);
+        l1_decay_mul = SIMD.float64x2.splat(l1_decay_mul || 1.0);
+        let l2_decay = SIMD.float64x2.mul(SIMD.float64x2.splat(this.l2_decay), l2_decay_mul);
+        let l1_decay = SIMD.float64x2.mul(SIMD.float64x2.splat(this.l1_decay), l1_decay_mul);
 
         let gsumi = this.gsum[i];
 
         let plen = (p.length|0);
 
-        for(let j = 0; j < plen; j += 4) {
+        for(let j = 0; j < plen; j += 2) {
 
-          let pj = SIMD.float32x4.load(p, j);
-          let gj = SIMD.float32x4.load(g, j);
-          let gsumij = SIMD.float32x4.load(gsumi, j);
+          let pj = SIMD.float64x2.load(p, j);
+          let gj = SIMD.float64x2.load(g, j);
+          let gsumij = SIMD.float64x2.load(gsumi, j);
 
           // accumulate weight decay loss
-          l2_decay_loss = SIMD.float32x4.add(l2_decay_loss, SIMD.float32x4.div(SIMD.float32x4.mul(l1_decay, SIMD.float32x4.mul(pj, pj)), SIMD.float32x4.splat(2)));
-          l1_decay_loss = SIMD.float32x4.add(l1_decay_loss, SIMD.mul(l1_decay, SIMD.float32x4.abs(pj)));
-          let l1grad = SIMD.float32x4.mul(l1_decay, SIMD.float32x4.greaterThan(pj, SIMD.float32x4.splat(0.0)));
-          let l2grad = SIMD.float32x4.mul(l2_decay, pj)
+          l2_decay_loss = SIMD.float64x2.add(l2_decay_loss, SIMD.float64x2.div(SIMD.float64x2.mul(l1_decay, SIMD.float64x2.mul(pj, pj)), SIMD.float64x2.splat(2)));
+          l1_decay_loss = SIMD.float64x2.add(l1_decay_loss, SIMD.mul(l1_decay, SIMD.float64x2.abs(pj)));
+          let l1grad = SIMD.float64x2.mul(l1_decay, SIMD.float64x2.greaterThan(pj, SIMD.float64x2.splat(0.0)));
+          let l2grad = SIMD.float64x2.mul(l2_decay, pj)
 
           // raw batch gradient
-          let gji = SIMD.float32x4.div(SIMD.float32x4.add(SIMD.float32x4.add(l2grad, l1grad), gj), SIMD.float32x4.splat(this.batch_size))
+          let gji = SIMD.float64x2.div(SIMD.float64x2.add(SIMD.float64x2.add(l2grad, l1grad), gj), SIMD.float64x2.splat(this.batch_size))
 		    
 	        if(this.momentum > 0.0) {
 	          // momentum update
-            let dx = SIMD.float32x4.sub(SIMD.float32x4.mul(mom, gsumij), SIMD.float32x4.mul(lr, gji));
+            let dx = SIMD.float64x2.sub(SIMD.float64x2.mul(mom, gsumij), SIMD.float64x2.mul(lr, gji));
 	          // back this up for next iteration of momentum
-            SIMD.float32x4.store(gsumi, j, dx);
+            SIMD.float64x2.store(gsumi, j, dx);
             // apply corrected gradient
-            SIMD.float32x4.store(p, j, SIMD.float32x4.add(pj, dx)); 
+            SIMD.float64x2.store(p, j, SIMD.float64x2.add(pj, dx)); 
 	        } else {
 	          // vanilla sgd
-            SIMD.float32x4.store(p, j, pj);
+            SIMD.float64x2.store(p, j, pj);
           }
           
-          SIMD.float32x4.store(g, j, SIMD.float32x4.zero()); // zero out gradient so that we can begin accumulating anew
+          SIMD.float64x2.store(g, j, SIMD.float64x2.zero()); // zero out gradient so that we can begin accumulating anew
         }
       }
     }

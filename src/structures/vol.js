@@ -29,9 +29,18 @@ export default function VolType(sx = 1, sy = 1, depth = 1){
     writable : false
   });
 
-  Voltype.prototype.toJSON = function toJSON(){
-  	return this;
-  };
+  Object.defineProperty(VolType.prototype, 'toJSON', {
+    value : function toJSON(){
+      return {
+        sx : this.sx,
+        sy : this.sy,
+        depth : this.depth,
+        w : this.w,
+        dw : this.dw
+      }
+    },
+    writeable : false
+  });
 
   return VolType;
 }
@@ -62,16 +71,16 @@ export function fromImageData(imagedata, convert_grayscale = false){
   let x;
 
   // prepare the input: get pixels and normalize them
-  let v = new (new VolType(imgdata.width, imgdata.height, 4))({w:(new Float32Array(imagedata.data)).buffer});
-  let vd = new Float32Array(TypedObject.storage(v.w).buffer);
+  let v = new (new VolType(imgdata.width, imgdata.height, 4))({w:(new Float64Array(imagedata.data)).buffer});
+  let vd = new Float64Array(TypedObject.storage(v.w).buffer);
 
-  const tff = SIMD.float32x4.splat(255.0);
-  const mpf = SIMD.float32x4.splat(0.5);
+  const tff = SIMD.float64x2.splat(255.0);
+  const mpf = SIMD.float64x2.splat(0.5);
   const len = p.length;
 
   // normalize image pixels to [-0.5, 0.5]
-  for(let i = 0; i < len; i += 4){
-    SIMD.float32x4.store(vd, i, SIMD.float32x4.sub(SIMD.float32x4.div(SIMD.float32x4.load(vd, i), tff), mpf))
+  for(let i = 0; i < len; i += 2){
+    SIMD.float64x2.store(vd, i, SIMD.float64x2.sub(SIMD.float64x2.div(SIMD.float64x2.load(vd, i), tff), mpf))
   }
 
   if(convert_grayscale) {
@@ -82,8 +91,8 @@ export function fromImageData(imagedata, convert_grayscale = false){
 
     // flatten into depth=1 array
     
-    for(let i = 0, j = 0; i < len; i += 4, j += 16){
-      SIMD.float32x4.store(g, i, SIMD.float32x4.div(SIMD.float32x4.add(SIMD.float32x4.add(SIMD.float32x4(vd, vd+4, vd+8, vd+12), SIMD.float32x4(vd+1, vd+5, vd+9, vd+13)), SIMD.float32x4(vd+2, vd+6, vd+10, vd+14)), SIMD.float32x4.splat(3)))
+    for(let i = 0, j = 0; i < len; i += 2, j += 8){
+      SIMD.float64x2.store(g, i, SIMD.float64x2.div(SIMD.float64x2.add(SIMD.float64x2.add(SIMD.float64x2(vd[i], vd[i+4]), SIMD.float64x2(vd[i+1], vd[i+5])), SIMD.float64x2(vd[i+2], vd[i+6])), SIMD.float64x2.splat(3)))
     }
 
     x = g;

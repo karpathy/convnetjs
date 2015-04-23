@@ -30,54 +30,61 @@ export default class FullyConnLayer extends Layer {
 
     // initializations
     var bias = opt.bias_pref || 0.0;
-    this.filters = new ;
-    for(var i=0;i<this.out_depth;i++) { 
-      this.filters.push(new Vol(this.sx, this.sy, this.in_depth)); 
-    }
-    this.biases = new Vol(1, 1, this.out_depth, bias);
+    this.bias_type = new VolType(1, 1, this.out_depth);
+    this.biases = new this.bias_type({w:[[(new Float64Array()).map(x => bias)]]});
 
+    this.filter_type = new VolType(this.sx, this.sy, this.in_depth);
+    this.filters = new (this.filter_type.array(this.out_depth))();
+    for(var i = 0; i < this.out_depth; i++) { 
+      this.filters[i] = new this.filter_type(); 
+    }
   }
 
-  forward(V, is_training) {
+  forward(V, is_training = false) {
     this.in_act = V;
-    var A = new Vol(1, 1, this.out_depth, 0.0);
-    var Vw = V.w;
-    for(var i=0;i<this.out_depth;i++) {
-      var a = 0.0;
-      var wi = this.filters[i].w;
-      for(var d=0;d<this.num_inputs;d++) {
-        a += Vw[d] * wi[d]; // for efficiency use Vols directly for now
+    this.out_act = new this.bias_type();
+    let ow = new Float64Array(TypedObject.storage(this.out_act.w).buffer);
+    let vw = new Float64Array(TypedObject.storage(this.in_act.w).buffer);
+    for(var i = 0; i < this.out_depth; i++) {
+      let a = SIMD.float64x2.zero();
+      let wi = new Float64Array(TypedObject.storage(this.filters[i].w).buffer);
+      for(var d = 0; d < this.num_inputs; d += 2) {
+        // for efficiency use Vols directly for now
+        a = SIMD.float64x2.add(a, SIMD.float64x2.mul(SIMD.float64x2.load(vw, d), SIMD.float64x2.load(wi, d)));
       }
-      a += this.biases.w[i];
-      A.w[i] = a;
+      ow[i] = (a.x + a.y + a.z + a.w) + this.biases.w[0][0][i];
     }
-    this.out_act = A;
     return this.out_act;
   }
 
   backward() {
-    var V = this.in_act;
-    V.dw = global.zeros(V.w.length); // zero out the gradient in input Vol
+    this.in_act.dw = (new Float64Array(this.in_act.w.length)).buffer // zero out the gradient in input Vol
     
+    let vd = new Float64Array(TypedObject.storage(this.in_act.dw).buffer);
+    let vw = new Float64Array(TypedObject.storage(this.in_act.w).buffer);
+
     // compute gradient wrt weights and data
-    for(var i=0;i<this.out_depth;i++) {
-      var tfi = this.filters[i];
-      var chain_grad = this.out_act.dw[i];
-      for(var d=0;d<this.num_inputs;d++) {
-        V.dw[d] += tfi.w[d]*chain_grad; // grad wrt input data
-        tfi.dw[d] += V.w[d]*chain_grad; // grad wrt params
+    for(var i = 0; i < this.out_depth; i++) {
+      let tfiw = new Float64Array(TypedObject.storage(this.filters[i].w).buffer);
+      let tfid = new Float64Array(TypedObject.storage(this.filters[i].dw).buffer);
+      let chain_grad = SIMD.float64x2.splat(this.out_act.dw[0][0][i]);
+      for(var d = 0; d < this.num_inputs; d += 2) {
+        // grad wrt input data
+        SIMD.float64x2.store(vd, d, SIMD.float64x2.add(SIMD.float64x2.load(vd, d), SIMD.float64x2.mul(SIMD.float64x2.load(tfiw, d), chain_grad)));
+        // grad wrt params
+        SIMD.float64x2.store(tfid, d, SIMD.float64x2.add(SIMD.float64x2.load(tfid, d), SIMD.float64x2.mul(SIMD.float64x2.load(vw, d), chain_grad)));
       }
-      this.biases.dw[i] += chain_grad;
+      this.biases.dw[i] += this.out_act.dw[0][0][i];
     }
     
   }
 
   getParamsAndGrads() {
     var response = new Array(this.out_depth + 1);
-    for(var i=0;i<this.out_depth;i++) {
+    for(var i = 0; i < this.out_depth; i++) {
       response[i] = {
         params: this.filters[i].w, 
-        grads: this.filters[i].dw, 
+        grads: this.filters[i].dw,
         l1_decay_mul: this.l1_decay_mul, 
         l2_decay_mul: this.l2_decay_mul
       };

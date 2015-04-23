@@ -30,7 +30,7 @@ export default class PoolLayer extends Layer {
   forward(V, is_training) {
     this.in_act = V;
 
-    var A = new (new VolType(this.out_sx, this.out_sy, this.out_depth));
+    var A = new (new VolType(this.out_sx, this.out_sy, this.out_depth))();
     
     var n=0; // a counter for switches
     for(var d=0;d<this.out_depth;d++) {

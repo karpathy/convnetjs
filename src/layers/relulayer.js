@@ -14,48 +14,31 @@ export class ReluLayer extends Layer {
     this.layer_type = 'relu';
   }
 
-  forward(V, is_training) {
+  forward(V, is_training = false) {
     this.in_act = V;
-    let V2 = new V.constructor(V);
+    this.out_act = new V.constructor(V);
 
-    let {sx, sy, depth} = V;
+    let v = new Float64Array(TypedObject.storage(this.in_act.w).buffer);
+    let v2 = new Float64Array(TypedObject.storage(this.out_act.w).buffer);
 
-    let zeroes = SIMD.float32x4.splat(0.0);
+    let zeroes = SIMD.float64x2.zero();
     
-    for(let x = 0; x < sx; x++){
-      for(let y = 0; y < sy; y++){
-        for(let d = 0; d < depth; d += 4){
-          let vv2 = SIMD.float32x4.max(SIMD.float32x4(V.w[x][y][d], V.w[x][y][d+1], V.w[x][y][d+2], V.w[x][y][d+3]), zeroes);
-          V2.w[x][y][d] = vv2.x;
-          V2.w[x][y][d+1] = vv2.y;
-          V2.w[x][y][d+2] = vv2.z;
-          V2.w[x][y][d+3] = vv2.w;
-        }
-      }
+    // Beautifully succinct, isn't it?
+    for(var i = 0; i < v.length; i += 2){
+      SIMD.float64x2.store(v2, i, SIMD.float64x2.max(SIMD.float64x2.load(v, i), zeroes));
     }
 
-    this.out_act = V2;
     return this.out_act;
   }
 
   backward() {
-    let V = this.in_act; // we need to set dw of this
-    let V2 = this.out_act;
+    let v = new Float64Array(TypedObject.storage(this.in_act.dw).buffer);
+    let v2 = new Float64Array(TypedObject.storage(this.out_act.dw).buffer);
 
-    let {sx, sy, depth} = V;
-
-    let zeroes = SIMD.float32x4.splat(0.0);
-
-    for(let x = 0; x < sx; x++){
-      for(let y = 0; y < sy; y++){
-        for(let d = 0; d < depth; d += 4){
-          let vv2 = SIMD.float32x4.max(SIMD.float32x4(V.dw[x][y][d], V.dw[x][y][d+1], V.dw[x][y][d+2], V.dw[x][y][d+3]), zeroes);
-          V2.dw[x][y][d] = vv2.x;
-          V2.dw[x][y][d+1] = vv2.y;
-          V2.dw[x][y][d+2] = vv2.z;
-          V2.dw[x][y][d+3] = vv2.w;
-        }
-      }
+    let zeroes = SIMD.float64x2.zero();
+    
+    for(var i = 0; i < v.length; i += 2){
+      SIMD.float64x2.store(v2, i, SIMD.float64x2.max(SIMD.float64x2.load(v, i), zeroes));
     }
   }
 

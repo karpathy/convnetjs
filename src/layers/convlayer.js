@@ -29,11 +29,14 @@ export default class ConvLayer extends Layer{
 
     // initializations
     let bias = opt.bias_pref || 0.0;
-    this.filters = [];
-    for(var i=0;i<this.out_depth;i++) { 
-      this.filters.push(new Vol(this.sx, this.sy, this.in_depth)); 
+    this.bias_type = new VolType(1, 1, this.out_depth);
+    this.biases = new this.bias_type({w:[[(new Float64Array()).map(x => bias)]]});
+
+    this.filter_type = new VolType(this.sx, this.sy, this.in_depth);
+    this.filters = new (this.filter_type.array(this.out_depth))();
+    for(var i = 0; i < this.out_depth; i++) { 
+      this.filters[i] = new this.filter_type(); 
     }
-    this.biases = new Vol(1, 1, this.out_depth, bias);
 
   }
 
@@ -89,13 +92,13 @@ export default class ConvLayer extends Layer{
     var V_sy = V.sy | 0;
     var xy_stride = this.stride | 0;
 
-    for(var d=0;d<this.out_depth;d++) {
+    for(var d = 0; d < this.out_depth; d++) {
       var f = this.filters[d];
       var x = -this.pad | 0;
       var y = -this.pad | 0;
-      for(var ay=0; ay<this.out_sy; y+=xy_stride,ay++) {  // xy_stride
+      for(var ay = 0; ay < this.out_sy; y += xy_stride, ay++) {  // xy_stride
         x = -this.pad | 0;
-        for(var ax=0; ax<this.out_sx; x+=xy_stride,ax++) {  // xy_stride
+        for(var ax = 0; ax < this.out_sx; x += xy_stride, ax++) {  // xy_stride
           // convolve centered at this particular location
           var chain_grad = this.out_act.dw[ax][ay][d]; // gradient from above, from chain rule
           for(var fy = 0; fy < f.sy; fy++) {
@@ -120,9 +123,19 @@ export default class ConvLayer extends Layer{
   getParamsAndGrads() {
     var response = new Array(this.out_depth + 1);
     for(var i=0;i<this.out_depth;i++) {
-      response.push({params: this.filters[i].w, grads: this.filters[i].dw, l2_decay_mul: this.l2_decay_mul, l1_decay_mul: this.l1_decay_mul});
+      response.push({
+        params: this.filters[i].w, 
+        grads: this.filters[i].dw, 
+        l2_decay_mul: this.l2_decay_mul, 
+        l1_decay_mul: this.l1_decay_mul
+      });
     }
-    response.push({params: this.biases.w, grads: this.biases.dw, l1_decay_mul: 0.0, l2_decay_mul: 0.0});
+    response.push({
+      params: this.biases.w, 
+      grads: this.biases.dw, 
+      l1_decay_mul: 0.0, 
+      l2_decay_mul: 0.0
+    });
     return response;
   }
 

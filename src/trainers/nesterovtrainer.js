@@ -16,11 +16,11 @@ export default class NesterovTrainer extends Trainer {
     let cost_loss = this.net.backward(y);
     let bwd_time = (new Date().getTime()) - start_2;
 
-    let l2_decay_loss = SIMD.float32x4.splat(0.0);
-    let l1_decay_loss = SIMD.float32x4.splat(0.0);
-    let mom = SIMD.float32x4.splat(this.momentum);
-    let momm = SIMD.float32x4.splat(1.0 + this.momentum)
-    let lr = SIMD.float32x4.splat(this.learning_rate);
+    let l2_decay_loss = SIMD.float64x2.splat(0.0);
+    let l1_decay_loss = SIMD.float64x2.splat(0.0);
+    let mom = SIMD.float64x2.splat(this.momentum);
+    let momm = SIMD.float64x2.splat(1.0 + this.momentum)
+    let lr = SIMD.float64x2.splat(this.learning_rate);
       
     this.k++;
     if(this.k % this.batch_size === 0) {
@@ -40,8 +40,8 @@ export default class NesterovTrainer extends Trainer {
         let {p, g, l2_decay_mul, l1_decay_mul} = pglist[i]; // param, gradient, other options in future (custom learning rate etc)
 
         // learning rate for some parameters.
-        let l2_decay = SIMD.float32x4.splat(this.l2_decay * (l2_decay_mul || 1.0));
-        let l1_decay = SIMD.float32x4.splat(this.l1_decay * (l1_decay_mul || 1.0));
+        let l2_decay = SIMD.float64x2.splat(this.l2_decay * (l2_decay_mul || 1.0));
+        let l1_decay = SIMD.float64x2.splat(this.l1_decay * (l1_decay_mul || 1.0));
 
         let gsumi = this.gsum[i];
         let xsumi = this.xsum[i];
@@ -52,30 +52,30 @@ export default class NesterovTrainer extends Trainer {
          * SIMD spaghetti code ahead - best served warm and w/ bolognaise sauce.
          */
 
-        for(let j = 0; j < plen; j += 4) {
+        for(let j = 0; j < plen; j += 2) {
           
-          let pj = SIMD.float32x4.load(p, j);
-          let gj = SIMD.float32x4.load(g, j);
-          let gsumij = SIMD.float32x4.load(gsumi, j);
+          let pj = SIMD.float64x2.load(p, j);
+          let gj = SIMD.float64x2.load(g, j);
+          let gsumij = SIMD.float64x2.load(gsumi, j);
 
           // accumulate weight decay loss
-          l2_decay_loss = SIMD.float32x4.add(l2_decay_loss, SIMD.float32x4.div(SIMD.float32x4.mul(l1_decay, SIMD.float32x4.mul(pj, pj)), SIMD.float32x4.splat(2)));
-          l1_decay_loss = SIMD.float32x4.add(l1_decay_loss, SIMD.mul(l1_decay, SIMD.float32x4.abs(pj)));
+          l2_decay_loss = SIMD.float64x2.add(l2_decay_loss, SIMD.float64x2.div(SIMD.float64x2.mul(l1_decay, SIMD.float64x2.mul(pj, pj)), SIMD.float64x2.splat(2)));
+          l1_decay_loss = SIMD.float64x2.add(l1_decay_loss, SIMD.mul(l1_decay, SIMD.float64x2.abs(pj)));
 
-          let l1grad = SIMD.float32x4.mul(l1_decay, SIMD.float32x4.greaterThan(pj, SIMD.float32x4.splat(0.0)));
-          let l2grad = SIMD.float32x4.mul(l2_decay, pj)
+          let l1grad = SIMD.float64x2.mul(l1_decay, SIMD.float64x2.greaterThan(pj, SIMD.float64x2.splat(0.0)));
+          let l2grad = SIMD.float64x2.mul(l2_decay, pj)
 
-          let gij = SIMD.float32x4.div(SIMD.float32x4.add(l2grad, SIMD.float32x4.add(l1grad, gj)), SIMD.float32x4.splat(this.batch_size)); // raw batch gradient
+          let gij = SIMD.float64x2.div(SIMD.float64x2.add(l2grad, SIMD.float64x2.add(l1grad, gj)), SIMD.float64x2.splat(this.batch_size)); // raw batch gradient
           let dx = gsumij;
 
-          gsumij = SIMD.float32x4.add(SIMD.float32x4.mul(gsumij, mom), SIMD.float32x4.mul(lr, gij));
+          gsumij = SIMD.float64x2.add(SIMD.float64x2.mul(gsumij, mom), SIMD.float64x2.mul(lr, gij));
 
-          SIMD.float32x4.store(gsumi, j, gsumij);
+          SIMD.float64x2.store(gsumi, j, gsumij);
 
-          SIMD.float32x4.store(p, j, SIMD.float32x4.add(SIMD.float32x4.sub(SIMD.float32x4.mul(mom, dx), SIMD.float32x4.mul(momm, gsumij)), pj));          
+          SIMD.float64x2.store(p, j, SIMD.float64x2.add(SIMD.float64x2.sub(SIMD.float64x2.mul(mom, dx), SIMD.float64x2.mul(momm, gsumij)), pj));          
 
           // zero out gradient so that we can begin accumulating anew
-          SIMD.float32x4.store(g, j, SIMD.float32x4.zero());
+          SIMD.float64x2.store(g, j, SIMD.float64x2.zero());
         }
       }
     }

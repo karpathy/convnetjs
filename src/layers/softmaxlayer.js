@@ -1,5 +1,5 @@
 import * as Layer from "./layer.js";
-import * as VolType from "../structres/vol.js";
+import * as VolType from "../structures/vol.js";
 
 // This is a classifier, with N discrete classes from 0 to N-1
 // it gets a stream of N incoming numbers and computes the softmax
@@ -15,59 +15,53 @@ export class SoftmaxLayer extends Layer {
     this.out_sy = 1;
     this.out_type = new VolType(1, 1, this.out_depth);
     this.layer_type = 'softmax';
+    this.es = new Float64Array(this.out_depth);
   }
 
-  forward(V, is_training) {
+  forward(V, is_training = false) {
     this.in_act = V;
+    this.out_act = new this.out_type();
 
-    let A = new this.out_type();
+    let v = new Float64Array(TypedObject.storage(this.in_act.w).buffer);
+    let a = new Float64Array(TypedObject.storage(this.out_act.w).buffer);
 
     // compute max activation
-    let {sx, sy, depth} = V;
-    let amax = SIMD.float32x4.splat(0.0);
-    for(let x = 0, i = 0; x < sx, i < this.out_depth; x++, i++){
-      for(let y = 0; y < sy, i < this.out_depth; y++, i++){
-        for(let d = 0; d < depth, i < this.out_depth; d++, i++){
-          amax = SIMD.float32x4.max(amax, SIMD.float32x4(V.w[x][y][d], V.w[x][y][d+1], V.w[x][y][d+2], V.w[x][y][d+3]))
-        }
-      } 
+    let len = (v.length | 0)
+    let amax = SIMD.float64x2.zero();
+
+    for(let i = 0; i < len; i += 2){
+      amax = SIMD.float64x2.max(amax, SIMD.float64x2.load(v, i));
     }
-    let max = Math.max(Math.max(amax.x, amax.y), Math.max(amax.z, amax.w));
 
     // compute exponentials (carefully to not blow up)
-    let es = new Float32Array(this.out_depth);
-    let esum = SIMD.float32x4.splat(0.0);
+    let esum = SIMD.float64x2.zero();
+    let max = Math.max(Math.max(amax.x, amax.y), Math.max(amax.z, amax.w));
 
-    for(var i=0;i<this.out_depth;i++) {
-      var e = SIMD.float32x4(Math.exp(as[i] - max), Math.exp(as[i+1] - max), Math.exp(as[i+2] - max), Math.exp(as[i+3] - max));
-      esum = SIMD.float32x4.add(esum, e);
-      es[i] = e.x; es[i+1] = e.y; es[i+2] = e.z; es[i+3] = e.w; 
+    for(var i = 0; i < this.out_depth; i += 2) {
+      var e = SIMD.float64x2(Math.exp(v[i] - max), Math.exp(v[i+1] - max));
+      esum = SIMD.float64x2.add(esum, e);
+      SIMD.float64x2.store(this.es, i, e);
     }
 
-    let sum = (esum.x + esum.y + esum.z + esum.w); 
-
-    // SIMDifying this part probably wouldn't bring any benefits.
     // normalize and output to sum to one
-    for(var i = 0; i < this.out_depth; i++) {
-      es[i] /= esum;
-      A.w[0][0][i] = es[i];
+    esum = SIMD.float64x2.splat(esum.x + esum.y + esum.z + esum.w);
+
+    for(var i = 0; i < this.out_depth; i += 2) {
+      let esi = SIMD.float64x2.div(SIMD.float32x4.load(es, i), esum);
+      SIMD.float64x2.store(this.es, i, esi);
+      SIMD.float64x2.store(a, i, esi)
     }
 
-    this.es = es; // save these for backprop
-    this.out_act = A;
     return this.out_act;
   }
 
   backward(y) {
 
     // compute and accumulate gradient wrt weights and bias of this layer
-    var x = this.in_act;
-    x.dw = new Float64Array(x.w.length); // zero out the gradient of input Vol
+    let x = new Float64Array(TypedObject.storage(this.in_act.dw).buffer);
 
-    for(var i=0;i<this.out_depth;i++) {
-      var indicator = i === y ? 1.0 : 0.0;
-      var mul = -(indicator - this.es[i]);
-      x.dw[i] = mul;
+    for(var i = 0; i < this.out_depth; i += 2) {
+      SIMD.float64x2.store(x, i, SIMD.float64x4(-(i === y ? 1.0 : 0.0 - this.es[i]), -(i+1 === y ? 1.0 : 0.0 - this.es[i+1])))
     }
 
     // loss is the class negative log likelihood
@@ -81,10 +75,10 @@ export class SoftmaxLayer extends Layer {
   toJSON() {
     return {
       out_depth : this.out_depth,
-      json.out_sx : this.out_sx,
-      json.out_sy : this.out_sy,
-      json.layer_type : this.layer_type,
-      json.num_inputs : this.num_inputs
+      out_sx : this.out_sx,
+      out_sy : this.out_sy,
+      layer_type : this.layer_type,
+      num_inputs : this.num_inputs
     };
   }
 
