@@ -12,11 +12,11 @@ A `Net` is essentially a set of layers. Passing a `Vol` forward through the `Net
 
 ### [`Brain`](./nets/brain.md)
 
-A `Brain` is a 
+A `Brain` is an abstract type of neural net to perform Reinforcement Learning.
 
 ## [Layers](./layers/contents.md)
 
-A neural network is composed of a series of layers.
+A neural network is composed of a series of layers. The available layers are listed below:
 
 ### [`Layer`](./layers/layer.md)
 
@@ -75,6 +75,8 @@ The `fromJSON` method creates a new `Layer` from a JSON serialisation of a layer
 `TanhLayer` extends `Layer`. 
 
 ## [Structures](./structures/contents.md)
+
+Structures are used to represent data within the ConvNetJS library. Vols are the most common structure by use.
 
 ### [`VolType`](./structures/voltype.md)
 
