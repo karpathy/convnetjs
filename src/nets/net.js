@@ -1,5 +1,4 @@
-import Vol from "./convnet_vol.js";
-import assert from "./convnet_utils.js";
+import * as VolType from "../structures/vol.js";
 
 export default class Net {
 
@@ -10,13 +9,13 @@ export default class Net {
     // few checks
     if(defs.length < 2){
       throw new Error('Error! At least one input layer and one loss layer are required.');
-    } else if (defs[0].type === 'input' || defs[0].constructor == InputLayer) {
+    } else if (defs[0].type !== 'input' || defs[0].constructor !== InputLayer) {
       throw new Error('Error! First layer must be the input layer, to declare size of inputs');
     }
 
     // desugar layer_defs for adding activation, dropout layers etc
     var new_defs = [];
-    for(var i=0;i<defs.length;i++) {
+    for(var i = 0; i < defs.length; i++) {
       var def = defs[i];
       
       if(def.type==='softmax' || def.type==='svm') {
@@ -78,7 +77,7 @@ export default class Net {
     }
 
     // create the layers
-    this.layers = new_defs.mapPar((x, i) => {
+    this.layers = new_defs.map((x, i) => {
 
       if(i > 0){
         var prev = this.layers[i-1];
@@ -89,43 +88,43 @@ export default class Net {
 
       switch(def.type) {
         case 'fc': 
-          return new global.FullyConnLayer(def); 
+          return new FullyConnLayer(def); 
           break;
         case 'lrn': 
-          return new global.LocalResponseNormalizationLayer(def); 
+          return new LocalResponseNormalizationLayer(def); 
           break;
         case 'dropout': 
-          return new global.DropoutLayer(def); 
+          return new DropoutLayer(def); 
           break;
         case 'input': 
-          return new global.InputLayer(def); 
+          return new InputLayer(def); 
           break;
         case 'softmax': 
-          return new global.SoftmaxLayer(def); 
+          return new SoftmaxLayer(def); 
           break;
         case 'regression': 
-          return new global.RegressionLayer(def); 
+          return new RegressionLayer(def); 
           break;
         case 'conv': 
-          return new global.ConvLayer(def); 
+          return new ConvLayer(def); 
           break;
         case 'pool': 
-          return new global.PoolLayer(def); 
+          return new PoolLayer(def); 
           break;
         case 'relu': 
-          return new global.ReluLayer(def); 
+          return new ReluLayer(def); 
           break;
         case 'sigmoid': 
-          return new global.SigmoidLayer(def); 
+          return new SigmoidLayer(def); 
           break;
         case 'tanh': 
-          return new global.TanhLayer(def); 
+          return new TanhLayer(def); 
           break;
         case 'maxout': 
-          return new global.MaxoutLayer(def); 
+          return new MaxoutLayer(def); 
           break;
         case 'svm': 
-          return new global.SVMLayer(def)); 
+          return new SVMLayer(def); 
           break;
         default: 
           console.error('ERROR: Unrecognised layer type: ' + def.type);
@@ -140,7 +139,7 @@ export default class Net {
   // called from outside (not from the trainer), it defaults to prediction mode
   forward(V, is_training = false) {
     var act = this.layers[0].forward(V, is_training);
-    for(var i=1; i<this.layers.length; i++) {
+    for(var i = 1; i<this.layers.length; i++) {
       act = this.layers[i].forward(act, is_training);
     }
     return act;
@@ -163,14 +162,7 @@ export default class Net {
 
   getParamsAndGrads() {
     // accumulate parameters and gradients for the entire network
-    var response = [];
-    for(var i=0;i<this.layers.length;i++) {
-      var layer_reponse = this.layers[i].getParamsAndGrads();
-      for(var j=0;j<layer_reponse.length;j++) {
-        response.push(layer_reponse[j]);
-      }
-    }
-    return response;
+    return [].concat.apply([], [for (layer of this.layers) layer.getParamsAndGrads()]);
   }
 
   getPrediction() {

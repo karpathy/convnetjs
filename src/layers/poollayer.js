@@ -1,10 +1,10 @@
-import * as Vol from "../vol/index.js";
+import * as VolType from "../structures/vol.js";
 import * as Layer from "./layer.js";
 
 export default class PoolLayer extends Layer {
 
   constructor(opt = {}){
-
+    super(opt);
     // required
     this.sx = opt.sx; // filter size
     this.in_depth = opt.in_depth;

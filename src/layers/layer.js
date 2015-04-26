@@ -4,15 +4,27 @@ export default class Layer {
 
 	}
 
+	forward(V, is_training = false){
+
+	}
+
+	backward(){
+
+	}
+
 	toJSON(){
 
 	}
 
-}
-
-export function fromJSON(json = {}){
-	if(typeof json === 'string'){
-		json = JSON.parse(json);
+	get layerType(){
+		return this.constructor.name;
 	}
-	return new Layer(json);
+
+	static fromJSON(json = {}){
+		if(typeof json === 'string'){
+			json = JSON.parse(json);
+		}
+		return new this.constructor(json);
+	}
+
 }

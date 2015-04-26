@@ -1,15 +1,18 @@
+
+/*
 import {randf, randi, maxmin, randperm, weightedSample, arrUnique} from "./convnet_util.js";
 import * as Trainer from "../trainers/index.js";
 import * as Net from "./net.js";
+import {EventEmitter as EventEmitter} from "events";
 
 /*
-A MagicNet takes data: a list of convnetjs.Vol(), and labels
-which for now are assumed to be class indeces 0..K. MagicNet then:
-- creates data folds for cross-validation
-- samples candidate networks
-- evaluates candidate networks on all data folds
-- produces predictions by model-averaging the best networks
-*/
+  A MagicNet takes data: a list of convnetjs.Vol(), and labels
+  which for now are assumed to be class indeces 0..K. MagicNet then:
+  - creates data folds for cross-validation
+  - samples candidate networks
+  - evaluates candidate networks on all data folds
+  - produces predictions by model-averaging the best networks
+*
 
 export default class MagicNet extends EventEmitter {
 
@@ -33,8 +36,8 @@ export default class MagicNet extends EventEmitter {
     // candidate parameters
     this.batch_size_min = opt, 'batch_size_min', 10;
     this.batch_size_max = opt, 'batch_size_max', 300;
-    this.l2_decay_min = getopt(opt, 'l2_decay_min', -4;
-    this.l2_decay_max = getopt(opt, 'l2_decay_max', 2;
+    this.l2_decay_min = getopt(opt, 'l2_decay_min', -4);
+    this.l2_decay_max = getopt(opt, 'l2_decay_max', 2);
     this.learning_rate_min = getopt(opt, 'learning_rate_min', -4;
     this.learning_rate_max = getopt(opt, 'learning_rate_max', 0;
     this.momentum_min = opt.momentum_min || 0.9;
@@ -293,3 +296,5 @@ export default class MagicNet extends EventEmitter {
   }
 
 }
+
+*/

@@ -1,4 +1,4 @@
-import Vol from "./convnet_vol.js";
+import * as VolType from "./structures/vol.js";
 
 // Random number utilities
 var return_v = false;
@@ -84,10 +84,10 @@ export function randperm(n) {
 
 // sample from list lst according to probabilities in list probs
 // the two lists are of same size, and probs adds up to 1
-export weightedSample(lst, probs) {
+export function weightedSample(lst, probs) {
   var p = randf(0, 1.0);
   var cumprob = 0.0;
-  for(var k=0,n=lst.length;k<n;k++) {
+  for(var k=0 ,n=lst.length;k<n;k++) {
     cumprob += probs[k];
     if(p < cumprob) { return lst[k]; }
   }
@@ -126,12 +126,12 @@ export function augment(V, crop, dx = randi(0, V.sx - crop), dy = randi(0, V.sy 
   // randomly sample a crop in the input volume
   var W;
   if(crop !== V.sx || dx!==0 || dy!==0) {
-    W = new Vol(crop, crop, V.depth, 0.0);
+    W = new (new VolType(crop, crop, V.depth))();
     for(var x=0;x<crop;x++) {
       for(var y=0;y<crop;y++) {
         if(x+dx<0 || x+dx>=V.sx || y+dy<0 || y+dy>=V.sy) continue; // oob
         for(var d=0;d<V.depth;d++) {
-         W.set(x,y,d,V.get(x+dx,y+dy,d)); // copy data over
+         W[x][y][d] = V[x+dx][y+dy][d]; // copy data over
         }
       }
     }
@@ -173,8 +173,7 @@ export function maxmin(w) {
 // returns string representation of float
 // but truncated to length of d digits
 
-export function f2t(x, d) {
-  if(typeof(d)==='undefined') { var d = 5; }
+export function f2t(x, d = 5) {
   var dd = 1.0 * Math.pow(10, d);
   return '' + Math.floor(x*dd)/dd;
 }

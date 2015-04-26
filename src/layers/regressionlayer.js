@@ -1,12 +1,13 @@
-import Vol from "./convnet_vol.js";
+import * as Layer from "./layer.js";
 
 // implements an L2 regression cost layer,
 // so penalizes \sum_i(||x_i - y_i||^2), where x is its input
 // and y is the user-provided array of "correct" values.
 
-export class RegressionLayer {
+export class RegressionLayer extends Layer{
 
   constructor(opt = {}){
+    super(opt);
     // computed
     this.num_inputs = opt.in_sx * opt.in_sy * opt.in_depth;
     this.out_depth = this.num_inputs;

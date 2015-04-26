@@ -36,11 +36,11 @@ export default class AdagradTrainer extends Trainer {
       for(var i=0;i<pglist.length;i++) {
 
         // param, gradient, other options in future (custom learning rate etc)
-        let {p, g, l2_decay_mul, l1_decay_mul} = pglist[i];
+        let {p, g} = pglist[i];
 
         // learning rate for some parameters.
-        let l2_decay_mul = SIMD.float64x2.splat(pg.l2_decay_mul || 1.0);
-        let l1_decay_mul = SIMD.float64x2.splat(pg.l1_decay_mul || 1.0);
+        let l2_decay_mul = SIMD.float64x2.splat(pglist[i].l2_decay_mul || 1.0);
+        let l1_decay_mul = SIMD.float64x2.splat(pglist[i].l1_decay_mul || 1.0);
         let l2_decay = SIMD.float64x2.mul(SIMD.float64x2.splat(this.l2_decay), l2_decay_mul);
         let l1_decay = SIMD.float64x2.mul(SIMD.float64x2.splat(this.l1_decay), l1_decay_mul);
 
@@ -55,7 +55,7 @@ export default class AdagradTrainer extends Trainer {
         for(var j = 0; j < plen; j += 2) {
 
           let pj = SIMD.float64x2.load(p, j);
-          let gj = SIMD.float64x2.load(p, j);
+          let gj = SIMD.float64x2.load(g, j);
           let gsumij = SIMD.float64x2.load(gsumi, j);
 
           // accumulate weight decay loss

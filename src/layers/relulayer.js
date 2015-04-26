@@ -7,6 +7,7 @@ import * as Layer from "./layer.js";
 export class ReluLayer extends Layer {
 
   constructor(opts = {}){
+    super(opts);
     // computed
     this.out_sx = opt.in_sx;
     this.out_sy = opt.in_sy;

@@ -3,6 +3,7 @@ import * as Layer from "./layer.js";
 export default class InputLayer extends Layer {
 
   constructor(opt = {}){
+    super(opt);
     // required: depth
     this.out_depth = opt.depth || opt.out_depth || 0;
 

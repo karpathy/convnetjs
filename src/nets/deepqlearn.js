@@ -2,6 +2,7 @@
 // over time it receives some inputs and some rewards
 // and its job is to set the outputs to maximize the expected reward
 
+/*
 export default class Brain {
 
   constructor(num_states, num_actions, opt = {}){
@@ -278,3 +279,4 @@ export default class Brain {
     elt.appendChild(brainvis);
   }
 }
+*/

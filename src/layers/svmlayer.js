@@ -3,6 +3,7 @@ import * as Layer from "./layer.js";
 export class SVMLayer extends Layer{
 
   constructor(opt = {}){
+    super(opt);
     // computed
     this.num_inputs = opt.in_sx * opt.in_sy * opt.in_depth;
     this.out_depth = this.num_inputs;

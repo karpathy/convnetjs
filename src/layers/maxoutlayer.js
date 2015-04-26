@@ -1,13 +1,14 @@
-import Vol from "./convnet_vol.js";
+import * as Layer from "./layer.js";
 
 // Implements Maxout nnonlinearity that computes
 // x -> max(x)
 // where x is a vector of size group_size. Ideally of course,
 // the input size should be exactly divisible by group_size
 
-export class MaxoutLayer {
+export class MaxoutLayer extends Layer {
 
   constructor(opt = {}){
+    super(opt);
     // required
     this.group_size = opt.group_size || 2;
 
@@ -87,6 +88,6 @@ export function fromJSON(json) {
     out_sx : json.out_sx,
     out_sy : json.out_sy,
     group_size : json.group_size,
-    switches = new Float64Array(json.group_size);
+    switches : new Float64Array(json.group_size)
   });
 }
