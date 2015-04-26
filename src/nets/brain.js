@@ -1,8 +1,12 @@
+import * as SGDTrainer from "../trainers/sgdtrainer.js"
+import * as VolType from "../structures/vol.js";
+import * as Window from "../structures/window.js";
+import * as Net from "./net.js";
+
 // A Brain object does all the magic.
 // over time it receives some inputs and some rewards
 // and its job is to set the outputs to maximize the expected reward
 
-/*
 export default class Brain {
 
   constructor(num_states, num_actions, opt = {}){
@@ -86,7 +90,7 @@ export default class Brain {
       }
       layer_defs.push({type:'regression', num_neurons:num_actions}); // value function output
     }
-    this.value_net = new convnetjs.Net();
+    this.value_net = new Net();
     this.value_net.makeLayers(layer_defs);
     
     // and finally we need a Temporal Difference Learning trainer!
@@ -94,7 +98,7 @@ export default class Brain {
     if(typeof opt.tdtrainer_options !== 'undefined') {
       tdtrainer_options = opt.tdtrainer_options; // allow user to overwrite this
     }
-    this.tdtrainer = new convnetjs.SGDTrainer(this.value_net, tdtrainer_options);
+    this.tdtrainer = new SGDTrainer(this.value_net, tdtrainer_options);
     
     // experience replay
     this.experience = [];
@@ -105,8 +109,8 @@ export default class Brain {
     this.epsilon = 1.0; // controls exploration exploitation tradeoff. Should be annealed over time
     this.latest_reward = 0;
     this.last_input_array = [];
-    this.average_reward_window = new cnnutil.Window(1000, 10);
-    this.average_loss_window = new cnnutil.Window(1000, 10);
+    this.average_reward_window = new Window(1000, 10);
+    this.average_loss_window = new Window(1000, 10);
     this.learning = true;
   }
 
@@ -116,14 +120,16 @@ export default class Brain {
     // do more sophisticated things. For example some actions could be more
     // or less likely at "rest"/default state.
     if(this.random_action_distribution.length === 0) {
-      return convnetjs.randi(0, this.num_actions);
+      return ((Math.random()*this.num_actions)|0);
     } else {
       // okay, lets do some fancier sampling:
-      var p = convnetjs.randf(0, 1.0);
+      var p = Math.random();
       var cumprob = 0.0;
       for(var k=0;k<this.num_actions;k++) {
         cumprob += this.random_action_distribution[k];
-        if(p < cumprob) { return k; }
+        if(p < cumprob) { 
+          return k; 
+        }
       }
     }
   }
@@ -183,7 +189,7 @@ export default class Brain {
       } else {
         this.epsilon = this.epsilon_test_time; // use test-time value
       }
-      var rf = convnetjs.randf(0,1);
+      var rf = Math.random();
       if(rf < this.epsilon) {
         // choose a random action with epsilon probability
         action = this.random_action();
@@ -234,7 +240,7 @@ export default class Brain {
         this.experience.push(e);
       } else {
         // replace. finite memory!
-        var ri = convnetjs.randi(0, this.experience_size);
+        var ri = ((Math.random()*this.experience_size)|0);
         this.experience[ri] = e;
       }
     }
@@ -244,9 +250,9 @@ export default class Brain {
     if(this.experience.length > this.start_learn_threshold) {
       var avcost = 0.0;
       for(var k=0;k < this.tdtrainer.batch_size;k++) {
-        var re = convnetjs.randi(0, this.experience.length);
+        var re = ((Math.random()*this.experience.length)|0);
         var e = this.experience[re];
-        var x = new convnetjs.Vol(1, 1, this.net_inputs);
+        var x = new (new VolType(1, 1, this.net_inputs))();
         x.w = e.state0;
         var maxact = this.policy(e.state1);
         var r = e.reward0 + this.gamma * maxact.value;
@@ -259,24 +265,4 @@ export default class Brain {
     }
   }
 
-  visSelf(elt) {
-    elt.innerHTML = ''; // erase elt first
-    
-    // elt is a DOM element that this function fills with brain-related information
-    var brainvis = document.createElement('div');
-    
-    // basic information
-    var desc = document.createElement('div');
-    var t = '';
-    t += 'experience replay size: ' + this.experience.length + '<br>';
-    t += 'exploration epsilon: ' + this.epsilon + '<br>';
-    t += 'age: ' + this.age + '<br>';
-    t += 'average Q-learning loss: ' + this.average_loss_window.get_average() + '<br />';
-    t += 'smooth-ish reward: ' + this.average_reward_window.get_average() + '<br />';
-    desc.innerHTML = t;
-    brainvis.appendChild(desc);
-    
-    elt.appendChild(brainvis);
-  }
 }
-*/

@@ -21,31 +21,11 @@ export function gaussRandom() {
   }
 }
 
-export function randf(a, b) { 
-  return Math.random()*(b-a)+a; 
-}
-
-export function randi(a, b) { 
-  return Math.floor(Math.random()*(b-a)+a); 
-}
-
 export function randn(mu, std){ 
   return mu+gaussRandom()*std; 
 }
 
 // Array utilities
-export function zeros(n = 0) {
-  if(typeof ArrayBuffer === 'undefined') {
-    // lacking browser support
-    var arr = new Array(n);
-    for(var i=0;i<n;i++) { 
-      arr[i]= 0; 
-    }
-    return arr;
-  } else {
-    return new Float64Array(n);
-  }
-}
 
 export function arrUnique(arr) {
   return arr.filter((x, i) => {return (arr.indexOf(x) >= i)});
@@ -93,34 +73,6 @@ export function weightedSample(lst, probs) {
   }
 }
 
-// syntactic sugar function for getting default parameter values
-export function getopt(opt, field_name, default_value) {
-  if(typeof field_name === 'string') {
-    // case of single string
-    return (typeof opt[field_name] !== 'undefined') ? opt[field_name] : default_value;
-  } else {
-    // assume we are given a list of string instead
-    var ret = default_value;
-    for(var i=0;i<field_name.length;i++) {
-      var f = field_name[i];
-      if (typeof opt[f] !== 'undefined') {
-        ret = opt[f]; // overwrite return value
-      }
-    }
-    return ret;
-  }
-}
-
-export function assert(condition, message) {
-  if (!condition) {
-    message = message || "Assertion failed";
-    if (typeof Error !== "undefined") {
-      throw new Error(message);
-    }
-    throw message; // Fallback
-  }
-}
-
 export function augment(V, crop, dx = randi(0, V.sx - crop), dy = randi(0, V.sy - crop), fliplr = false) {
   
   // randomly sample a crop in the input volume
@@ -141,11 +93,11 @@ export function augment(V, crop, dx = randi(0, V.sx - crop), dy = randi(0, V.sy 
 
   if(fliplr) {
     // flip volume horziontally
-    var W2 = W.cloneAndZero();
+    var W2 = new W.constructor();
     for(var x=0;x<W.sx;x++) {
       for(var y=0;y<W.sy;y++) {
         for(var d=0;d<W.depth;d++) {
-         W2.set(x,y,d,W.get(W.sx - x - 1,y,d)); // copy data over
+         W2[x][y][d] = W.[W.sx - x - 1][y][d]; // copy data over
         }
       }
     }
@@ -164,16 +116,19 @@ export function maxmin(w) {
   var maxi = 0;
   var mini = 0;
   for(var i=1;i<w.length;i++) {
-    if(w[i] > maxv) { maxv = w[i]; maxi = i; } 
-    if(w[i] < minv) { minv = w[i]; mini = i; } 
+    if(w[i] > maxv) { 
+      maxv = w[i]; 
+      maxi = i; 
+    } 
+    if(w[i] < minv) { 
+      minv = w[i]; mini = i; 
+    } 
   }
-  return {maxi: maxi, maxv: maxv, mini: mini, minv: minv, dv:maxv-minv};
-}
-
-// returns string representation of float
-// but truncated to length of d digits
-
-export function f2t(x, d = 5) {
-  var dd = 1.0 * Math.pow(10, d);
-  return '' + Math.floor(x*dd)/dd;
+  return {
+    maxi: maxi, 
+    maxv: maxv, 
+    mini: mini, 
+    minv: minv, 
+    dv:maxv-minv
+  };
 }
