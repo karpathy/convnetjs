@@ -16,7 +16,7 @@ export class SigmoidLayer extends Layer {
   }
 
   forward(V, is_training) {
-    this.in_act = V;
+    super.forward(V, is_training);
     this.out_act = new V.constructor();
 
     let v = new Float64Array(TypedObject.storage(this.in_act.w).buffer);
@@ -44,10 +44,6 @@ export class SigmoidLayer extends Layer {
     }
   }
 
-  getParamsAndGrads() {
-    return [];
-  }
-
   toJSON() {
     return {
       out_depth : this.out_depth,
@@ -57,15 +53,4 @@ export class SigmoidLayer extends Layer {
     };
   }
 
-}
-
-export function fromJSON(json) {
-  if(typeof json == 'string'){
-    json = JSON.parse(json);
-  }
-  return new SigmoidLayer({
-    out_depth : json.out_depth,
-    out_sx : json.out_sx,
-    out_sy : json.out_sy
-  });
 }

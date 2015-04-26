@@ -15,19 +15,6 @@ export default class InputLayer extends Layer {
     this.layer_type = 'input';
   }
 
-  forward(V, is_training) {
-    this.in_act = V;
-    this.out_act = V;
-    return this.out_act; // simply identity function for now
-  }
-
-  backward() { 
-  }
-
-  getParamsAndGrads() {
-    return new Float64Array(0);
-  }
-
   toJSON() {
     return {
       out_depth : this.out_depth,
@@ -36,11 +23,4 @@ export default class InputLayer extends Layer {
       layer_type : this.layer_type
     };
   }
-}
-
-export function fromJSON(json){
-  if(typeof json === 'string'){
-    json = JSON.parse(json);
-  }
-  return new InputLayer(json);
 }

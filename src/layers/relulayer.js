@@ -16,7 +16,7 @@ export class ReluLayer extends Layer {
   }
 
   forward(V, is_training = false) {
-    this.in_act = V;
+    super.forward(V, is_training);
     this.out_act = new V.constructor(V);
 
     let v = new Float64Array(TypedObject.storage(this.in_act.w).buffer);
@@ -43,10 +43,6 @@ export class ReluLayer extends Layer {
     }
   }
 
-  getParamsAndGrads() {
-    return new Float64Array(0);
-  }
-
   toJSON() {
     return {
       out_depth : this.out_depth,
@@ -56,15 +52,4 @@ export class ReluLayer extends Layer {
     }
   }
 
-}
-
-export function fromJSON(json) {
-  if(typeof json === 'string'){
-    json = JSON.parse(json);
-  }
-  return new ReluLayer({
-    out_depth : json.out_depth,
-    out_sx : json.out_depth,
-    out_sy : json.out_sy
-  });
 }

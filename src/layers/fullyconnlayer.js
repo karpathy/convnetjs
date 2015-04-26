@@ -41,7 +41,7 @@ export default class FullyConnLayer extends Layer {
   }
 
   forward(V, is_training = false) {
-    this.in_act = V;
+    super.forward(V, is_training);
     this.out_act = new this.bias_type();
     let ow = new Float64Array(TypedObject.storage(this.out_act.w).buffer);
     let vw = new Float64Array(TypedObject.storage(this.in_act.w).buffer);
@@ -58,10 +58,13 @@ export default class FullyConnLayer extends Layer {
   }
 
   backward() {
-    this.in_act.dw = (new Float64Array(this.in_act.w.length)).buffer // zero out the gradient in input Vol
-    
+   
     let vd = new Float64Array(TypedObject.storage(this.in_act.dw).buffer);
     let vw = new Float64Array(TypedObject.storage(this.in_act.w).buffer);
+
+    for(let i = 0; i < vd.length; i++){
+      vd[i] = 0;
+    }
 
     // compute gradient wrt weights and data
     for(var i = 0; i < this.out_depth; i++) {
@@ -112,21 +115,4 @@ export default class FullyConnLayer extends Layer {
     };
   }
 
-}
-
-export function fromJSON(json){
-  if(typeof json === 'string'){
-    json = JSON.parse(json);
-  }
-  return new FullyConnLayer({
-    out_depth : json.out_depth,
-    out_sx : json.out_sx,
-    out_sy : json.out_sy,
-    layer_type : json.layer_type,
-    num_inputs : json.num_inputs,
-    l1_decay_mul : json.l1_decay_mul,
-    l2_decay_mul : json.l2_decay_mul,
-    filters : json.filters.mapPar(x => VolType.fromJSON(x)),
-    biases : VolType.fromJSON(json.biases)
-  });
 }

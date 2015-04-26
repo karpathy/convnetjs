@@ -44,9 +44,8 @@ export default class ConvLayer extends Layer{
   }
 
   forward(V, is_training = false) {
+    super.forward(V, is_training);
     // optimized code by @mdda that achieves 2x speedup over previous version
-
-    this.in_act = V;
     this.out_act = new this.out_type();
 
     let vw = new Float64Array(TypedObject.storage(this.in_act.w).buffer);
@@ -199,25 +198,4 @@ export default class ConvLayer extends Layer{
     };
   }
 
-}
-
-export function fromJSON(json) {
-  if(typeof json === 'string'){
-    json = JSON.parse(json);
-  }
-  return new ConvLayer({
-    out_depth : json.out_depth,
-    out_sx : json.out_sx,
-    out_sy : json.out_sy,
-    layer_type : json.layer_type,
-    sx : json.sx, // filter size in x, y dims
-    sy : json.sy,
-    stride : json.stride,
-    in_depth : json.in_depth, // depth of input volume
-    l1_decay_mul : json.l1_decay_mul,
-    l2_decay_mul : json.l2_decay_mul,
-    pad : json.pad,
-    filters : json.filters.mapPar(x => VolType.fromJSON(x)),
-    biases : VolType.fromJSON(json.biases)
-  });
 }

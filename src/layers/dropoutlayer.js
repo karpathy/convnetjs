@@ -15,7 +15,7 @@ export default class DropoutLayer extends Layer {
   }
 
   forward(V, is_training = false) {
-    this.in_act = V;
+    super.forward(V, is_training);
     this.out_act = new V.constructor(TypedObject.storage(this.in_act).buffer.slice(0));
     let v = new Float64Array(TypedObject.storage(this.in_act.w).buffer);
     let v2 = new Float64Array(TypedObject.storage(this.out_act.w).buffer);
@@ -47,10 +47,6 @@ export default class DropoutLayer extends Layer {
     }
   }
 
-  getParamsAndGrads() {
-    return new Float64Array(0);
-  }
-
   toJSON() {
     return {
       out_depth : this.out_depth,
@@ -61,11 +57,4 @@ export default class DropoutLayer extends Layer {
     };
   }
 
-}
-
-export function fromJSON(json){
-  if(typeof json === "string"){
-    json = JSON.parse(json);
-  }
-  return new DropoutLayer(json);
 }

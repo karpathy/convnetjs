@@ -22,7 +22,7 @@ export class MaxoutLayer extends Layer {
   }
 
   forward(V, is_training = false) {
-    this.in_act = V;
+    super.forward(V, is_training);
     this.out_act = new V.constructor();
 
     let v = new Float64Array(TypedObject.storage(this.in_act.w).buffer);
@@ -63,10 +63,6 @@ export class MaxoutLayer extends Layer {
 
   }
 
-  getParamsAndGrads() {
-    return [];
-  }
-
   toJSON() {
     return {
       out_depth : this.out_depth,
@@ -77,17 +73,4 @@ export class MaxoutLayer extends Layer {
     };
   }
 
-}
-
-export function fromJSON(json) {
-  if(typeof json == 'string'){
-    json = JSON.parse(json);
-  }
-  return new MaxoutLayer({
-    out_depth : json.out_depth,
-    out_sx : json.out_sx,
-    out_sy : json.out_sy,
-    group_size : json.group_size,
-    switches : new Float64Array(json.group_size)
-  });
 }

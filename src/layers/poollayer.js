@@ -28,7 +28,7 @@ export default class PoolLayer extends Layer {
   }
 
   forward(V, is_training) {
-    this.in_act = V;
+    super.forward(V, is_training);
 
     var A = new (new VolType(this.out_sx, this.out_sy, this.out_depth))();
     
@@ -90,10 +90,6 @@ export default class PoolLayer extends Layer {
     }
   }
 
-  getParamsAndGrads() {
-    return new Float64Array(0);
-  }
-
   toJSON() {
     return {
       sx : this.sx,
@@ -107,19 +103,5 @@ export default class PoolLayer extends Layer {
       pad : this.pad
     };
   }
-
-  fromJSON(json) {
-    this.out_depth = json.out_depth;
-    this.out_sx = json.out_sx;
-    this.out_sy = json.out_sy;
-    this.layer_type = json.layer_type;
-    this.sx = json.sx;
-    this.sy = json.sy;
-    this.stride = json.stride;
-    this.in_depth = json.in_depth;
-    this.pad = typeof json.pad !== 'undefined' ? json.pad : 0; // backwards compatibility
-    this.switchx = global.zeros(this.out_sx*this.out_sy*this.out_depth); // need to re-init these appropriately
-    this.switchy = global.zeros(this.out_sx*this.out_sy*this.out_depth);
-  }
-
+  
 }

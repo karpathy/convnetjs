@@ -20,7 +20,7 @@ export class SoftmaxLayer extends Layer {
   }
 
   forward(V, is_training = false) {
-    this.in_act = V;
+    super.forward(V, is_training);
     this.out_act = new this.out_type();
 
     let v = new Float64Array(TypedObject.storage(this.in_act.w).buffer);
@@ -69,10 +69,6 @@ export class SoftmaxLayer extends Layer {
     return -Math.log(this.es[y]);
   }
 
-  getParamsAndGrads() { 
-    return [];
-  }
-
   toJSON() {
     return {
       out_depth : this.out_depth,
@@ -83,16 +79,4 @@ export class SoftmaxLayer extends Layer {
     };
   }
 
-}
-
-export function fromJSON(json) {
-  if(typeof json === string){
-    json = JSON.parse(json);
-  }
-  return new SoftmaxLayer({
-    out_depth : json.out_depth,
-    out_sx : json.out_sx,
-    out_sy : json.out_sy,
-    num_inputs : json.num_inputs
-  });
 }

@@ -14,4 +14,8 @@ export class Trainer {
     this.gsum = []; // last iteration gradients (used for momentum calculations)
   }
 
+  train(x, y){
+
+  }
+
 }

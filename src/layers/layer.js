@@ -4,20 +4,22 @@ export default class Layer {
 
 	}
 
-	forward(V, is_training = false){
-
-	}
+	forward(V, is_training = false) {
+	    this.in_act = V;
+	    this.out_act = V;
+	    return V; // identity function
+	  }
 
 	backward(){
 
 	}
 
-	toJSON(){
-
+	getParamsAndGrads(){
+		return [];
 	}
 
-	get layerType(){
-		return this.constructor.name;
+	toJSON(){
+		return {};
 	}
 
 	static fromJSON(json = {}){

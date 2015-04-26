@@ -15,15 +15,13 @@ export class TanhLayer extends Layer{
     this.layer_type = 'tanh';
   }
 
-  forward(V, is_training) {
-    this.in_act = V;
+  forward(V, is_training = false) {
+    super.forward(V, is_training);
     this.out_act = new V.constructor();
 
     let v = new Float64Array(TypedObject.storage(this.in_act.w).buffer);
     let v2 = new Float64Array(TypedObject.storage(this.out_act.w).buffer);
-
     let len = (v.length|0)
-    
     for(let i = 0; i < len; i += 2){
       SIMD.float64x2.store(v2, i, SIMD.float64x2(Math.tanh(v[i]), Math.tanh(v[i+1])));
     }
@@ -43,11 +41,6 @@ export class TanhLayer extends Layer{
       let out = SIMD.float64x2.load(v2, i);
       SIMD.float64x2.store(v, i, SIMD.float64x2.mul(SIMD.float64x2.sub(ones, SIMD.float64x2.mul(out, out)), out));
     }
-
-  }
-
-  getParamsAndGrads() {
-    return [];
   }
 
   toJSON() {
@@ -59,15 +52,4 @@ export class TanhLayer extends Layer{
     };
   }
 
-}
-
-export function fromJSON(json) {
-  if(typeof json === 'string'){
-    json = JSON.parse(json);
-  }
-  return new TanhLayer({
-    out_depth : json.out_depth,
-    out_sx : json.out_sx,
-    out_sy : json.out_sy,
-  });
 }
