@@ -1,4 +1,5 @@
 import * as VolType from "../structures/vol.js";
+import * as Layer from "../layers/index.js";
 
 export default class Net {
 
@@ -13,125 +14,138 @@ export default class Net {
       throw new Error('Error! First layer must be the input layer, to declare size of inputs');
     }
 
-    // desugar layer_defs for adding activation, dropout layers etc
-    var new_defs = [];
-    for(var i = 0; i < defs.length; i++) {
-      var def = defs[i];
-      
-      if(def.type==='softmax' || def.type==='svm') {
-        // add an fc layer here, there is no reason the user should
-        // have to worry about this and we almost always want to
-        new_defs.push({
-          type:'fc', 
-          num_neurons: def.num_classes
-        });
-      } else if(def.type==='regression') {
-        // add an fc layer here, there is no reason the user should
-        // have to worry about this and we almost always want to
-        new_defs.push({
-          type:'fc', 
-          num_neurons: def.num_neurons
-        });
-      } else if((def.type==='fc' || def.type==='conv') && typeof(def.bias_pref) === 'undefined'){
-        def.bias_pref = 0.0;
-        if(typeof def.activation !== 'undefined' && def.activation === 'relu') {
-          def.bias_pref = 0.1; // relus like a bit of positive bias to get gradients early
-          // otherwise it's technically possible that a relu unit will never turn on (by chance)
-          // and will never get any gradient and never contribute any computation. Dead relu.
+    this.layers = [];
+
+    let in_sx, in_sy, in_depth;
+
+    for(let i = 0; i < defs.length; i++){
+      let def = defs[i];
+
+      if((def.type === 'softmax' || def.constructor.name === 'SoftmaxLayer' ||
+          def.type === 'svm' || def.constructor.name === 'SVMLayer') && 
+        (this.layers[this.layers.length-1].num_neurons != def.num_classes)){
+        this.layers.push(new Layer.FullyConnLayer({
+          num_neurons: def.num_classes,
+          in_sx : in_sx,
+          in_sy : in_sy,
+          in_depth : in_depth
+        }));
+      } else if((def.type === 'regression' || def.constructor.name === 'RegressionLayer') && 
+        (this.layers[this.layers.length-1].num_neurons != def.num_neurons)){
+        this.layers.push(new Layer.FullyConnLayer({
+          num_neurons: def.num_neurons,
+          in_sx : in_sx,
+          in_sy : in_sy,
+          in_depth : in_depth
+        }));
+      } else if((def.type === 'fc' || def.type === 'conv' || 
+        def.constructor.name === 'FullyConnLayer' || def.constructor.name === 'ReluLayer') && 
+        def.bias_pref == undefined){
+        def.bias_pref = (def.activation === 'relu') ? 0.1 : 0.0; // relus like a bit of positive bias to get gradients early
+        // otherwise it's technically possible that a relu unit will never turn on (by chance)
+        // and will never get any gradient and never contribute any computation. Dead relu.
+      } 
+
+      if(def.constructor.name === 'Object'){
+        switch(def.type) {
+          case 'fc': 
+            this.layers.push(new Layer.FullyConnLayer(def)); 
+            break;
+          case 'lrn': 
+            this.layers.push(new Layer.LocalResponseNormalizationLayer(def)); 
+            break;
+          case 'dropout': 
+            this.layers.push(new Layer.DropoutLayer(def)); 
+            break;
+          case 'input': 
+            this.layers.push(new Layer.InputLayer(def)); 
+            break;
+          case 'softmax': 
+            this.layers.push(new Layer.SoftmaxLayer(def)); 
+            break;
+          case 'regression': 
+            this.layers.push(new Layer.RegressionLayer(def)); 
+            break;
+          case 'conv': 
+            this.layers.push(new Layer.ConvLayer(def)); 
+            break;
+          case 'pool': 
+            this.layers.push(new Layer.PoolLayer(def)); 
+            break;
+          case 'relu': 
+            this.layers.push(new Layer.ReluLayer(def)); 
+            break;
+          case 'sigmoid': 
+            this.layers.push(new Layer.SigmoidLayer(def)); 
+            break;
+          case 'tanh': 
+            this.layers.push(new Layer.TanhLayer(def)); 
+            break;
+          case 'maxout': 
+            this.layers.push(new Layer.MaxoutLayer(def)); 
+            break;
+          case 'svm': 
+            this.layers.push(new Layer.SVMLayer(def)); 
+            break;
+          default:
+            throw new Error("Unrecognised layer type: " + def.type);
         }
+      }else{
+        this.layers.push(def);
       }
 
-      new_defs.push(def);
+      in_sx = def.out_sx; in_sy = def.out_sy; in_depth = def.out_depth;
 
-      if(typeof def.activation !== 'undefined') {
-        if(def.activation==='relu') { 
-          new_defs.push({
-            type:'relu'
-          }); 
-        } else if (def.activation==='sigmoid') { 
-          new_defs.push({
-            type:'sigmoid'
-          }); 
-        } else if (def.activation==='tanh') { 
-          new_defs.push({
-            type:'tanh'
-          }); 
-        } else if (def.activation==='maxout') {
-          // create maxout activation, and pass along group size, if provided
-          var gs = def.group_size !== 'undefined' ? def.group_size : 2;
-          new_defs.push({
-            type:'maxout', group_size:gs
-          });
-        } else { 
-          console.log('ERROR unsupported activation ' + def.activation); 
-        }
+      if(def.activation === 'relu' && (defs[i+1].constructor.name !== 'ReluLayer' || defs[i+1].layer_type !== 'relu')){
+        this.layers.push(new Layer.ReluLayer({
+          in_sx : in_sx,
+          in_sy : in_sy,
+          in_depth : in_depth
+        }));
+        in_sx = this.layers[this.layer.length-1].out_sx; 
+        in_sy = this.layers[this.layer.length-1].out_sy; 
+        in_depth = this.layers[this.layer.length-1].out_depth;
+      }else if(def.activation === 'sigmoid' && (defs[i+1].constructor.name !== 'SigmoidLayer' || defs[i+1].layer_type !== 'sigmoid')){
+        this.layers.push(new Layer.SigmoidLayer({
+          in_sx : in_sx,
+          in_sy : in_sy,
+          in_depth : in_depth
+        }));
+        in_sx = this.layers[this.layer.length-1].out_sx; 
+        in_sy = this.layers[this.layer.length-1].out_sy; 
+        in_depth = this.layers[this.layer.length-1].out_depth;
+      }else if(def.activation === 'tanh' && (defs[i+1].constructor.name !== 'TanhLayer' || defs[i+1].layer_type !== 'tanh')){
+        this.layers.push(new Layer.TanhLayer({
+          in_sx : in_sx,
+          in_sy : in_sy,
+          in_depth : in_depth
+        }));
+        in_sx = this.layers[this.layer.length-1].out_sx; 
+        in_sy = this.layers[this.layer.length-1].out_sy; 
+        in_depth = this.layers[this.layer.length-1].out_depth;
+      }else if(def.activation === 'maxout' && (defs[i+1].constructor.name !== 'MaxoutLayer' || defs[i+1].layer_type !== 'maxout')){
+        this.layers.push(new Layer.MaxoutLayer({
+          in_sx : in_sx,
+          in_sy : in_sy,
+          in_depth : in_depth,
+          group_size : def.group_size || 2
+        }));
+        in_sx = this.layers[this.layer.length-1].out_sx; 
+        in_sy = this.layers[this.layer.length-1].out_sy; 
+        in_depth = this.layers[this.layer.length-1].out_depth;
+      }else if(def.activation == undefined){
+        throw new Error("Unsupported activation: " + def.activation);
       }
 
-      if(typeof def.drop_prob !== 'undefined' && def.type !== 'dropout') {
-        new_defs.push({
-          type:'dropout', 
-          drop_prob: def.drop_prob
-        });
+      if(def.drop_prob != undefined && (def.type !== 'dropout' || def.constructor.name !== 'DropoutLayer')){
+        this.layers.push(new DropoutLayer({
+          drop_prob : def.drop_prob,
+          in_sx : in_sx,
+          in_sy : in_sy,
+          in_depth : in_depth
+        }));
       }
-
     }
-
-    // create the layers
-    this.layers = new_defs.map((x, i) => {
-
-      if(i > 0){
-        var prev = this.layers[i-1];
-        def.in_sx = prev.out_sx;
-        def.in_sy = prev.out_sy;
-        def.in_depth = prev.out_depth;
-      }
-
-      switch(def.type) {
-        case 'fc': 
-          return new FullyConnLayer(def); 
-          break;
-        case 'lrn': 
-          return new LocalResponseNormalizationLayer(def); 
-          break;
-        case 'dropout': 
-          return new DropoutLayer(def); 
-          break;
-        case 'input': 
-          return new InputLayer(def); 
-          break;
-        case 'softmax': 
-          return new SoftmaxLayer(def); 
-          break;
-        case 'regression': 
-          return new RegressionLayer(def); 
-          break;
-        case 'conv': 
-          return new ConvLayer(def); 
-          break;
-        case 'pool': 
-          return new PoolLayer(def); 
-          break;
-        case 'relu': 
-          return new ReluLayer(def); 
-          break;
-        case 'sigmoid': 
-          return new SigmoidLayer(def); 
-          break;
-        case 'tanh': 
-          return new TanhLayer(def); 
-          break;
-        case 'maxout': 
-          return new MaxoutLayer(def); 
-          break;
-        case 'svm': 
-          return new SVMLayer(def); 
-          break;
-        default: 
-          console.error('ERROR: Unrecognised layer type: ' + def.type);
-      }
-
-    });
-
   }
 
   // forward prop the network. 

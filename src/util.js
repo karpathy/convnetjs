@@ -97,7 +97,7 @@ export function augment(V, crop, dx = randi(0, V.sx - crop), dy = randi(0, V.sy 
     for(var x=0;x<W.sx;x++) {
       for(var y=0;y<W.sy;y++) {
         for(var d=0;d<W.depth;d++) {
-         W2[x][y][d] = W.[W.sx - x - 1][y][d]; // copy data over
+         W2[x][y][d] = W[W.sx - x - 1][y][d]; // copy data over
         }
       }
     }
