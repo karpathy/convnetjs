@@ -1,9 +1,6 @@
-
-/*
-import {randf, randi, maxmin, randperm, weightedSample, arrUnique} from "./convnet_util.js";
 import * as Trainer from "../trainers/index.js";
 import * as Net from "./net.js";
-import {EventEmitter as EventEmitter} from "events";
+import {EventEmitter} from "events";
 
 /*
   A MagicNet takes data: a list of convnetjs.Vol(), and labels
@@ -12,7 +9,7 @@ import {EventEmitter as EventEmitter} from "events";
   - samples candidate networks
   - evaluates candidate networks on all data folds
   - produces predictions by model-averaging the best networks
-*
+*/
 
 export default class MagicNet extends EventEmitter {
 
@@ -49,7 +46,7 @@ export default class MagicNet extends EventEmitter {
     this.folds = []; // data fold indices, gets filled by sampleFolds()
     this.candidates = []; // candidate networks that are being currently evaluated
     this.evaluated_candidates = []; // history of all candidates that were fully evaluated on all folds
-    this.unique_labels = arrUnique(labels);
+    this.unique_labels = labels.filter((x, i) => {return (arr.indexOf(x) >= i)});
     this.iter = 0; // iteration counter, goes from 0 -> num_epochs * num_training_data
     this.foldix = 0; // index of active fold
 
@@ -67,7 +64,19 @@ export default class MagicNet extends EventEmitter {
     var num_train = Math.floor(this.train_ratio * N);
     this.folds = []; // flush folds, if any
     for(var i=0;i<this.num_folds;i++) {
-      var p = randperm(N);
+      let p = [];
+      var i = n,
+          j = 0,
+          temp;
+      for(var q = 0; q < n; q++){ 
+        j[q] = q;
+      }
+      while (i--) {
+          j = Math.floor(Math.random() * (i+1));
+          temp = j[i];
+          j[i] = j[j];
+          j[j] = temp;
+      }
       this.folds.push({train_ix: p.slice(0, num_train), test_ix: p.slice(num_train, N)});
     }
   },
@@ -80,7 +89,21 @@ export default class MagicNet extends EventEmitter {
     // sample network topology and hyperparameters
     var layer_defs = [];
     layer_defs.push({type:'input', out_sx:1, out_sy:1, out_depth: input_depth});
-    var nl = weightedSample([0,1,2,3], [0.2, 0.3, 0.3, 0.2]); // prefer nets with 1,2 hidden layers
+
+    let nl; // prefer nets with 1,2 hidden layers
+    {
+      let lst = [0,1,2,3];
+      let probs = [0.2, 0.3, 0.3, 0.2];
+      let p = Math.random(); 
+      let cumprob = 0.0;
+      for(let k = 0, n = lst.length; k < n; k++) {
+        cumprob += probs[k];
+        if(p < cumprob) { 
+          nl = lst[k]; 
+        }
+      }
+    }
+
     for(var q=0;q<nl;q++) {
       var ni = randi(this.neurons_min, this.neurons_max);
       var act = ['tanh','maxout','relu'][randi(0,3)];
@@ -92,34 +115,35 @@ export default class MagicNet extends EventEmitter {
       }
     }
     layer_defs.push({type:'softmax', num_classes: num_classes});
-    var net = new Net();
-    net.makeLayers(layer_defs);
+    var net = new Net(layer_defs);
 
     // sample training hyperparameters
     var bs = randi(this.batch_size_min, this.batch_size_max); // batch size
     var l2 = Math.pow(10, randf(this.l2_decay_min, this.l2_decay_max)); // l2 weight decay
     var lr = Math.pow(10, randf(this.learning_rate_min, this.learning_rate_max)); // learning rate
-    var mom = randf(this.momentum_min, this.momentum_max); // momentum. Lets just use 0.9, works okay usually ;p
-    var tp = randf(0,1); // trainer type
-    var trainer_def;
+    var mom = Math.random() * (this.momentum_max - this.momentum_min) + this.moment_min; // momentum. Lets just use 0.9, works okay usually ;p
+    var tp = Math.random(); // trainer type
+    let trainer_def;
+    let trainer;
     if(tp<0.33) {
-      trainer_def = {method:'adadelta', batch_size:bs, l2_decay:l2};
+      trainer = new AdadeltaTrainer(net, {batch_size:bs, l2_decay:l2});
+      trainer_def = {name : 'Adadelta', batch_size:bs, l2_decay:l2};
     } else if(tp<0.66) {
-      trainer_def = {method:'adagrad', learning_rate: lr, batch_size:bs, l2_decay:l2};
+      trainer = new AdagradTrainer(net, {learning_rate: lr, batch_size:bs, l2_decay:l2});
+      trainer_def = {name : 'Adagrad', learning_rate: lr, batch_size:bs, l2_decay:l2}
     } else {
-      trainer_def = {method:'sgd', learning_rate: lr, momentum: mom, batch_size:bs, l2_decay:l2};
+      trainer = new SGDTrainer(net, {learning_rate: lr, momentum: mom, batch_size:bs, l2_decay:l2});
+      trainer_def = {name: 'SGD', learning_rate: lr, momentum: mom, batch_size:bs, l2_decay:l2};
     }
-    
-    var trainer = new Trainer(net, trainer_def);
 
-    var cand = {};
-    cand.acc = [];
-    cand.accv = 0; // this will maintained as sum(acc) for convenience
-    cand.layer_defs = layer_defs;
-    cand.trainer_def = trainer_def;
-    cand.net = net;
-    cand.trainer = trainer;
-    return cand;
+    return {
+      acc : [],
+      accv : 0,
+      layer_defs : layer_defs,
+      trainer_def : trainer_def,
+      net : net,
+      trainer : trainer
+    };
   }
 
   // sets this.candidates with this.num_candidates candidate nets
@@ -187,10 +211,9 @@ export default class MagicNet extends EventEmitter {
       } else {
         // we will go on to another fold. reset all candidates nets
         for(var k=0;k<this.candidates.length;k++) {
-          var c = this.candidates[k];
-          var net = new Net();
-          net.makeLayers(c.layer_defs);
-          var trainer = new Trainer(net, c.trainer_def);
+          let c = this.candidates[k];
+          let net = new Net(c.layer_defs);
+          let trainer = new Trainer[c.trainer_def.name + "Trainer"](net, c.trainer_def);
           c.net = net;
           c.trainer = trainer;
         }
@@ -203,10 +226,10 @@ export default class MagicNet extends EventEmitter {
     // as simple list
     var vals = [];
     var fold = this.folds[this.foldix]; // active fold
-    for(var k=0;k<this.candidates.length;k++) {
+    for(var k = 0; k < this.candidates.length; k++) {
       var net = this.candidates[k].net;
       var v = 0.0;
-      for(var q=0;q<fold.test_ix.length;q++) {
+      for(var q = 0; q < fold.test_ix.length; q++) {
         var x = this.data[fold.test_ix[q]];
         var l = this.labels[fold.test_ix[q]];
         net.forward(x);
@@ -222,7 +245,7 @@ export default class MagicNet extends EventEmitter {
   // returns prediction scores for given test data point, as Vol
   // uses an averaged prediction from the best ensemble_size models
   // x is a Vol.
-  predict_soft(data) {
+  predictSoft(data) {
     // forward prop the best networks
     // and accumulate probabilities at last layer into a an output Vol
 
@@ -263,13 +286,16 @@ export default class MagicNet extends EventEmitter {
 
   predict(data) {
     var xout = this.predict_soft(data);
-    if(xout.w.length !== 0) {
-      var stats = maxmin(xout.w);
-      var predicted_label = stats.maxi; 
-    } else {
-      var predicted_label = -1; // error out
+    let w = new Float64Array(TypedObject.storage(xout.w).buffer);
+    let maxv = w[0];
+    let maxi = 0;
+    let n = w.length;
+    for(let i = 1; i < n; i++) {
+      if(w[i] > maxv) { 
+        maxi = i; 
+      } 
     }
-    return predicted_label;
+    return maxi;
   }
 
   toJSON() {
@@ -283,7 +309,7 @@ export default class MagicNet extends EventEmitter {
     return json;
   }
 
-  fromJSON(json) {
+  static fromJSON(json) {
     this.ensemble_size = json.nets.length;
     this.evaluated_candidates = [];
     for(var i=0;i<this.ensemble_size;i++) {

@@ -1,5 +1,3 @@
-#!/usr/bin/env node
-
 var fs = require('fs');
 var path = require('path');
 var babelify = require('babelify');
@@ -24,7 +22,11 @@ b.bundle(function(error, buffer){
 		uglify.minify(
 			buffer.toString('utf8'), 
 			{
-				fromString: true
+				fromString: true,
+				mangle : true,
+				compress : {
+
+				}
 			}
 		).code
 	);

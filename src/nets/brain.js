@@ -73,10 +73,10 @@ export default class Brain {
       if(layer_defs[0].type !== 'input') { console.log('TROUBLE! first layer must be input layer!'); }
       if(layer_defs[layer_defs.length-1].type !== 'regression') { console.log('TROUBLE! last layer must be input regression!'); }
       if(layer_defs[0].out_depth * layer_defs[0].out_sx * layer_defs[0].out_sy !== this.net_inputs) {
-        console.log('TROUBLE! Number of inputs must be num_states * temporal_window + num_actions * temporal_window + num_states!');
+        throw new Error('Number of inputs must be num_states * temporal_window + num_actions * temporal_window + num_states!');
       }
       if(layer_defs[layer_defs.length-1].num_neurons !== this.num_actions) {
-        console.log('TROUBLE! Number of regression neurons should be num_actions!');
+        throw new Error('Number of regression neurons should be num_actions!');
       }
     } else {
       // create a very simple neural net by default
@@ -90,8 +90,7 @@ export default class Brain {
       }
       layer_defs.push({type:'regression', num_neurons:num_actions}); // value function output
     }
-    this.value_net = new Net();
-    this.value_net.makeLayers(layer_defs);
+    this.value_net = new Net(layer_defs);
     
     // and finally we need a Temporal Difference Learning trainer!
     var tdtrainer_options = {learning_rate:0.01, momentum:0.0, batch_size:64, l2_decay:0.01};
