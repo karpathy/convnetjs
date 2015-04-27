@@ -23,7 +23,7 @@ export default class MagicNet extends EventEmitter {
     // optional inputs
     this.train_ratio = opt.train_ratio || 0.7;
     this.num_folds = opt.num_folds || 10;
-    this.num_candidates = getopt(opt, 'num_candidates', 50); // we evaluate several in parallel
+    this.num_candidates = opt.num_candidates || 50; // we evaluate several in parallel
     // how many epochs of data to train every network? for every fold?
     // higher values mean higher accuracy in final results, but more expensive
     this.num_epochs = opt.num_epochs || 50; 
@@ -31,15 +31,15 @@ export default class MagicNet extends EventEmitter {
     this.ensemble_size = opt.ensemble_size || 10;
 
     // candidate parameters
-    this.batch_size_min = opt, 'batch_size_min', 10;
-    this.batch_size_max = opt, 'batch_size_max', 300;
-    this.l2_decay_min = getopt(opt, 'l2_decay_min', -4);
-    this.l2_decay_max = getopt(opt, 'l2_decay_max', 2);
-    this.learning_rate_min = getopt(opt, 'learning_rate_min', -4;
-    this.learning_rate_max = getopt(opt, 'learning_rate_max', 0;
+    this.batch_size_min = opt.batch_size_min || 10;
+    this.batch_size_max = opt.batch_size_max || 300;
+    this.l2_decay_min = opt.l2_decay_min || -4);
+    this.l2_decay_max = opt.l2_decay_max || 2);
+    this.learning_rate_min = opt.learning_rate_min || -4;
+    this.learning_rate_max = opt.learning_rate_max || 0;
     this.momentum_min = opt.momentum_min || 0.9;
-    this.momentum_max = opt, 'momentum_max', 0.9;
-    this.neurons_min = opt, 'neurons_min', 5;
+    this.momentum_max = opt.momentum_max || 0.9;
+    this.neurons_min = opt.neurons_min || 5;
     this.neurons_max = opt.neurons_max || 30;
 
     // computed
