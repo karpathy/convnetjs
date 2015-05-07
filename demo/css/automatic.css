@@ -1,0 +1,82 @@
+#wrap {
+  width:800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+h2 {
+  text-align: center;
+  font-size: 34px;
+  font-weight: 300;
+  margin-bottom: 50px;
+}
+h1 {
+  font-size: 26px;
+  font-weight: 400;
+  border-bottom: 1px #999 solid;
+}
+#datamsg{
+  background-color: white;
+  margin-top: 2px;
+  padding: 10px;
+}
+#prepromsg{
+  margin-top: 10px;
+  padding: 10px;
+}
+.msg{
+  padding: 2px;
+}
+body {
+  font-family: 'Lato', sans-serif;
+  color: #333;
+  font-size: 20px;
+  font-weight: 300;
+}
+input[type=text] {
+  border: 1px solid #999;
+  padding: 3px;
+  font-size: 18px;
+  color: #333;
+}
+.clouds-flat-button {
+  position: relative;
+  vertical-align: top;
+  width: 100%;
+  height: 80px;
+  padding: 0;
+  color:#454545;
+  text-align: center;
+  font-size: 16px;
+  background: #ecf0f1;
+  border: 0;
+  border-bottom: 2px solid #dadedf;
+  cursor: pointer;
+  -webkit-box-shadow: inset 0 -2px #dadedf;
+  box-shadow: inset 0 -2px #dadedf;
+}
+.clouds-flat-button:active {
+  top: 1px;
+  outline: none;
+  -webkit-box-shadow: none;
+  box-shadow: none;
+}
+#bestmodel {
+  font-size: 16px;
+  background-color: #FAFAFA;
+  padding: 10px;
+}
+#bestmodeloverall {
+  font-size: 16px;
+  background-color: #FAFAFA;
+  padding: 10px;
+  margin-top: 10px;
+}
+.syntaxhighlighter {
+  font-size: 14px !important;
+  overflow-y: hidden !important; 
+}
+.sopts {
+  box-shadow: 0px 0px 2px 0px #555;
+  margin-bottom: 5px;
+  padding: 10px;
+}
