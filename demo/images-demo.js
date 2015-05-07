@@ -1,37 +1,3 @@
-// ------------------------
-// BEGIN CIFAR-10 SPECIFIC STUFF
-// ------------------------
-var classes_txt = ['airplane', 'car', 'bird', 'cat', 'deer', 'dog', 'frog', 'horse', 'ship', 'truck'];
-var dataset_name = "cifar10";
-var num_batches = 51; // 20 training batches, 1 test
-var test_batch = 50;
-var num_samples_per_batch = 1000;
-var image_dimension = 32;
-var image_channels = 3;
-var use_validation_data = true;
-var random_flip = true;
-var random_position = true;
-
-var layer_defs, net, trainer;
-var t = "layer_defs = [];\n\
-layer_defs.push({type:'input', out_sx:32, out_sy:32, out_depth:3});\n\
-layer_defs.push({type:'conv', sx:5, filters:16, stride:1, pad:2, activation:'relu'});\n\
-layer_defs.push({type:'pool', sx:2, stride:2});\n\
-layer_defs.push({type:'conv', sx:5, filters:20, stride:1, pad:2, activation:'relu'});\n\
-layer_defs.push({type:'pool', sx:2, stride:2});\n\
-layer_defs.push({type:'conv', sx:5, filters:20, stride:1, pad:2, activation:'relu'});\n\
-layer_defs.push({type:'pool', sx:2, stride:2});\n\
-layer_defs.push({type:'softmax', num_classes:10});\n\
-\n\
-net = new convnetjs.Net();\n\
-net.makeLayers(layer_defs);\n\
-\n\
-trainer = new convnetjs.SGDTrainer(net, {method:'adadelta', batch_size:4, l2_decay:0.0001});\n\
-";
-// ------------------------
-// END CIFAR-10 SPECIFIC STUFF
-// ------------------------
-
 var sample_training_instance = function() {
   // find an unloaded batch
   var bi = Math.floor(Math.random()*loaded_train_batches.length);
