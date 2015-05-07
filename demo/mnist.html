@@ -13,6 +13,9 @@
 <script src="../build/util.js"></script>
 <script src="../build/convnet.js"></script>
 
+<script src="image-helpers.js"></script>
+<script src="pica.js"></script>
+
 <script src="mnist/mnist_labels.js"></script>
 <script type="text/javascript">
   // ------------------------
@@ -98,6 +101,17 @@
         </canvas>
         <br />
         <input id="buttoncg" type="submit" value="clear graph" onclick="clear_graph();"/>
+      </div>
+    </div>
+    <div class="secpart"> 
+      <div id="upload_box">
+        Test an image from your computer:
+        <div id="img_div">
+            <img id="preview_img"/>
+        </div>
+        <input name="image" type="file" accept="image/*" onchange="loadFile(event)">
+
+        <input type="submit" value="Test Image" onclick="testImage(document.getElementById('preview_img'))">
       </div>
     </div>
     <div style="clear:both;"></div>

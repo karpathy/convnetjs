@@ -437,13 +437,14 @@ var test_predict = function() {
 
     // add predictions
     var probsdiv = document.createElement('div');
-    div.className = 'probsdiv';
+    
     var t = '';
     for(var k=0;k<3;k++) {
       var col = preds[k].k===y ? 'rgb(85,187,85)' : 'rgb(187,85,85)';
-      t += '<div class=\"pp\" style=\"width:' + Math.floor(preds[k].p/n*100) + 'px; margin-left: 70px; background-color:' + col + ';\">' + classes_txt[preds[k].k] + '</div>'
+      t += '<div class=\"pp\" style=\"width:' + Math.floor(preds[k].p/n*100) + 'px; background-color:' + col + ';\">' + classes_txt[preds[k].k] + '</div>'
     }
     probsdiv.innerHTML = t;
+    probsdiv.className = 'probsdiv';
     div.appendChild(probsdiv);
 
     // add it into DOM
@@ -455,7 +456,44 @@ var test_predict = function() {
   testAccWindow.add(num_correct/num_total);
   $("#testset_acc").text('test accuracy based on last 200 test images: ' + testAccWindow.get_average());  
 }
+var testImage = function(img) {
+  var x = convnetjs.img_to_vol(img);
+  var out_p = net.forward(x);
 
+
+  var vis_elt = document.getElementById("visnet");
+  visualize_activations(net, vis_elt);
+
+  var preds =[]
+  for(var k=0;k<out_p.w.length;k++) { preds.push({k:k,p:out_p.w[k]}); }
+  preds.sort(function(a,b){return a.p<b.p ? 1:-1;});
+
+  // add predictions
+  var div = document.createElement('div');
+  div.className = 'testdiv';
+
+  // draw the image into a canvas
+  draw_activations_COLOR(div, x, 2);
+
+  var probsdiv = document.createElement('div');
+
+
+  var t = '';
+  for(var k=0;k<3;k++) {
+    var col = k===0 ? 'rgb(85,187,85)' : 'rgb(187,85,85)';
+    t += '<div class=\"pp\" style=\"width:' + Math.floor(preds[k].p/1*100) + 'px; background-color:' + col + ';\">' + classes_txt[preds[k].k] + '</div>'
+  }
+  
+  probsdiv.innerHTML = t;
+  probsdiv.className = 'probsdiv';
+  div.appendChild(probsdiv);
+
+  // add it into DOM
+  $(div).prependTo($("#testset_vis")).hide().fadeIn('slow').slideDown('slow');
+  if($(".probsdiv").length>200) {
+    $("#testset_vis > .probsdiv").last().remove(); // pop to keep upper bound of shown items
+  }
+}
 
 var lossGraph = new cnnvis.Graph();
 var xLossWindow = new cnnutil.Window(100);
