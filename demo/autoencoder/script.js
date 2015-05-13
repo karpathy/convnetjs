@@ -11,8 +11,7 @@ layer_defs.push({type:'fc', num_neurons:50, activation:'tanh'});\n\
 layer_defs.push({type:'fc', num_neurons:50, activation:'tanh'});\n\
 layer_defs.push({type:'regression', num_neurons:28*28});\n\
 \n\
-net = new convnetjs.Net();\n\
-net.makeLayers(layer_defs);\n\
+net = new convnetjs.Netlayer_defs();\n\
 \n\
 trainer = new convnetjs.SGDTrainer(net, {learning_rate:1, method:'adadelta', batch_size:50, l2_decay:0.001, l1_decay:0.001});\n\
 ";
@@ -41,11 +40,13 @@ var sample_training_instance = function() {
 
   // fetch the appropriate row of the training image and reshape into a Vol
   var p = img_data[b].data;
-  var x = new convnetjs.Vol(28,28,1,0.0);
+  var vol_type = new convnetjs.VolType(28, 28, 1);
+  var x = new vol_type();
   var W = 28*28;
-  for(var i=0;i<W;i++) {
-    var ix = ((W * k) + i) * 4;
-    x.w[i] = p[ix]/255.0;
+  for(var sx = 0, i = 0; sx < x.w.length, i < W; sx++){
+    for(var sy = 0; sy < x.w[0].length; sy++, i++){
+      x.w[sx][sy][0] = p[((W * k) + i) * 4]/255.0;
+    }
   }
 
   return {x:x, label:labels[n]};
@@ -483,13 +484,12 @@ var reset_all = function() {
   $("#cyclestatus").html('drawing neurons ' + d0 + ' and ' + d1 + ' of layer with index ' + lix + ' (' + net.layers[lix].layer_type + ')');
 
 }
+
 var load_from_json = function() {
-  var jsonString = document.getElementById("dumpjson").value;
-  var json = JSON.parse(jsonString);
-  net = new convnetjs.Net();
-  net.fromJSON(json);
+  net = convnetjs.Net.fromJSON(JSON.parse(document.getElementById("dumpjson").value));
   reset_all();
 }
+
 var change_net = function() {
   eval($("#newnet").val());
   reset_all();

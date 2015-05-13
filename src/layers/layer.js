@@ -1,16 +1,16 @@
 export default class Layer { 
 
 	constructor(opts){
-
+		
 	}
 
-	forward(V, is_training = false) {
+	forward(V, use_webgl = false, is_training = false) {
 	    this.in_act = V;
 	    this.out_act = V;
 	    return V; // identity function
 	  }
 
-	backward(){
+	backward(use_webgl = false, is_training = false){
 
 	}
 

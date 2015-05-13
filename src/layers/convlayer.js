@@ -1,7 +1,7 @@
 import * as VolType from "../structures/vol.js";
 import * as Layer from "./layer.js";
 
-export default class ConvLayer extends Layer{
+export default class ConvLayer extends Layer {
 
   constructor(opt = {}){
     super(opt);
@@ -43,17 +43,18 @@ export default class ConvLayer extends Layer{
 
   }
 
-  forward(V, is_training = false) {
-    super.forward(V, is_training);
+  forward(V, use_webgl = false, is_training = false) {
+
+    super.forward(V, use_webgl, is_training);
     // optimized code by @mdda that achieves 2x speedup over previous version
     this.out_act = new this.out_type();
 
-    let vw = new Float64Array(TypedObject.storage(this.in_act.w).buffer);
-    let vd = new Float64Array(TypedObject.storage(this.in_act.dw).buffer);
-    let v2w = new Float64Array(TypedObject.storage(this.out_act.w).buffer);
-    let v2d = new Float64Array(TypedObject.storage(this.out_act.dw).buffer);
-    let b = new Float64Array(TypedObject.storage(this.biases.w).buffer);
-    let fw = new Float64Array(TypedObject.storage(this.filters).buffer);
+    let vw = new Float64Array(storage(this.in_act.w).buffer);
+    let vd = new Float64Array(storage(this.in_act.dw).buffer);
+    let v2w = new Float64Array(storage(this.out_act.w).buffer);
+    let v2d = new Float64Array(storage(this.out_act.dw).buffer);
+    let b = new Float64Array(storage(this.biases.w).buffer);
+    let fw = new Float64Array(storage(this.filters).buffer);
     let x = (0|0), y = (0|0),
         xco = (0|0), fco = (0|0),
         fsx = (this.sx|0), fsy = (this.sy|0), fdep = (this.in_depth|0), fstep = (this.filters.byteLength/8/this.filters.length|0),
@@ -94,14 +95,14 @@ export default class ConvLayer extends Layer{
     return this.out_act;
   }
 
-  backward() {
+  backward(use_webgl = false, is_training = false) {
 
-    let vw = new Float64Array(TypedObject.storage(this.in_act.w).buffer);
-    let vd = new Float64Array(TypedObject.storage(this.in_act.dw).buffer);
-    let v2w = new Float64Array(TypedObject.storage(this.out_act.w).buffer);
-    let v2d = new Float64Array(TypedObject.storage(this.out_act.dw).buffer);
-    let b = new Float64Array(TypedObject.storage(this.biases.dw).buffer);
-    let fw = new Float64Array(TypedObject.storage(this.filters).buffer);
+    let vw = new Float64Array(storage(this.in_act.w).buffer);
+    let vd = new Float64Array(storage(this.in_act.dw).buffer);
+    let v2w = new Float64Array(storage(this.out_act.w).buffer);
+    let v2d = new Float64Array(storage(this.out_act.dw).buffer);
+    let b = new Float64Array(storage(this.biases.dw).buffer);
+    let fw = new Float64Array(storage(this.filters).buffer);
     let x = (0|0), y = (0|0),
         xco = (0|0), fco = (0|0),
         fsx = (this.sx|0), fsy = (this.sy|0), fdep = (this.in_depth|0), fstep = (this.filters.byteLength/8/this.filters.length|0),

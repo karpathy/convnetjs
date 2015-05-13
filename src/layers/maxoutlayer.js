@@ -21,12 +21,12 @@ export class MaxoutLayer extends Layer {
     this.switches = new Float64Array(this.out_sx*this.out_sy*this.out_depth); // useful for backprop
   }
 
-  forward(V, is_training = false) {
+  forward(V, use_webgl = false, is_training = false) {
     super.forward(V, is_training);
     this.out_act = new V.constructor();
 
-    let v = new Float64Array(TypedObject.storage(this.in_act.w).buffer);
-    let v2 = new Float64Array(TypedObject.storage(this.out_act.w).buffer);
+    let v = new Float64Array(storage(this.in_act.w).buffer);
+    let v2 = new Float64Array(storage(this.out_act.w).buffer);
     
     let len = (v.length|0)
 
@@ -50,8 +50,8 @@ export class MaxoutLayer extends Layer {
 
   backward() {
 
-    let v = new Float64Array(TypedObject.storage(this.in_act).buffer);
-    let v2 = new Float64Array(TypedObject.storage(this.out_act).buffer);
+    let v = new Float64Array(storage(this.in_act).buffer);
+    let v2 = new Float64Array(storage(this.out_act).buffer);
 
     let len = (v.length|0);
 

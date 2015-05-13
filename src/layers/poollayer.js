@@ -25,12 +25,14 @@ export default class PoolLayer extends Layer {
     this.switchx = new Float64Array(this.out_sx*this.out_sy*this.out_depth);
     this.switchy = new Float64Array(this.out_sx*this.out_sy*this.out_depth);
 
+    this.out_vol = new VolType(this.out_sx, this.out_sy, this.out_depth);
+
   }
 
-  forward(V, is_training) {
+  forward(V, use_webgl = false, is_training = false) {
     super.forward(V, is_training);
 
-    var A = new (new VolType(this.out_sx, this.out_sy, this.out_depth))();
+    var A = new this.out_voltype();
     
     var n=0; // a counter for switches
     for(var d=0;d<this.out_depth;d++) {
@@ -47,22 +49,22 @@ export default class PoolLayer extends Layer {
             for(var fy=0;fy<this.sy;fy++) {
               var oy = y+fy;
               var ox = x+fx;
-              if(oy>=0 && oy<V.sy && ox>=0 && ox<V.sx) {
+              if(oy >= 0 && oy < V.sy && ox >= 0 && ox < V.sx) {
                 var v = V.w[ox][oy][d];
                 // perform max pooling and store pointers to where
                 // the max came from. This will speed up backprop 
                 // and can help make nice visualizations in future
                 if(v > a) { 
                   a = v; 
-                  winx=ox; 
-                  winy=oy;
+                  winx = ox; 
+                  winy = oy;
                 }
               }
             }
           }
           this.switchx[n] = winx;
           this.switchy[n] = winy;
-          A[ax][ay][d] = a;
+          A.w[ax][ay][d] = a;
         }
       }
     }
@@ -74,17 +76,17 @@ export default class PoolLayer extends Layer {
     // pooling layers have no parameters, so simply compute 
     // gradient wrt data here
     var V = this.in_act;
-    V.dw = global.zeros(V.w.length); // zero out gradient wrt data
+    V.dw = new Float64Array(V.w.length); // zero out gradient wrt data
     var A = this.out_act; // computed in forward pass 
 
     var n = 0;
     for(var d=0;d<this.out_depth;d++) {
       var x = -this.pad;
       var y = -this.pad;
-      for(var ax=0; ax < this.out_sx; x+=this.stride, ax++) {
+      for(var ax = 0; ax < this.out_sx; x += this.stride, ax++) {
         y = -this.pad;
-        for(var ay=0; ay<this.out_sy; y+=this.stride, ay++, n++) {
-          V.add_grad(this.switchx[n], this.switchy[n], d, this.out_act.get_grad(ax,ay,d));
+        for(var ay = 0; ay<this.out_sy; y += this.stride, ay++, n++) {
+          V.dw[this.switchx[n]][this.switchy[n]][d] = this.out_act.dw[ax][ay][d];
         }
       }
     }

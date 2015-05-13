@@ -15,12 +15,13 @@ export class TanhLayer extends Layer{
     this.layer_type = 'tanh';
   }
 
-  forward(V, is_training = false) {
+  forward(V, use_webgl = false, is_training = false) {
     super.forward(V, is_training);
     this.out_act = new V.constructor();
 
-    let v = new Float64Array(TypedObject.storage(this.in_act.w).buffer);
-    let v2 = new Float64Array(TypedObject.storage(this.out_act.w).buffer);
+    let v = new Float64Array(storage(this.in_act.w).buffer);
+    let v2 = new Float64Array(storage(this.out_act.w).buffer);
+
     let len = (v.length|0)
     for(let i = 0; i < len; i += 2){
       SIMD.float64x2.store(v2, i, SIMD.float64x2(Math.tanh(v[i]), Math.tanh(v[i+1])));
@@ -29,10 +30,10 @@ export class TanhLayer extends Layer{
     return this.out_act;
   }
 
-  backward() {
+  backward(use_webgl = false, is_training = false) {
 
-    let v = new Float64Array(TypedObject.storage(this.in_act.dw).buffer);
-    let v2 = new Float64Array(TypedObject.storage(this.out_act.dw).buffer);
+    let v = new Float64Array(storage(this.in_act.dw).buffer);
+    let v2 = new Float64Array(storage(this.out_act.dw).buffer);
 
     let len = (v.length|0);
     let ones = SIMD.float64x2.splat(1.0);

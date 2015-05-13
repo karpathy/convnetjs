@@ -151,10 +151,10 @@ export default class Net {
   // forward prop the network. 
   // The trainer class passes is_training = true, but when this function is
   // called from outside (not from the trainer), it defaults to prediction mode
-  forward(V, is_training = false) {
-    var act = this.layers[0].forward(V, is_training);
-    for(var i = 1; i<this.layers.length; i++) {
-      act = this.layers[i].forward(act, is_training);
+  forward(V, use_webgl = false, is_training = false) {
+    var act = this.layers[0].forward(V, use_webgl, is_training);
+    for(var i = 1; i < this.layers.length; i++) {
+      act = this.layers[i].forward(act, use_webgl, is_training);
     }
     return act;
   }
@@ -165,10 +165,10 @@ export default class Net {
   }
   
   // backprop: compute gradients wrt all parameters
-  backward(y) {
+  backward(y, use_webgl = false, is_training = false) {
     var N = this.layers.length;
     var loss = this.layers[N-1].backward(y); // last layer assumed to be loss layer
-    for(var i=N-2;i>=0;i--) { // first layer assumed input
+    for(var i = N - 2; i >= 0; i--) { // first layer assumed input
       this.layers[i].backward();
     }
     return loss;

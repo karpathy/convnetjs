@@ -6,14 +6,14 @@ export default class SGDTrainer extends Trainer {
 		super(opts);
 	}
 
-	train(x, y){
+	train(x, y, use_webgl = false){
 
 		let start_1 = new Date().getTime();
-    this.net.forward(x, true); // also set the flag that lets the net know we're just training
+    this.net.forward(x, use_webgl, true); // also set the flag that lets the net know we're just training
     let fwd_time = (new Date().getTime()) - start_1;
 
     let start_2 = new Date().getTime();
-    let cost_loss = this.net.backward(y);
+    let cost_loss = this.net.backward(y, use_webgl, true);
     let bwd_time = (new Date().getTime()) - start_2;
 
     let l2_decay_loss = SIMD.float64x2.splat(0.0);

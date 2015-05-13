@@ -15,6 +15,9 @@
 
 	"main" : "./build/convnet.js",
 
+	"dependencies" : {
+	},
+
 	"devDependencies" : {
 		"babelify" : "*",
 		"uglify-js" : "*",

@@ -27,7 +27,7 @@ export class RegressionLayer extends Layer{
 
     // compute and accumulate gradient wrt weights and bias of this layer
     // zero out the gradient of input Vol
-    let x = new Float64Array(TypedObject.storage(new this.in_act.constructor({w:this.in_act.w})).buffer);
+    let x = new Float64Array(storage(new this.in_act.constructor({w:this.in_act.w})).buffer);
     let loss = 0.0;
 
     for(let i = 0; i < this.out_depth && i < y.length; i++){

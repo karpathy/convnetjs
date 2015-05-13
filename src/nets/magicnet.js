@@ -33,8 +33,8 @@ export default class MagicNet extends EventEmitter {
     // candidate parameters
     this.batch_size_min = opt.batch_size_min || 10;
     this.batch_size_max = opt.batch_size_max || 300;
-    this.l2_decay_min = opt.l2_decay_min || -4);
-    this.l2_decay_max = opt.l2_decay_max || 2);
+    this.l2_decay_min = opt.l2_decay_min || -4;
+    this.l2_decay_max = opt.l2_decay_max || 2;
     this.learning_rate_min = opt.learning_rate_min || -4;
     this.learning_rate_max = opt.learning_rate_max || 0;
     this.momentum_min = opt.momentum_min || 0.9;
@@ -79,7 +79,7 @@ export default class MagicNet extends EventEmitter {
       }
       this.folds.push({train_ix: p.slice(0, num_train), test_ix: p.slice(num_train, N)});
     }
-  },
+  }
 
   // returns a random candidate network
   sampleCandidate() {
@@ -286,7 +286,7 @@ export default class MagicNet extends EventEmitter {
 
   predict(data) {
     var xout = this.predict_soft(data);
-    let w = new Float64Array(TypedObject.storage(xout.w).buffer);
+    let w = new Float64Array(storage(xout.w).buffer);
     let maxv = w[0];
     let maxi = 0;
     let n = w.length;
@@ -322,5 +322,3 @@ export default class MagicNet extends EventEmitter {
   }
 
 }
-
-*/

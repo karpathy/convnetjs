@@ -6,9 +6,9 @@
 // the data. 
 
 export default function VolType(sx = 1, sy = 1, depth = 1){
-  let VolType = new TypedObject.StructType({
-    w : TypedObject.float64.array(depth).array(sy).array(sx),
-    dw : TypedObject.float64.array(depth).array(sy).array(sx)
+  let VolType = new StructType({
+    w : float64.array(depth).array(sy).array(sx),
+    dw : float64.array(depth).array(sy).array(sx)
   });
 
   Object.defineProperty(VolType.prototype, 'sx', {
@@ -27,6 +27,14 @@ export default function VolType(sx = 1, sy = 1, depth = 1){
     enumerable : true,
     value : depth,
     writable : false
+  });
+
+  Object.defineProperty(VolType.prototype, 'clone', {
+    enumerable : false,
+    value : function clone(){
+      return new this.constructor(storage(this).buffer);
+    },
+    writeable : false
   });
 
   Object.defineProperty(VolType.prototype, 'toJSON', {
@@ -72,7 +80,7 @@ export function fromImageData(imagedata, convert_grayscale = false){
 
   // prepare the input: get pixels and normalize them
   let v = new (new VolType(imgdata.width, imgdata.height, 4))({w:(new Float64Array(imagedata.data)).buffer});
-  let vd = new Float64Array(TypedObject.storage(v.w).buffer);
+  let vd = new Float64Array(storage(v.w).buffer);
 
   const tff = SIMD.float64x2.splat(255.0);
   const mpf = SIMD.float64x2.splat(0.5);
