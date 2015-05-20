@@ -1,0 +1,15 @@
+#wrap {
+  width: 800px;
+  margin-left: auto;
+  margin-right: auto;
+}
+h1 {
+  font-size: 16px;
+  color: #333;
+  background-color: #DDD;
+  border-bottom: 1px #999 solid;
+  text-align: center;
+}
+body {
+  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+}
