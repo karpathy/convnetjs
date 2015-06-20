@@ -86,7 +86,7 @@
             var xsumi = this.xsum[i];
             if(this.method === 'adam') {
               // adam update
-              var bt1 = this.beta1 * Math.pow(this.lambda, this.k); // decay first moment running average coefficient
+              var bt1 = this.beta1 * Math.pow(this.lambda, this.k-1); // decay first moment running average coefficient
               gsumi[j] = gsumi[j] * bt1 + (1-bt1) * gij; // update biased first moment estimate
               xsumi[j] = xsumi[j] * this.beta2 + (1-this.beta2) * gij * gij; // update biased second moment estimate
               var denom = Math.sqrt(xsumi[j]) + this.eps;
