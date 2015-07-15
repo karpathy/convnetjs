@@ -7,12 +7,19 @@ var it = mocha.it;
 var describe = mocha.describe;
 
 describe('VolType', function(){
-
+	it('should make a new VolType', function(){
+		var type = new convnet.VolType(1, 1, 2);
+	});
 });
 
 describe('Net', function(){
 	it('should create a network from an array of layers.', function(){
 		var layers = [
+		    {type:'input', out_sx:1, out_sy:1, out_depth:2},
+		    {type:'fc', num_neurons:20, activation:'relu'},
+		    {type:'softmax', num_classes:10}
 		];
+
+		var net = new convnet.Net(layers);
 	});
 });
