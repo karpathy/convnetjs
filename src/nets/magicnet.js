@@ -1,4 +1,4 @@
-import Trainer from "../trainers/index.js";
+import * as Trainers from "../trainers/index.js";
 import Net from "./net.js";
 import {EventEmitter} from "events";
 
@@ -126,13 +126,13 @@ export default class MagicNet extends EventEmitter {
     let trainer_def;
     let trainer;
     if(tp<0.33) {
-      trainer = new AdadeltaTrainer(net, {batch_size:bs, l2_decay:l2});
+      trainer = new Trainers.AdadeltaTrainer(net, {batch_size:bs, l2_decay:l2});
       trainer_def = {name : 'Adadelta', batch_size:bs, l2_decay:l2};
     } else if(tp<0.66) {
-      trainer = new AdagradTrainer(net, {learning_rate: lr, batch_size:bs, l2_decay:l2});
+      trainer = new Trainers.AdagradTrainer(net, {learning_rate: lr, batch_size:bs, l2_decay:l2});
       trainer_def = {name : 'Adagrad', learning_rate: lr, batch_size:bs, l2_decay:l2}
     } else {
-      trainer = new SGDTrainer(net, {learning_rate: lr, momentum: mom, batch_size:bs, l2_decay:l2});
+      trainer = new Trainers.SGDTrainer(net, {learning_rate: lr, momentum: mom, batch_size:bs, l2_decay:l2});
       trainer_def = {name: 'SGD', learning_rate: lr, momentum: mom, batch_size:bs, l2_decay:l2};
     }
 
@@ -213,7 +213,7 @@ export default class MagicNet extends EventEmitter {
         for(var k=0;k<this.candidates.length;k++) {
           let c = this.candidates[k];
           let net = new Net(c.layer_defs);
-          let trainer = new Trainer[c.trainer_def.name + "Trainer"](net, c.trainer_def);
+          let trainer = new Trainers[c.trainer_def.name + "Trainer"](net, c.trainer_def);
           c.net = net;
           c.trainer = trainer;
         }

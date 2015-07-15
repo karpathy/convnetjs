@@ -1,4 +1,17 @@
-import Layer from "../layers/index.js";
+import {
+  ConvLayer, 
+  DropoutLayer, 
+  FullyConnLayer, 
+  InputLayer, 
+  MaxoutLayer, 
+  PoolLayer, 
+  RegressionLayer, 
+  ReluLayer, 
+  SigmoidLayer, 
+  SoftmaxLayer, 
+  SVMLayer, 
+  TanhLayer
+} from "../layers/index.js";
 
 export default class Net {
 
