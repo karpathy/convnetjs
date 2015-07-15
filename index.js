@@ -1,10 +1,7 @@
 (function() {
 
 	// Cover the various ways TypedObjects are specified.
-	if(typeof StructType == undefined){
-		if(typeof TypedObject == undefined){
-			//TypedObject = require('typed-objects')();
-		}
+	if(typeof TypedObject !== 'undefined'){
 		Any = TypedObject.Any;
 		ArrayType = TypedObject.ArrayType; 
 		StructType = TypedObject.StructType;
@@ -20,17 +17,19 @@
 		uint32 = TypedObject.uint32;
 		uint8 = TypedObject.uint8;
 		uint8Clamped = TypedObject.uint8Clamped;
+	} else {
+		require('typed-objects')()
 	}
 
 	if(typeof SIMD == undefined){
-		// require('simd');
+		require('./external/simd.js');
 	}
 
 	if (typeof module === "undefined" || typeof module.exports === "undefined") {
 		// in ordinary browser attach library to window
-		window.convnetjs = require('./src/index.js'); 
+		window.convnetjs = require('./lib/index.js'); 
 	} else {
 		// in commonjs
-		module.exports = require('./src/index.js'); 
+		module.exports = require('./lib/index.js'); 
 	}
 })();

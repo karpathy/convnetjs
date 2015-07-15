@@ -6,7 +6,7 @@
 // the data. 
 
 export default function VolType(sx = 1, sy = 1, depth = 1){
-  let VolType = new StructType({
+  const VolType = new StructType({
     w : float64.array(depth).array(sy).array(sx),
     dw : float64.array(depth).array(sy).array(sx)
   });
