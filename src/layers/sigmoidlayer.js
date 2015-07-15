@@ -1,4 +1,4 @@
-import * as Layer from "./layer.js";
+import Layer from "./layer.js";
 
 // Implements Sigmoid nonlinearity elementwise
 // x -> 1/(1+e^(-x))

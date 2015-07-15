@@ -1,4 +1,4 @@
-import * as Layer from "./layer.js";
+import Layer from "./layer.js";
 
 // Implements ReLU nonlinearity elementwise
 // x -> max(0, x)

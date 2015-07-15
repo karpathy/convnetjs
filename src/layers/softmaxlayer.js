@@ -1,5 +1,5 @@
-import * as Layer from "./layer.js";
-import * as VolType from "../structures/vol.js";
+import Layer from "./layer.js";
+import VolType from "../structures/vol.js";
 
 // This is a classifier, with N discrete classes from 0 to N-1
 // it gets a stream of N incoming numbers and computes the softmax

@@ -1,4 +1,4 @@
-import * as Layer from "./layer.js";
+import Layer from "./layer.js";
 
 // implements an L2 regression cost layer,
 // so penalizes \sum_i(||x_i - y_i||^2), where x is its input

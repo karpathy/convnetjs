@@ -1,5 +1,5 @@
-import * as VolType from "../structures/vol.js";
-import * as Layer from "./layer.js";
+import VolType from "../structures/vol.js";
+import Layer from "./layer.js";
 
 export default class FullyConnLayer extends Layer {
 

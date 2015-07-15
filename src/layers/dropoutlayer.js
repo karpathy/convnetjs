@@ -1,5 +1,5 @@
-import * as Layer from "./layer.js";
-import * as Vol from "../structures/vol.js";
+import Layer from "./layer.js";
+import VolType from "../structures/vol.js";
 
 export default class DropoutLayer extends Layer {
 
@@ -14,8 +14,8 @@ export default class DropoutLayer extends Layer {
     this.dropped = new Array(this.out_sx*this.out_sy*this.out_depth);
   }
 
-  forward(V, use_webgl = false, is_training = false) {
-    super.forward(V, use_webgl, is_training);
+  forward(V, is_training = false) {
+    super.forward(V, is_training);
     this.out_act = new V.constructor(storage(this.in_act).buffer.slice(0));
     let v = new Float64Array(storage(this.in_act.w).buffer);
     let v2 = new Float64Array(storage(this.out_act.w).buffer);
@@ -39,7 +39,7 @@ export default class DropoutLayer extends Layer {
     return this.out_act; // dummy identity function for now
   }
 
-  backward(use_webgl = false, is_training = false) {
+  backward(is_training = false) {
     let v = new Float64Array(storage(this.in_act.dw).buffer); // we need to set dw of this
     let v2 = new Float64Array(storage(this.out_act.dw).buffer);
     for(let i = 0; i < v.length; i++){
