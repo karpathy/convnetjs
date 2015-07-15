@@ -3,22 +3,22 @@ import * as Layer from "./layer.js";
 
 export default class ConvLayer extends Layer {
 
-  constructor(opt = {}){
-    super(opt);
+  constructor(options){
+    super(options);
 
     // required
-    this.out_depth = opt.filters;
-    this.sx = opt.sx; // filter size. Should be odd if possible, it's cleaner.
-    this.in_depth = opt.in_depth;
-    this.in_sx = opt.in_sx;
-    this.in_sy = opt.in_sy;
+    this.out_depth = options.filters;
+    this.sx = options.sx; // filter size. Should be odd if possible, it's cleaner.
+    this.in_depth = options.in_depth;
+    this.in_sx = options.in_sx;
+    this.in_sy = options.in_sy;
     
     // optional
-    this.sy = opt.sy || this.sx;
-    this.stride = opt.stride || 1; // stride at which we apply filters to input volume
-    this.pad = opt.pad || 0; // amount of 0 padding to add around borders of input volume
-    this.l1_decay_mul = opt.l1_decay_mul || 0.0;
-    this.l2_decay_mul = opt.l2_decay_mul || 1.0;
+    this.sy = options.sy || this.sx;
+    this.stride = options.stride || 1; // stride at which we apply filters to input volume
+    this.pad = options.pad || 0; // amount of 0 padding to add around borders of input volume
+    this.l1_decay_mul = options.l1_decay_mul || 0.0;
+    this.l2_decay_mul = options.l2_decay_mul || 1.0;
 
     // computed
     // note we are doing floor, so if the strided convolution of the filter doesnt fit into the input
