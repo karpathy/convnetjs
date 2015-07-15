@@ -1,4 +1,4 @@
-import * as Layer from "../layers/index.js";
+import Layer from "../layers/index.js";
 
 export default class Net {
 

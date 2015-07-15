@@ -1,2 +1,2 @@
-export * as VolType from "./vol.js";
-export * as Experience from "./experience.js";
+export VolType from "./vol.js";
+export Experience from "./experience.js";

@@ -1,4 +1,4 @@
-import * as Trainer from "./trainer.js";
+import Trainer from "./trainer.js";
 
 export default class SGDTrainer extends Trainer {
 	

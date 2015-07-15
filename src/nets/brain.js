@@ -1,7 +1,7 @@
-import * as SGDTrainer from "../trainers/sgdtrainer.js"
-import * as VolType from "../structures/vol.js";
-import * as Window from "../structures/window.js";
-import * as Net from "./net.js";
+import SGDTrainer from "../trainers/sgdtrainer.js"
+import VolType from "../structures/vol.js";
+import Window from "../structures/window.js";
+import Net from "./net.js";
 
 // A Brain object does all the magic.
 // over time it receives some inputs and some rewards

@@ -1,5 +1,5 @@
-import * as Trainer from "../trainers/index.js";
-import * as Net from "./net.js";
+import Trainer from "../trainers/index.js";
+import Net from "./net.js";
 import {EventEmitter} from "events";
 
 /*

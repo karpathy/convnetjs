@@ -1,7 +1,7 @@
-export * as Trainer from "./trainer.js";
+export Trainer from "./trainer.js";
 
-export * as AdagradTrainer from "./adagradtrainer.js";
-export * as AdadeltaTrainer from "./adadeltatrainer.js";
-export * as NesterovTrainer from "./nesterovtrainer.js";
-export * as SGDTrainer from "./sgdtrainer.js";
-export * as WindowgradTrainer from "./windowgradtrainer.js";
+export AdagradTrainer from "./adagradtrainer.js";
+export AdadeltaTrainer from "./adadeltatrainer.js";
+export NesterovTrainer from "./nesterovtrainer.js";
+export SGDTrainer from "./sgdtrainer.js";
+export WindowgradTrainer from "./windowgradtrainer.js";
