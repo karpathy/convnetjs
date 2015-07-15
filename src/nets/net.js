@@ -1,7 +1,8 @@
-import * as VolType from "../structures/vol.js";
 import * as Layer from "../layers/index.js";
 
 export default class Net {
+
+  layers = []
 
   // Net manages a set of layers
   // For now constraints: Simple linear order of layers, first layer input last layer a cost layer
@@ -13,8 +14,6 @@ export default class Net {
     } else if (defs[0].type !== 'input' || defs[0].constructor !== InputLayer) {
       throw new Error('Error! First layer must be the input layer, to declare size of inputs');
     }
-
-    this.layers = [];
 
     let in_sx, in_sy, in_depth;
 

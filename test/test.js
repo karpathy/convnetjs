@@ -11,5 +11,8 @@ describe('VolType', function(){
 });
 
 describe('Net', function(){
-	it('should ')
+	it('should create a network from an array of layers.', function(){
+		var layers = [
+		];
+	});
 });

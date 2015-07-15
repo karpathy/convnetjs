@@ -1,6 +1,6 @@
 #!/bin/bash
 
-babel src --out-dir lib
+babel src --stage 0 --out-dir lib
 
 browserify index.js > ./build/convnet.js
 
