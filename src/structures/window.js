@@ -15,14 +15,16 @@ export default class Window {
     this.v.push(x);
     this.sum += x;
     if(this.v.length>this.size) {
-      var xold = this.v.shift();
-      this.sum -= xold;
+      this.sum -= this.v.shift();;
     }
   }
 
-  get_average() {
-    if(this.v.length < this.minsize) return -1;
-    else return this.sum/this.v.length;
+  getAverage() {
+    if(this.v.length < this.minsize){
+      return -1;
+    } else {
+      return this.sum/this.v.length;
+    }
   }
 
   reset(x) {
