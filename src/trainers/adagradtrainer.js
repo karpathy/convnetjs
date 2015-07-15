@@ -6,7 +6,7 @@ export default class AdagradTrainer extends Trainer {
 		super(opts);
 	}
 
-	train(x, y, use_webgl = false){
+	train(x, y){
 
 		let start_1 = new Date().getTime();
     this.net.forward(x, use_webgl, true); // also set the flag that lets the net know we're just training

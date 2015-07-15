@@ -1,4 +1,4 @@
-export class Trainer {
+export default class Trainer {
 
   constructor(net, options = {}){
     this.net = net;
