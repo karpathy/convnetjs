@@ -43,7 +43,7 @@ export default class ConvLayer extends Layer {
 
   }
 
-  forward(V, use_webgl = false, is_training = false) {
+  forward(V, is_training = false) {
 
     super.forward(V, use_webgl, is_training);
     // optimized code by @mdda that achieves 2x speedup over previous version

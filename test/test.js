@@ -19,12 +19,12 @@ describe('Structures', function(){
 		it('should work', function(){
 			new convnet.Experience();
 		});
-	})
+	});
 	describe('Window', function(){
-		if('should work', function(){
+		it('should work', function(){
 			new convnet.Window();
-		})
-	})
+		});
+	});
 });
 
 describe('Layers', function(){
@@ -37,7 +37,7 @@ describe('Layers', function(){
 		it('should work', function(){
 
 		});
-	})
+	});
 });
 
 describe('Nets', function(){
