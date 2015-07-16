@@ -33,7 +33,7 @@ export default class ConvLayer extends Layer {
     // initializations
     const bias_type = new VolType(1, 1, this.out_depth);
     this.bias_type = bias_type;
-    this.biases = new bias_type({w:[[(new Float64Array(this.out_depth)).map(x => (opt.bias_pref || 0.0))]]});
+    this.biases = new bias_type({w:[[[...(new Float64Array(this.out_depth))].map(x => (opt.bias_pref || 0.0))]]});
 
     this.filter_type = new VolType(this.sx, this.sy, this.in_depth);
     this.filters = new (new ArrayType(this.filter_type, this.out_depth))([for (filter of (function* (n){
