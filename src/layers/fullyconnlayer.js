@@ -31,7 +31,9 @@ export default class FullyConnLayer extends Layer {
     // initializations
     var bias = opt.bias_pref || 0.0;
     this.bias_type = new VolType(1, 1, this.out_depth);
-    this.biases = new this.bias_type({w:[[(new Float64Array()).map(x => bias)]]});
+    this.biases = new this.bias_type({
+      w:[[new Float64Array([for (x of new Float64Array(this.out_depth)) bias])]]
+    });
 
     this.filter_type = new VolType(this.sx, this.sy, this.in_depth);
     this.filters = new (this.filter_type.array(this.out_depth))();
@@ -110,7 +112,7 @@ export default class FullyConnLayer extends Layer {
       num_inputs : this.num_inputs,
       l1_decay_mul : this.l1_decay_mul,
       l2_decay_mul : this.l2_decay_mul,
-      filters : this.filters.mapPar(x => x.toJSON()),
+      filters : this.filters.map(x => x.toJSON()),
       biases : this.biases.toJSON()
     };
   }
