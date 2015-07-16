@@ -34,11 +34,15 @@ export default class Net {
     for(let i = 0; i < defs.length; i++){
       let def = defs[i];
 
-      if((def.type === 'softmax' || def instanceof SoftmaxLayer || def.type === 'svm' || def instanceof SVMLayer) && (this.layers[this.layers.length-1].num_neurons !== def.num_classes)){
+      if((['softmax', 'svm', 'regression'].includes(def.type) || 
+        def instanceof SoftmaxLayer || def instanceof SVMLayer || def instanceof RegressionLayer) && 
+        (this.layers[this.layers.length-1].num_neurons !== def.num_classes)
+      ){
+
         this.layers.push(new FullyConnLayer({num_neurons: def.num_classes, in_sx : in_sx, in_sy : in_sy, in_depth : in_depth}));
-      } else if((def.type === 'regression' || def instanceof RegressionLayer) && (this.layers[this.layers.length-1].num_neurons != def.num_neurons)){
-        this.layers.push(new FullyConnLayer({num_neurons: def.num_neurons, in_sx : in_sx, in_sy : in_sy, in_depth : in_depth}));
-      } else if((def.type === 'fc' || def.type === 'conv' || def.constructor.name === 'FullyConnLayer' || def.constructor.name === 'ReluLayer') && def.bias_pref == undefined){
+      
+      } else if((['fc', 'conv'].includes(def.type)|| def instanceof FullyConnLayer || def instanceof ReluLayer) && def.bias_pref == undefined){
+        
         def.bias_pref = (def.activation === 'relu') ? 0.1 : 0.0; // relus like a bit of positive bias to get gradients early
         // otherwise it's technically possible that a relu unit will never turn on (by chance)
         // and will never get any gradient and never contribute any computation. Dead relu.
