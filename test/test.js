@@ -11,8 +11,11 @@ describe('Structures', function(){
 		it('should make a new VolType', function(){
 			new convnet.VolType(1, 1, 2);
 		});
-		it('should be an instance of StructType', function(){
-			assert((new convnet.VolType()) instanceof StructType);
+		it('should have a field called w', function(){
+			assert('w' in (new convnet.VolType()));
+		});
+		it('should have a field called dw', function(){
+			assert('dw' in (new convnet.VolType()));
 		});
 	});
 	describe('Experience', function(){

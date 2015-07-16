@@ -1,6 +1,16 @@
 import VolType from "../structures/vol.js";
 import Layer from "./layer.js";
 
+function * fillArray(wif, until){
+  for (let i = 0; i < until; i++){
+    if(typeof wif === 'function'){
+      yield wif();
+    } else {
+      yield wif;
+    }
+  }
+}
+
 export default class ConvLayer extends Layer {
 
   constructor(options){
@@ -31,16 +41,13 @@ export default class ConvLayer extends Layer {
     this.out_type = new VolType(this.out_sx, this.out_sy, this.out_depth);
 
     // initializations
+    const bias = (opt.bias_pref || 0.0);
     const bias_type = new VolType(1, 1, this.out_depth);
     this.bias_type = bias_type;
-    this.biases = new bias_type({w:[[[...(new Float64Array(this.out_depth))].map(x => (opt.bias_pref || 0.0))]]});
-
+    this.biases = new bias_type({w:[[[...fillArray(bias, this.out_depth)]]]});
+    
     this.filter_type = new VolType(this.sx, this.sy, this.in_depth);
-    this.filters = new (new ArrayType(this.filter_type, this.out_depth))([for (filter of (function* (n){
-      for(var i = 0; i < this.out_depth; i++) { 
-       yield new this.filter_type(); 
-      }
-    })(this.out_depth)) filter]);
+    this.filters = [...fillArray(()=>(new this.filter_type()), this.out_depth)]; 
 
   }
 
