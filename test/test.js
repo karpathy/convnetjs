@@ -13,7 +13,7 @@ describe('VolType', function(){
 });
 
 describe('Net', function(){
-	it('should create a network from an array of layers.', function(){
+	it('should create a network from an array of layers', function(){
 		var layers = [
 		    {type:'input', out_sx:1, out_sy:1, out_depth:2},
 		    {type:'fc', num_neurons:20, activation:'relu'},
