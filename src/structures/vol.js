@@ -7,8 +7,8 @@
 
 export default function VolType(sx = 1, sy = 1, depth = 1){
   const VolType = new StructType({
-    w : float64.arrayType(depth).arrayType(sy).arrayType(sx),
-    dw : float64.arrayType(depth).arrayType(sy).arrayType(sx)
+    w : new ArrayType(new ArrayType(new ArrayType(float64, depth), sy), sx),
+    dw : new ArrayType(new ArrayType(new ArrayType(float64, depth), sy), sx)
   });
 
   Object.defineProperty(VolType.prototype, 'sx', {
