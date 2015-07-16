@@ -83,4 +83,5 @@ export default class VolType extends StructType {
 
     return x;
   }
+  
 }
