@@ -108,7 +108,7 @@ export default class Net {
 
       in_sx = def.out_sx; in_sy = def.out_sy; in_depth = def.out_depth;
 
-      if (def.type === 'con'){
+      if (def.type === 'con' || def.type === 'fc' || ){
         if(def.activation === 'relu' && (defs[i+1].constructor.name !== 'ReluLayer' || defs[i+1].layer_type !== 'relu')){
               this.layers.push(new ReluLayer({
                 in_sx : in_sx,

@@ -40,7 +40,7 @@ describe('Layers', function(){
 	});
 	describe('FullyConnLayer', function(){
 		it('should work', function(){
-			new convnet.FullyConnLayer();
+			new convnet.FullyConnLayer({type:'fc', num_neurons:10, activation:'sigmoid'});
 		});
 	});
 	describe('InputLayer', function(){
