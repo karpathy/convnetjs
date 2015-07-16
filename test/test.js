@@ -42,7 +42,7 @@ describe('Layers', function(){
 	});
 	describe('DropoutLayer', function(){
 		it('should work', function(){
-			new convnet.DropoutLayer();
+			new convnet.DropoutLayer({in_sx: 1, in_sy: 1, in_depth: 2});
 		});
 	});
 	describe('FullyConnLayer', function(){

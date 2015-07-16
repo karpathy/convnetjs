@@ -3,15 +3,15 @@ import VolType from "../structures/vol.js";
 
 export default class DropoutLayer extends Layer {
 
-  constructor(opt = {}){
-    super(opt);
+  constructor({in_sx, in_sy, in_depth, drop_prob = 0.5, ...options} = {}){
+    super(options);
     // computed
-    this.out_sx = opt.in_sx;
-    this.out_sy = opt.in_sy;
-    this.out_depth = opt.in_depth;
+    this.out_sx = in_sx;
+    this.out_sy = in_sy;
+    this.out_depth = in_depth;
     this.layer_type = 'dropout';
-    this.drop_prob = opt.drop_prob || 0.5;
-    this.dropped = new Array(this.out_sx*this.out_sy*this.out_depth);
+    this.drop_prob = drop_prob;
+    this.dropped = new Array(this.out_sx * this.out_sy * this.out_depth);
   }
 
   forward(V, is_training = false) {

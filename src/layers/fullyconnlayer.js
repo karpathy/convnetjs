@@ -1,6 +1,16 @@
 import VolType from "../structures/vol.js";
 import Layer from "./layer.js";
 
+function * fillArray(wif, until){
+  for (let i = 0; i < until; i++){
+    if(typeof wif === 'function'){
+      yield wif();
+    } else {
+      yield wif;
+    }
+  }
+}
+
 export default class FullyConnLayer extends Layer {
 
   constructor(opt = {}){
@@ -30,10 +40,9 @@ export default class FullyConnLayer extends Layer {
 
     // initializations
     let bias = opt.bias_pref || 0.0;
-    this.bias_type = new VolType(1, 1, this.out_depth);
-    this.biases = new (this.bias_type)({
-      w:[[[for (x of new Float64Array(this.out_depth)) bias]]]
-    });
+    const bias_type = new VolType(1, 1, this.out_depth);
+    this.bias_type = bias_type;
+    this.biases = new bias_type({w:[[[...fillArray(bias, this.out_depth)]]]});
 
     this.filter_type = new VolType(this.sx, this.sy, this.in_depth);
     this.filters = new (this.filter_type.array(this.out_depth))();
