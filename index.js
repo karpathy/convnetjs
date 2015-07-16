@@ -1,5 +1,7 @@
 (function() {
 
+	require('babel/polyfill');
+
 	// Cover the various ways TypedObjects are specified.
 	if(typeof TypedObject !== 'undefined'){
 		Any = TypedObject.Any;
