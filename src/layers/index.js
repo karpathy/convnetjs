@@ -9,6 +9,6 @@ export PoolLayer from "./poollayer.js";
 export RegressionLayer from "./regressionlayer.js";
 export ReluLayer from "./relulayer.js";
 export SigmoidLayer from "./sigmoidlayer.js";
-export SoftMaxLayer from "./softmaxlayer.js";
+export SoftmaxLayer from "./softmaxlayer.js";
 export SVMLayer from "./svmlayer.js";
 export TanhLayer from "./tanhlayer.js";

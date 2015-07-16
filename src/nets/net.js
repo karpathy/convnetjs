@@ -34,24 +34,6 @@ export default class Net {
     for(let i = 0; i < defs.length; i++){
       let def = defs[i];
 
-      try {
-        def instanceof SoftmaxLayer;
-      } catch(e){
-        console.log("Softmax is the issue.")
-      }
-
-      try {
-        def instanceof SVMLayer;
-      } catch(e){
-        console.log("SVMLayer is the issue.")
-      }
-
-      try {
-        def instanceof RegressionLayer;
-      } catch(e){
-        console.log("RegressionLayer is the issue.")
-      }
-
       if((['softmax', 'svm', 'regression'].includes(def.type) || 
         def instanceof SoftmaxLayer || def instanceof SVMLayer || def instanceof RegressionLayer) && 
         (this.layers[this.layers.length-1].num_neurons !== def.num_classes)
