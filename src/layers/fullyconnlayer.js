@@ -42,7 +42,7 @@ export default class FullyConnLayer extends Layer {
     }
   }
 
-  forward(V, use_webgl = false, is_training = false) {
+  forward(V, is_training = false) {
     super.forward(V, is_training);
     this.out_act = new this.bias_type();
     let ow = new Float64Array(storage(this.out_act.w).buffer);
@@ -59,7 +59,7 @@ export default class FullyConnLayer extends Layer {
     return this.out_act;
   }
 
-  backward(use_webgl = false, is_training = false) {
+  backward(is_training = false) {
    
     let vd = new Float64Array(storage(this.in_act.dw).buffer);
     let vw = new Float64Array(storage(this.in_act.w).buffer);

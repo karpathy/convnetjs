@@ -7,10 +7,17 @@
 
 export default class VolType extends StructType {
   constructor(sx = 1, sy = 1, depth = 1){
-    super({
+    return class Vol extends super({
       w : new ArrayType(new ArrayType(new ArrayType(float64, depth), sy), sx),
       dw : new ArrayType(new ArrayType(new ArrayType(float64, depth), sy), sx)
-    });
+    }){
+      constructor(...args){
+        super(...args);
+        this.sx = sx;
+        this.sy = sy;
+        this.depth = depth;
+      }
+    }
   }
   
   get sx(){
