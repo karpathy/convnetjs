@@ -34,6 +34,8 @@ export default class Net {
     for(let i = 0; i < defs.length; i++){
       let def = defs[i];
 
+      console.log("Got this far.");
+
       if((['softmax', 'svm', 'regression'].includes(def.type) || 
         def instanceof SoftmaxLayer || def instanceof SVMLayer || def instanceof RegressionLayer) && 
         (this.layers[this.layers.length-1].num_neurons !== def.num_classes)
@@ -41,7 +43,7 @@ export default class Net {
 
         this.layers.push(new FullyConnLayer({num_neurons: def.num_classes, in_sx : in_sx, in_sy : in_sy, in_depth : in_depth}));
       
-      } else if((['fc', 'conv'].includes(def.type)|| def instanceof FullyConnLayer || def instanceof ReluLayer) && def.bias_pref == undefined){
+      } else if((['fc', 'conv'].includes(def.type) || def instanceof FullyConnLayer || def instanceof ReluLayer) && def.bias_pref == undefined){
         
         def.bias_pref = (def.activation === 'relu') ? 0.1 : 0.0; // relus like a bit of positive bias to get gradients early
         // otherwise it's technically possible that a relu unit will never turn on (by chance)
