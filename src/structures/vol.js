@@ -6,11 +6,14 @@
 // the data. 
 
 export default class VolType extends StructType {
-  
+
   constructor(sx = 1, sy = 1, depth = 1){
     return class Vol extends super({
       w : new ArrayType(new ArrayType(new ArrayType(float64, depth), sy), sx),
-      dw : new ArrayType(new ArrayType(new ArrayType(float64, depth), sy), sx)
+      dw : new ArrayType(new ArrayType(new ArrayType(float64, depth), sy), sx),
+      sx : int32,
+      sy : int32,
+      depth : int32
     }){
       constructor(...args){
         super(...args);
@@ -19,18 +22,6 @@ export default class VolType extends StructType {
         this.depth = depth;
       }
     }
-  }
-  
-  get sx(){
-    return this.w.length;
-  }
-  
-  get sy(){
-    return this.w[0].length;
-  }
-  
-  get depth(){
-    return this.w[0][0].length;
   }
 
   static fromJSON(json){
