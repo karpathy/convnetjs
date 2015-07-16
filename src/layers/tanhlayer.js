@@ -4,7 +4,7 @@ import Layer from "./layer.js"
 // x -> tanh(x) 
 // so the output is between -1 and 1.
 
-export class TanhLayer extends Layer{
+export default class TanhLayer extends Layer{
 
   constructor(opt = {}){
     super(opt);

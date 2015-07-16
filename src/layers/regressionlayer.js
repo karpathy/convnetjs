@@ -4,7 +4,7 @@ import Layer from "./layer.js";
 // so penalizes \sum_i(||x_i - y_i||^2), where x is its input
 // and y is the user-provided array of "correct" values.
 
-export class RegressionLayer extends Layer{
+export default class RegressionLayer extends Layer{
 
   constructor(opt = {}){
     super(opt);

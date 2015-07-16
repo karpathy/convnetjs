@@ -5,7 +5,7 @@ import VolType from "../structures/vol.js";
 // it gets a stream of N incoming numbers and computes the softmax
 // function (exponentiate and normalize to sum to 1 as probabilities should)
 
-export class SoftmaxLayer extends Layer {
+export default class SoftmaxLayer extends Layer {
 
   constructor(opt = {}){
     super(opt);

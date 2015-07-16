@@ -4,7 +4,7 @@ import Layer from "./layer.js";
 // x -> max(0, x)
 // the output is in [0, inf)
 
-export class ReluLayer extends Layer {
+export default class ReluLayer extends Layer {
 
   constructor(opts = {}){
     super(opts);

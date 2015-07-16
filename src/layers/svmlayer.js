@@ -1,6 +1,6 @@
 import Layer from "./layer.js";
 
-export class SVMLayer extends Layer{
+export default class SVMLayer extends Layer{
 
   constructor(opt = {}){
     super(opt);

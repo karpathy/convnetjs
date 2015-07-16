@@ -4,7 +4,7 @@ import Layer from "./layer.js";
 // x -> 1/(1+e^(-x))
 // so the output is between 0 and 1.
 
-export class SigmoidLayer extends Layer {
+export default class SigmoidLayer extends Layer {
 
   constructor(opt = {}){
     super(opt);
