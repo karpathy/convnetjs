@@ -115,27 +115,27 @@ export default class Net {
                 in_sy : in_sy,
                 in_depth : in_depth
               }));
-              in_sx = this.layers[this.layer.length-1].out_sx; 
-              in_sy = this.layers[this.layer.length-1].out_sy; 
-              in_depth = this.layers[this.layer.length-1].out_depth;
+              in_sx = this.layers[this.layers.length-1].out_sx; 
+              in_sy = this.layers[this.layers.length-1].out_sy; 
+              in_depth = this.layers[this.layers.length-1].out_depth;
             }else if(def.activation === 'sigmoid' && (defs[i+1].constructor.name !== 'SigmoidLayer' || defs[i+1].layer_type !== 'sigmoid')){
               this.layers.push(new SigmoidLayer({
                 in_sx : in_sx,
                 in_sy : in_sy,
                 in_depth : in_depth
               }));
-              in_sx = this.layers[this.layer.length-1].out_sx; 
-              in_sy = this.layers[this.layer.length-1].out_sy; 
-              in_depth = this.layers[this.layer.length-1].out_depth;
+              in_sx = this.layers[this.layers.length-1].out_sx; 
+              in_sy = this.layers[this.layers.length-1].out_sy; 
+              in_depth = this.layers[this.layers.length-1].out_depth;
             }else if(def.activation === 'tanh' && (defs[i+1].constructor.name !== 'TanhLayer' || defs[i+1].layer_type !== 'tanh')){
               this.layers.push(new TanhLayer({
                 in_sx : in_sx,
                 in_sy : in_sy,
                 in_depth : in_depth
               }));
-              in_sx = this.layers[this.layer.length-1].out_sx; 
-              in_sy = this.layers[this.layer.length-1].out_sy; 
-              in_depth = this.layers[this.layer.length-1].out_depth;
+              in_sx = this.layers[this.layers.length-1].out_sx; 
+              in_sy = this.layers[this.layers.length-1].out_sy; 
+              in_depth = this.layers[this.layers.length-1].out_depth;
             }else if(def.activation === 'maxout' && (defs[i+1].constructor.name !== 'MaxoutLayer' || defs[i+1].layer_type !== 'maxout')){
               this.layers.push(new MaxoutLayer({
                 in_sx : in_sx,
@@ -143,9 +143,9 @@ export default class Net {
                 in_depth : in_depth,
                 group_size : def.group_size || 2
               }));
-              in_sx = this.layers[this.layer.length-1].out_sx; 
-              in_sy = this.layers[this.layer.length-1].out_sy; 
-              in_depth = this.layers[this.layer.length-1].out_depth;
+              in_sx = this.layers[this.layers.length-1].out_sx; 
+              in_sy = this.layers[this.layers.length-1].out_sy; 
+              in_depth = this.layers[this.layers.length-1].out_depth;
             }else {
               throw new Error("Unsupported activation: " + def.activation);
             }
