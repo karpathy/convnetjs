@@ -12,13 +12,13 @@ describe('Structures', function(){
 			new convnet.VolType(1, 1, 2);
 		});
 		it('should have a field called w', function(){
-			let voltype = new convnet.VolType();
-			let vol = new voltype();
+			var voltype = new convnet.VolType();
+			var vol = new voltype();
 			assert('w' in vol);
 		});
 		it('should have a field called dw', function(){
-			let voltype = new convnet.VolType();
-			let vol = new voltype();
+			var voltype = new convnet.VolType();
+			var vol = new voltype();
 			assert('dw' in vol);
 		});
 	});
