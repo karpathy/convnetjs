@@ -6,6 +6,7 @@
 // the data. 
 
 export default class VolType extends StructType {
+  
   constructor(sx = 1, sy = 1, depth = 1){
     return class Vol extends super({
       w : new ArrayType(new ArrayType(new ArrayType(float64, depth), sy), sx),
@@ -83,5 +84,5 @@ export default class VolType extends StructType {
 
     return x;
   }
-  
+
 }
