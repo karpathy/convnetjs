@@ -6,12 +6,12 @@ import Layer from "./layer.js";
 
 export default class ReluLayer extends Layer {
 
-  constructor(opts = {}){
-    super(opts);
+  constructor({in_sx, in_sy, in_depth, ...options} = {}){
+    super(options);
     // computed
-    this.out_sx = opt.in_sx;
-    this.out_sy = opt.in_sy;
-    this.out_depth = opt.in_depth;
+    this.out_sx = in_sx;
+    this.out_sy = in_sy;
+    this.out_depth = in_depth;
     this.layer_type = 'relu';
   }
 
