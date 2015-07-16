@@ -24,7 +24,10 @@
 		"babel" : ">=5.0.0",
 		"uglify-js" : ">=2.0.0",
 		"browserify" : ">=10.0.0",
-		"mocha" : "*"
+		"mocha" : "*",
+		"mocha-lcov-reporter" : "*",
+		"jscoverage" : "*",
+		"coveralls" : "*"
 	},
 
 	"scripts" : {
