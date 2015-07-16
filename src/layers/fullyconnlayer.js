@@ -31,7 +31,7 @@ export default class FullyConnLayer extends Layer {
     // initializations
     var bias = opt.bias_pref || 0.0;
     this.bias_type = new VolType(1, 1, this.out_depth);
-    this.biases = new this.bias_type({
+    this.biases = new (this.bias_type)({
       w:[[new Float64Array([for (x of new Float64Array(this.out_depth)) bias])]]
     });
 
