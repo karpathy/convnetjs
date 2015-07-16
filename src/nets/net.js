@@ -1,4 +1,5 @@
 import {
+  Layer,
   ConvLayer, 
   DropoutLayer, 
   FullyConnLayer, 
@@ -33,32 +34,17 @@ export default class Net {
     for(let i = 0; i < defs.length; i++){
       let def = defs[i];
 
-      if((def.type === 'softmax' || def.constructor.name === 'SoftmaxLayer' ||
-          def.type === 'svm' || def.constructor.name === 'SVMLayer') && 
-        (this.layers[this.layers.length-1].num_neurons != def.num_classes)){
-        this.layers.push(new FullyConnLayer({
-          num_neurons: def.num_classes,
-          in_sx : in_sx,
-          in_sy : in_sy,
-          in_depth : in_depth
-        }));
-      } else if((def.type === 'regression' || def.constructor.name === 'RegressionLayer') && 
-        (this.layers[this.layers.length-1].num_neurons != def.num_neurons)){
-        this.layers.push(new FullyConnLayer({
-          num_neurons: def.num_neurons,
-          in_sx : in_sx,
-          in_sy : in_sy,
-          in_depth : in_depth
-        }));
-      } else if((def.type === 'fc' || def.type === 'conv' || 
-        def.constructor.name === 'FullyConnLayer' || def.constructor.name === 'ReluLayer') && 
-        def.bias_pref == undefined){
+      if((def.type === 'softmax' || def instanceof SoftmaxLayer || def.type === 'svm' || def instanceof SVMLayer) && (this.layers[this.layers.length-1].num_neurons !== def.num_classes)){
+        this.layers.push(new FullyConnLayer({num_neurons: def.num_classes, in_sx : in_sx, in_sy : in_sy, in_depth : in_depth}));
+      } else if((def.type === 'regression' || def instanceof RegressionLayer) && (this.layers[this.layers.length-1].num_neurons != def.num_neurons)){
+        this.layers.push(new FullyConnLayer({num_neurons: def.num_neurons, in_sx : in_sx, in_sy : in_sy, in_depth : in_depth}));
+      } else if((def.type === 'fc' || def.type === 'conv' || def.constructor.name === 'FullyConnLayer' || def.constructor.name === 'ReluLayer') && def.bias_pref == undefined){
         def.bias_pref = (def.activation === 'relu') ? 0.1 : 0.0; // relus like a bit of positive bias to get gradients early
         // otherwise it's technically possible that a relu unit will never turn on (by chance)
         // and will never get any gradient and never contribute any computation. Dead relu.
       } 
 
-      if(def.constructor.name === 'Object'){
+      if(!(def instanceof Layer)){
         switch(def.type) {
           case 'fc': 
             this.layers.push(new FullyConnLayer(def)); 
@@ -110,54 +96,23 @@ export default class Net {
 
       if (def.type === 'con' || def.type === 'fc'){
         if(def.activation === 'relu' && (defs[i+1].constructor.name !== 'ReluLayer' || defs[i+1].layer_type !== 'relu')){
-              this.layers.push(new ReluLayer({
-                in_sx : in_sx,
-                in_sy : in_sy,
-                in_depth : in_depth
-              }));
-              in_sx = this.layers[this.layers.length-1].out_sx; 
-              in_sy = this.layers[this.layers.length-1].out_sy; 
-              in_depth = this.layers[this.layers.length-1].out_depth;
-            }else if(def.activation === 'sigmoid' && (defs[i+1].constructor.name !== 'SigmoidLayer' || defs[i+1].layer_type !== 'sigmoid')){
-              this.layers.push(new SigmoidLayer({
-                in_sx : in_sx,
-                in_sy : in_sy,
-                in_depth : in_depth
-              }));
-              in_sx = this.layers[this.layers.length-1].out_sx; 
-              in_sy = this.layers[this.layers.length-1].out_sy; 
-              in_depth = this.layers[this.layers.length-1].out_depth;
-            }else if(def.activation === 'tanh' && (defs[i+1].constructor.name !== 'TanhLayer' || defs[i+1].layer_type !== 'tanh')){
-              this.layers.push(new TanhLayer({
-                in_sx : in_sx,
-                in_sy : in_sy,
-                in_depth : in_depth
-              }));
-              in_sx = this.layers[this.layers.length-1].out_sx; 
-              in_sy = this.layers[this.layers.length-1].out_sy; 
-              in_depth = this.layers[this.layers.length-1].out_depth;
-            }else if(def.activation === 'maxout' && (defs[i+1].constructor.name !== 'MaxoutLayer' || defs[i+1].layer_type !== 'maxout')){
-              this.layers.push(new MaxoutLayer({
-                in_sx : in_sx,
-                in_sy : in_sy,
-                in_depth : in_depth,
-                group_size : def.group_size || 2
-              }));
-              in_sx = this.layers[this.layers.length-1].out_sx; 
-              in_sy = this.layers[this.layers.length-1].out_sy; 
-              in_depth = this.layers[this.layers.length-1].out_depth;
-            }else {
-              throw new Error("Unsupported activation: " + def.activation);
-            }
-          }
+          this.layers.push(new ReluLayer({in_sx : in_sx, in_sy : in_sy, in_depth : in_depth}));
+        }else if(def.activation === 'sigmoid' && (!(defs[i+1] instanceof SigmoidLayer) || defs[i+1].layer_type !== 'sigmoid')){
+          this.layers.push(new SigmoidLayer({in_sx : in_sx, in_sy : in_sy, in_depth : in_depth}));
+        }else if(def.activation === 'tanh' && (defs[i+1].constructor.name !== 'TanhLayer' || defs[i+1].layer_type !== 'tanh')){
+          this.layers.push(new TanhLayer({in_sx : in_sx, in_sy : in_sy, in_depth : in_depth}));
+        }else if(def.activation === 'maxout' && (defs[i+1].constructor.name !== 'MaxoutLayer' || defs[i+1].layer_type !== 'maxout')){
+          this.layers.push(new MaxoutLayer({in_sx : in_sx, in_sy : in_sy, in_depth : in_depth, group_size : def.group_size || 2}));
+        }else {
+          throw new Error("Unsupported activation: " + def.activation);
+        }
+        in_sx = this.layers[this.layers.length-1].out_sx; 
+        in_sy = this.layers[this.layers.length-1].out_sy; 
+        in_depth = this.layers[this.layers.length-1].out_depth;
+      }
 
       if(def.drop_prob != undefined && (def.type !== 'dropout' || def.constructor.name !== 'DropoutLayer')){
-        this.layers.push(new DropoutLayer({
-          drop_prob : def.drop_prob,
-          in_sx : in_sx,
-          in_sy : in_sy,
-          in_depth : in_depth
-        }));
+        this.layers.push(new DropoutLayer({drop_prob : def.drop_prob, in_sx : in_sx, in_sy : in_sy, in_depth : in_depth}));
       }
     }
   }
@@ -165,10 +120,10 @@ export default class Net {
   // forward prop the network. 
   // The trainer class passes is_training = true, but when this function is
   // called from outside (not from the trainer), it defaults to prediction mode
-  forward(V, use_webgl = false, is_training = false) {
-    var act = this.layers[0].forward(V, use_webgl, is_training);
+  forward(V, training = false) {
+    let act = this.layers[0].forward(V, training);
     for(var i = 1; i < this.layers.length; i++) {
-      act = this.layers[i].forward(act, use_webgl, is_training);
+      act = this.layers[i].forward(act, training);
     }
     return act;
   }
@@ -179,10 +134,9 @@ export default class Net {
   }
   
   // backprop: compute gradients wrt all parameters
-  backward(y, use_webgl = false, is_training = false) {
-    var N = this.layers.length;
-    var loss = this.layers[N-1].backward(y); // last layer assumed to be loss layer
-    for(var i = N - 2; i >= 0; i--) { // first layer assumed input
+  backward(y, is_training = false) {
+    const loss = this.layers[this.layers.length - 1].backward(y); // last layer assumed to be loss layer
+    for(var i = this.layers.length - 2; i >= 0; i--) { // first layer assumed input
       this.layers[i].backward();
     }
     return loss;
@@ -190,18 +144,21 @@ export default class Net {
 
   getParamsAndGrads() {
     // accumulate parameters and gradients for the entire network
-    return [].concat.apply([], [for (layer of this.layers) layer.getParamsAndGrads()]);
+    return [for (layer of this.layers) layer.getParamsAndGrads()];
   }
 
   getPrediction() {
     // this is a convenience function for returning the argmax
     // prediction, assuming the last layer of the net is a softmax
-    var S = this.layers[this.layers.length-1];
-    assert(S.layer_type === 'softmax', 'getPrediction function assumes softmax as last layer of the net!');
+    let S = this.layers[this.layers.length-1];
 
-    var p = S.out_act.w;
-    var maxv = p[0];
-    var maxi = 0;
+    if(S.layer_type !== softmax){
+      throw new Error('Net.prototype.getPrediction function assumes softmax as last layer of the net!')
+    }
+
+    const p = S.out_act.w;
+    let maxv = p[0];
+    let maxi = 0;
     for(var i=1;i<p.length;i++) {
       if(p[i] > maxv) { 
         maxv = p[i]; 
@@ -213,6 +170,16 @@ export default class Net {
 
   toJSON() {
     return this.layers.map(x => x.toJSON());
+  }
+
+  * [Symbol.iterator](){
+    for(let layer of this.layers){
+      yield layer;
+    }
+  }
+
+  get [Symbol.toStringTag](){
+    return "Neural Network"
   }
 
 }
