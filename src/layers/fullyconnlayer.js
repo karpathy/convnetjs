@@ -29,15 +29,15 @@ export default class FullyConnLayer extends Layer {
     this.layer_type = 'conv';
 
     // initializations
-    var bias = opt.bias_pref || 0.0;
+    let bias = opt.bias_pref || 0.0;
     this.bias_type = new VolType(1, 1, this.out_depth);
     this.biases = new (this.bias_type)({
-      w:[[new Float64Array([for (x of new Float64Array(this.out_depth)) bias])]]
+      w:[[[for (x of new Float64Array(this.out_depth)) bias]]]
     });
 
     this.filter_type = new VolType(this.sx, this.sy, this.in_depth);
     this.filters = new (this.filter_type.array(this.out_depth))();
-    for(var i = 0; i < this.out_depth; i++) { 
+    for(let i = 0; i < this.out_depth; i++) { 
       this.filters[i] = new this.filter_type(); 
     }
   }
