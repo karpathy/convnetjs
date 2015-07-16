@@ -24,7 +24,7 @@ export default class Net {
     // few checks
     if(defs.length < 2){
       throw new Error('Error! At least one input layer and one loss layer are required.');
-    } else if (defs[0].type !== 'input' || defs[0].constructor !== InputLayer) {
+    } else if (defs[0].type !== 'input' && defs[0].constructor !== InputLayer) {
       throw new Error('Error! First layer must be the input layer, to declare size of inputs');
     }
 
