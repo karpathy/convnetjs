@@ -36,7 +36,7 @@ export default class Net {
       if((def.type === 'softmax' || def.constructor.name === 'SoftmaxLayer' ||
           def.type === 'svm' || def.constructor.name === 'SVMLayer') && 
         (this.layers[this.layers.length-1].num_neurons != def.num_classes)){
-        this.layers.push(new Layer.FullyConnLayer({
+        this.layers.push(new FullyConnLayer({
           num_neurons: def.num_classes,
           in_sx : in_sx,
           in_sy : in_sy,
@@ -44,7 +44,7 @@ export default class Net {
         }));
       } else if((def.type === 'regression' || def.constructor.name === 'RegressionLayer') && 
         (this.layers[this.layers.length-1].num_neurons != def.num_neurons)){
-        this.layers.push(new Layer.FullyConnLayer({
+        this.layers.push(new FullyConnLayer({
           num_neurons: def.num_neurons,
           in_sx : in_sx,
           in_sy : in_sy,
@@ -61,43 +61,43 @@ export default class Net {
       if(def.constructor.name === 'Object'){
         switch(def.type) {
           case 'fc': 
-            this.layers.push(new Layer.FullyConnLayer(def)); 
+            this.layers.push(new FullyConnLayer(def)); 
             break;
           case 'lrn': 
-            this.layers.push(new Layer.LocalResponseNormalizationLayer(def)); 
+            this.layers.push(new LocalResponseNormalizationLayer(def)); 
             break;
           case 'dropout': 
-            this.layers.push(new Layer.DropoutLayer(def)); 
+            this.layers.push(new DropoutLayer(def)); 
             break;
           case 'input': 
-            this.layers.push(new Layer.InputLayer(def)); 
+            this.layers.push(new InputLayer(def)); 
             break;
           case 'softmax': 
-            this.layers.push(new Layer.SoftmaxLayer(def)); 
+            this.layers.push(new SoftmaxLayer(def)); 
             break;
           case 'regression': 
-            this.layers.push(new Layer.RegressionLayer(def)); 
+            this.layers.push(new RegressionLayer(def)); 
             break;
           case 'conv': 
-            this.layers.push(new Layer.ConvLayer(def)); 
+            this.layers.push(new ConvLayer(def)); 
             break;
           case 'pool': 
-            this.layers.push(new Layer.PoolLayer(def)); 
+            this.layers.push(new PoolLayer(def)); 
             break;
           case 'relu': 
-            this.layers.push(new Layer.ReluLayer(def)); 
+            this.layers.push(new ReluLayer(def)); 
             break;
           case 'sigmoid': 
-            this.layers.push(new Layer.SigmoidLayer(def)); 
+            this.layers.push(new SigmoidLayer(def)); 
             break;
           case 'tanh': 
-            this.layers.push(new Layer.TanhLayer(def)); 
+            this.layers.push(new TanhLayer(def)); 
             break;
           case 'maxout': 
-            this.layers.push(new Layer.MaxoutLayer(def)); 
+            this.layers.push(new MaxoutLayer(def)); 
             break;
           case 'svm': 
-            this.layers.push(new Layer.SVMLayer(def)); 
+            this.layers.push(new SVMLayer(def)); 
             break;
           default:
             throw new Error("Unrecognised layer type: " + def.type);
@@ -109,7 +109,7 @@ export default class Net {
       in_sx = def.out_sx; in_sy = def.out_sy; in_depth = def.out_depth;
 
       if(def.activation === 'relu' && (defs[i+1].constructor.name !== 'ReluLayer' || defs[i+1].layer_type !== 'relu')){
-        this.layers.push(new Layer.ReluLayer({
+        this.layers.push(new ReluLayer({
           in_sx : in_sx,
           in_sy : in_sy,
           in_depth : in_depth
@@ -118,7 +118,7 @@ export default class Net {
         in_sy = this.layers[this.layer.length-1].out_sy; 
         in_depth = this.layers[this.layer.length-1].out_depth;
       }else if(def.activation === 'sigmoid' && (defs[i+1].constructor.name !== 'SigmoidLayer' || defs[i+1].layer_type !== 'sigmoid')){
-        this.layers.push(new Layer.SigmoidLayer({
+        this.layers.push(new SigmoidLayer({
           in_sx : in_sx,
           in_sy : in_sy,
           in_depth : in_depth
@@ -127,7 +127,7 @@ export default class Net {
         in_sy = this.layers[this.layer.length-1].out_sy; 
         in_depth = this.layers[this.layer.length-1].out_depth;
       }else if(def.activation === 'tanh' && (defs[i+1].constructor.name !== 'TanhLayer' || defs[i+1].layer_type !== 'tanh')){
-        this.layers.push(new Layer.TanhLayer({
+        this.layers.push(new TanhLayer({
           in_sx : in_sx,
           in_sy : in_sy,
           in_depth : in_depth
@@ -136,7 +136,7 @@ export default class Net {
         in_sy = this.layers[this.layer.length-1].out_sy; 
         in_depth = this.layers[this.layer.length-1].out_depth;
       }else if(def.activation === 'maxout' && (defs[i+1].constructor.name !== 'MaxoutLayer' || defs[i+1].layer_type !== 'maxout')){
-        this.layers.push(new Layer.MaxoutLayer({
+        this.layers.push(new MaxoutLayer({
           in_sx : in_sx,
           in_sy : in_sy,
           in_depth : in_depth,
