@@ -30,12 +30,27 @@ describe('Structures', function(){
 describe('Layers', function(){
 	describe('ConvLayer', function(){
 		it('should work', function(){
-			new convnet.ConvLayer();
+			new convnet.ConvLayer({sx:5, filters:8, stride:1, activation:'relu'});
 		});
 	});
 	describe('DropoutLayer', function(){
 		it('should work', function(){
-
+			new convnet.DropoutLayer();
+		});
+	});
+	describe('FullyConnLayer', function(){
+		it('should work', function(){
+			new convnet.FullyConnLayer();
+		});
+	});
+	describe('InputLayer', function(){
+		it('should work', function(){
+			new convnet.InputLayer({out_sx:1, out_sy:1, out_depth:20});
+		});
+	});
+	describe('MaxoutLayer', function(){
+		it('should work', function(){
+			new convnet.MaxoutLayer();
 		});
 	});
 });
