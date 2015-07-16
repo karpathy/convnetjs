@@ -7,7 +7,7 @@ import Layer from "./layer.js";
 
 export default class MaxoutLayer extends Layer {
 
-  constructor({group_size = 2, in_sx, in_sy, in_depth, ...options}opt = {}){
+  constructor({group_size = 2, in_sx, in_sy, in_depth, ...options} = {}){
     super(options);
     // required
     this.group_size = group_size;
