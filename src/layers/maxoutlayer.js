@@ -5,23 +5,23 @@ import Layer from "./layer.js";
 // where x is a vector of size group_size. Ideally of course,
 // the input size should be exactly divisible by group_size
 
-export class MaxoutLayer extends Layer {
+export default class MaxoutLayer extends Layer {
 
-  constructor(opt = {}){
-    super(opt);
+  constructor({group_size = 2, in_sx, in_sy, in_depth, ...options}opt = {}){
+    super(options);
     // required
-    this.group_size = opt.group_size || 2;
+    this.group_size = group_size;
 
     // computed
-    this.out_sx = opt.in_sx;
-    this.out_sy = opt.in_sy;
-    this.out_depth = Math.floor(opt.in_depth / this.group_size);
+    this.out_sx = in_sx;
+    this.out_sy = in_sy;
+    this.out_depth = Math.floor(in_depth / this.group_size);
     this.layer_type = 'maxout';
 
     this.switches = new Float64Array(this.out_sx*this.out_sy*this.out_depth); // useful for backprop
   }
 
-  forward(V, use_webgl = false, is_training = false) {
+  forward(V) {
     super.forward(V, is_training);
     this.out_act = new V.constructor();
 

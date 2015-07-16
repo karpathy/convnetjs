@@ -39,7 +39,7 @@ export default class DropoutLayer extends Layer {
     return this.out_act; // dummy identity function for now
   }
 
-  backward(is_training = false) {
+  backward() {
     let v = new Float64Array(storage(this.in_act.dw).buffer); // we need to set dw of this
     let v2 = new Float64Array(storage(this.out_act.dw).buffer);
     for(let i = 0; i < v.length; i++){

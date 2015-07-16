@@ -57,7 +57,7 @@ describe('Layers', function(){
 	});
 	describe('MaxoutLayer', function(){
 		it('should work', function(){
-			new convnet.MaxoutLayer();
+			new convnet.MaxoutLayer({group_size: 10, in_sx: 1, in_sy: 1, in_depth: 5});
 		});
 	});
 });
