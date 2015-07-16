@@ -12,7 +12,7 @@ describe('Structures', function(){
 			new convnet.VolType(1, 1, 2);
 		});
 		it('should be an instance of StructType', function(){
-			assert((new VolType()) instanceof StructType);
+			assert((new convnet.VolType()) instanceof StructType);
 		});
 	});
 	describe('Experience', function(){
