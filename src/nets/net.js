@@ -53,9 +53,6 @@ export default class Net {
           case 'fc': 
             this.layers.push(new FullyConnLayer(def)); 
             break;
-          case 'lrn': 
-            this.layers.push(new LocalResponseNormalizationLayer(def)); 
-            break;
           case 'dropout': 
             this.layers.push(new DropoutLayer(def)); 
             break;
@@ -192,34 +189,5 @@ export function fromJSON(json) {
   if(typeof json === 'string'){
     json = JSON.parse(json);
   }
-  return new Net(json.layers.map(x => {
-    switch(x.layer_type){
-      case 'input':
-        return InputLayer.fromJSON(x); 
-      case 'relu':
-        return ReluLayer.fromJSON(x); 
-      case 'sigmoid':
-        return SigmoidLayer.fromJSON(x); 
-      case 'tanh':
-        return TanhLayer.fromJSON(x); 
-      case 'dropout':
-        return DropoutLayer.fromJSON(x); 
-      case 'conv':
-        return ConvLayer.fromJSON(x); 
-      case 'pool':
-        return PoolLayer.fromJSON(x); 
-      case 'lrn':
-        return LocalResponseNormalizationLayer.fromJSON(); 
-      case 'softmax':
-        return SoftmaxLayer.fromJSON(); 
-      case 'regression':
-        return RegressionLayer.fromJSON(); 
-      case 'fc':
-        return FullyConnLayer.fromJSON(); 
-      case 'maxout':
-        return MaxoutLayer.fromJSON(); 
-      case 'svm':
-        return SVMLayer.fromJSON();
-    }
-  }));
+  return new Net(json.layers);
 }  

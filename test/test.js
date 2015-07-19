@@ -195,7 +195,7 @@ describe('Nets', function(){
 
 			var net = new convnet.Net(layers);
 		});
-		it('should be able to have a Vol passed through it', function(){
+		it('should be able to have a Vol passed forward through it', function(){
 			var layers = [
 			    {type:'input', out_sx:1, out_sy:1, out_depth:2},
 			    {type:'fc', num_neurons:20, activation:'relu'},
@@ -207,6 +207,19 @@ describe('Nets', function(){
 			var vol = new voltype([[[1,0]]]);
 
 			net.forward(vol);
+		});
+		it('should have a backward() method that works', function(){
+			var layers = [
+			    {type:'input', out_sx:1, out_sy:1, out_depth:2},
+			    {type:'fc', num_neurons:20, activation:'relu'},
+			    {type:'softmax', num_classes:10}
+			];
+
+			var net = new convnet.Net(layers);
+			var voltype = new convnet.VolType(1, 1, 2);
+			var vol = new voltype([[[1,0]]]);
+
+			net.backward();
 		});
 	});
 });
