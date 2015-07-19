@@ -44,7 +44,7 @@ var magicNet = new convnetjs.MagicNet(train_data, train_labels, opts);
 magicNet.onFinishBatch(finishedBatch); // example of setting callback for events
 
 // start training magicNet. Every step() call all candidates train on one example
-setInterval(function(){ magicNet.step() }, 0});
+setInterval(function(){ magicNet.step() }, 0);
 
 // once at least one batch of candidates is evaluated on all folds we can do prediction!
 function finishedBatch() {
