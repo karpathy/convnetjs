@@ -15,7 +15,7 @@ nets = [];\n\
 trainer_defs = [];\n\
 trainer_defs.push({learning_rate:LR, method: 'sgd', momentum: 0.0, batch_size:BS, l2_decay:L2});\n\
 trainer_defs.push({learning_rate:LR, method: 'sgd', momentum: 0.9, batch_size:BS, l2_decay:L2});\n\
-trainer_defs.push({learning_rate:LR, method: 'adam', eps: 1e-8, beta1: 0.9, beta2: 0.99, lambda: 1-1e-8, batch_size:BS, l2_decay:L2});\n\
+trainer_defs.push({learning_rate:LR, method: 'adam', eps: 1e-8, beta1: 0.9, beta2: 0.99, batch_size:BS, l2_decay:L2});\n\
 trainer_defs.push({learning_rate:LR, method: 'adagrad', eps: 1e-6, batch_size:BS, l2_decay:L2});\n\
 trainer_defs.push({learning_rate:LR, method: 'windowgrad', eps: 1e-6, ro: 0.95, batch_size:BS, l2_decay:L2});\n\
 trainer_defs.push({learning_rate:1.0, method: 'adadelta', eps: 1e-6, ro:0.95, batch_size:BS, l2_decay:L2});\n\

@@ -18,7 +18,6 @@
     this.eps = typeof options.eps !== 'undefined' ? options.eps : 1e-8; // used in adam or adadelta
     this.beta1 = typeof options.beta1 !== 'undefined' ? options.beta1 : 0.9; // used in adam
     this.beta2 = typeof options.beta2 !== 'undefined' ? options.beta2 : 0.999; // used in adam
-    this.lambda = typeof options.lambda !== 'undefined' ? options.lambda : 1-1e-8; // used in adam
 
     this.k = 0; // iteration counter
     this.gsum = []; // last iteration gradients (used for momentum calculations)
@@ -86,14 +85,11 @@
             var xsumi = this.xsum[i];
             if(this.method === 'adam') {
               // adam update
-              var bt1 = this.beta1 * Math.pow(this.lambda, this.k-1); // decay first moment running average coefficient
-              gsumi[j] = gsumi[j] * bt1 + (1-bt1) * gij; // update biased first moment estimate
+              gsumi[j] = gsumi[j] * this.beta1 + (1- this.beta1) * gij; // update biased first moment estimate
               xsumi[j] = xsumi[j] * this.beta2 + (1-this.beta2) * gij * gij; // update biased second moment estimate
-              var denom = Math.sqrt(xsumi[j]) + this.eps;
-              var biasCorr1 = 1 - Math.pow(this.beta1, this.k); // correct bias
-              var biasCorr2 = 1 - Math.pow(this.beta2, this.k); // correct bias
-              var stepSize = this.learning_rate * Math.sqrt(biasCorr2) / biasCorr1;
-              var dx = stepSize * gsumi[j] / denom;
+              var biasCorr1 = gsumi[j] * (1 - Math.pow(this.beta1, this.k)); // correct bias first moment estimate
+              var biasCorr2 = xsumi[j] * (1 - Math.pow(this.beta2, this.k)); // correct bias second moment estimate
+              var dx =  - this.learning_rate * biasCorr1 / (Math.sqrt(biasCorr2) + this.eps);
               p[j] += dx;
             } else if(this.method === 'adagrad') {
               // adagrad update
