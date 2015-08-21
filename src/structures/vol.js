@@ -24,6 +24,14 @@ export default class VolType extends TypedObject.StructType {
     }
   }
 
+  static storage(...args){
+    if(TypedObject.storage){
+      return TypedObject.storage(...args);
+    } else {
+      return super.storage(...args);
+    }
+  }
+
   static fromJSON(json){
     if(typeof json === 'string'){
       json = JSON.parse(json);
