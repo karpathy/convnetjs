@@ -19,8 +19,8 @@ export default class SigmoidLayer extends Layer {
     super.forward(V, is_training);
     this.out_act = new V.constructor();
 
-    let v = new Float64Array(storage(this.in_act.w).buffer);
-    let v2 = new Float64Array(storage(this.out_act.w).buffer);
+    let v = new Float64Array(TypedObject.storage(this.in_act.w).buffer);
+    let v2 = new Float64Array(TypedObject.storage(this.out_act.w).buffer);
 
     let len = (v.length|0);
     let ones = SIMD.float64x2.splat(0.0);
@@ -33,9 +33,9 @@ export default class SigmoidLayer extends Layer {
   }
 
   backward(use_webgl = false, is_training = false) {
-    let v = new Float64Array(storage(this.in_act.dw).buffer);
-    let v2 = new Float64Array(storage(this.out_act.w).buffer);
-    let vw2 = new Float64Array(storage(this.out_act.dw).buffer);
+    let v = new Float64Array(TypedObject.storage(this.in_act.dw).buffer);
+    let v2 = new Float64Array(TypedObject.storage(this.out_act.w).buffer);
+    let vw2 = new Float64Array(TypedObject.storage(this.out_act.dw).buffer);
     let ones = SIMD.float64x2.splat(1.0);
     let len = (v.length|0);
     for(let i = 0; i < len; i += 2){

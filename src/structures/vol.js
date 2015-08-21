@@ -46,7 +46,7 @@ export default class VolType extends TypedObject.StructType {
 
     // prepare the input: get pixels and normalize them
     let v = new (new VolType(imgdata.width, imgdata.height, 4))({w:(new Float64Array(imagedata.data)).buffer});
-    let vd = new Float64Array(storage(v.w).buffer);
+    let vd = new Float64Array(TypedObject.storage(v.w).buffer);
 
     const tff = SIMD.float64x2.splat(255.0);
     const mpf = SIMD.float64x2.splat(0.5);

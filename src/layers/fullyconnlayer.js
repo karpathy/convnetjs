@@ -54,11 +54,11 @@ export default class FullyConnLayer extends Layer {
   forward(V, is_training = false) {
     super.forward(V, is_training);
     this.out_act = new this.bias_type();
-    let ow = new Float64Array(storage(this.out_act.w).buffer);
-    let vw = new Float64Array(storage(this.in_act.w).buffer);
+    let ow = new Float64Array(TypedObject.storage(this.out_act.w).buffer);
+    let vw = new Float64Array(TypedObject.storage(this.in_act.w).buffer);
     for(var i = 0; i < this.out_depth; i++) {
       let a = SIMD.float64x2.zero();
-      let wi = new Float64Array(storage(this.filters[i].w).buffer);
+      let wi = new Float64Array(TypedObject.storage(this.filters[i].w).buffer);
       for(var d = 0; d < this.num_inputs; d += 2) {
         // for efficiency use Vols directly for now
         a = SIMD.float64x2.add(a, SIMD.float64x2.mul(SIMD.float64x2.load(vw, d), SIMD.float64x2.load(wi, d)));
@@ -70,8 +70,8 @@ export default class FullyConnLayer extends Layer {
 
   backward(is_training = false) {
    
-    let vd = new Float64Array(storage(this.in_act.dw).buffer);
-    let vw = new Float64Array(storage(this.in_act.w).buffer);
+    let vd = new Float64Array(TypedObject.storage(this.in_act.dw).buffer);
+    let vw = new Float64Array(TypedObject.storage(this.in_act.w).buffer);
 
     for(let i = 0; i < vd.length; i++){
       vd[i] = 0;
@@ -79,8 +79,8 @@ export default class FullyConnLayer extends Layer {
 
     // compute gradient wrt weights and data
     for(var i = 0; i < this.out_depth; i++) {
-      let tfiw = new Float64Array(storage(this.filters[i].w).buffer);
-      let tfid = new Float64Array(storage(this.filters[i].dw).buffer);
+      let tfiw = new Float64Array(TypedObject.storage(this.filters[i].w).buffer);
+      let tfid = new Float64Array(TypedObject.storage(this.filters[i].dw).buffer);
       let chain_grad = SIMD.float64x2.splat(this.out_act.dw[0][0][i]);
       for(var d = 0; d < this.num_inputs; d += 2) {
         // grad wrt input data

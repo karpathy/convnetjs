@@ -286,7 +286,7 @@ export default class MagicNet extends EventEmitter {
 
   predict(data) {
     var xout = this.predict_soft(data);
-    let w = new Float64Array(storage(xout.w).buffer);
+    let w = new Float64Array(TypedObject.storage(xout.w).buffer);
     let maxv = w[0];
     let maxi = 0;
     let n = w.length;

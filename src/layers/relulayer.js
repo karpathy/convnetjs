@@ -19,8 +19,8 @@ export default class ReluLayer extends Layer {
     super.forward(V, use_webgl, is_training);
     this.out_act = new V.constructor(V);
 
-    let v = new Float64Array(storage(this.in_act.w).buffer);
-    let v2 = new Float64Array(storage(this.out_act.w).buffer);
+    let v = new Float64Array(TypedObject.storage(this.in_act.w).buffer);
+    let v2 = new Float64Array(TypedObject.storage(this.out_act.w).buffer);
 
     let zeroes = SIMD.float64x2.zero();
     
@@ -33,8 +33,8 @@ export default class ReluLayer extends Layer {
   }
 
   backward(use_webgl = false, is_training = false) {
-    let v = new Float64Array(storage(this.in_act.dw).buffer);
-    let v2 = new Float64Array(storage(this.out_act.dw).buffer);
+    let v = new Float64Array(TypedObject.storage(this.in_act.dw).buffer);
+    let v2 = new Float64Array(TypedObject.storage(this.out_act.dw).buffer);
 
     let zeroes = SIMD.float64x2.zero();
     

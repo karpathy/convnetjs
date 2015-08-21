@@ -15,8 +15,8 @@ export default class SVMLayer extends Layer{
   backward(y, use_webgl = false, is_training = false) {
 
     // compute and accumulate gradient wrt weights and bias of this layer
-    let x = new Float64Array(storage(this.in_act.dw).buffer);
-    let w = new Float64Array(storage(this.in_act.w).buffer);
+    let x = new Float64Array(TypedObject.storage(this.in_act.dw).buffer);
+    let w = new Float64Array(TypedObject.storage(this.in_act.w).buffer);
 
     // we're using structured loss here, which means that the score
     // of the ground truth should be higher than the score of any other 

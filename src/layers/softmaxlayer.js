@@ -23,8 +23,8 @@ export default class SoftmaxLayer extends Layer {
     super.forward(V, is_training);
     this.out_act = new this.out_type();
 
-    let v = new Float64Array(storage(this.in_act.w).buffer);
-    let a = new Float64Array(storage(this.out_act.w).buffer);
+    let v = new Float64Array(TypedObject.storage(this.in_act.w).buffer);
+    let a = new Float64Array(TypedObject.storage(this.out_act.w).buffer);
 
     // compute max activation
     let len = (v.length | 0)
@@ -59,7 +59,7 @@ export default class SoftmaxLayer extends Layer {
   backward(y, use_webgl = false, is_training = false) {
 
     // compute and accumulate gradient wrt weights and bias of this layer
-    let x = new Float64Array(storage(this.in_act.dw).buffer);
+    let x = new Float64Array(TypedObject.storage(this.in_act.dw).buffer);
 
     for(var i = 0; i < this.out_depth; i += 2) {
       SIMD.float64x2.store(x, i, SIMD.float64x4(-(i === y ? 1.0 : 0.0 - this.es[i]), -(i+1 === y ? 1.0 : 0.0 - this.es[i+1])))

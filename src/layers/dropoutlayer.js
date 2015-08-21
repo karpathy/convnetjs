@@ -16,9 +16,9 @@ export default class DropoutLayer extends Layer {
 
   forward(V, is_training = false) {
     super.forward(V, is_training);
-    this.out_act = new V.constructor(storage(this.in_act).buffer.slice(0));
-    let v = new Float64Array(storage(this.in_act.w).buffer);
-    let v2 = new Float64Array(storage(this.out_act.w).buffer);
+    this.out_act = new V.constructor(TypedObject.storage(this.in_act).buffer.slice(0));
+    let v = new Float64Array(TypedObject.storage(this.in_act.w).buffer);
+    let v2 = new Float64Array(TypedObject.storage(this.out_act.w).buffer);
     let dp = SIMD.float64x2.splat(this.drop_prob);
     if(is_training) {
       // do dropout
@@ -40,8 +40,8 @@ export default class DropoutLayer extends Layer {
   }
 
   backward() {
-    let v = new Float64Array(storage(this.in_act.dw).buffer); // we need to set dw of this
-    let v2 = new Float64Array(storage(this.out_act.dw).buffer);
+    let v = new Float64Array(TypedObject.storage(this.in_act.dw).buffer); // we need to set dw of this
+    let v2 = new Float64Array(TypedObject.storage(this.out_act.dw).buffer);
     for(let i = 0; i < v.length; i++){
       v[i] = (!(this.dropped)) ? v2[i] : 0; // copy over the gradient
     }

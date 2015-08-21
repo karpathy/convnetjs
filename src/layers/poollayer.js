@@ -32,7 +32,7 @@ export default class PoolLayer extends Layer {
   forward(V, use_webgl = false, is_training = false) {
     super.forward(V, is_training);
 
-    var A = new this.out_voltype();
+    var A = new this.out_vol();
     
     var n=0; // a counter for switches
     for(var d=0;d<this.out_depth;d++) {
