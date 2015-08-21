@@ -45,7 +45,7 @@ export default class FullyConnLayer extends Layer {
     this.biases = new bias_type({w:[[[...fillArray(bias, this.out_depth)]]]});
 
     this.filter_type = new VolType(this.sx, this.sy, this.in_depth);
-    this.filters = new (new ArrayType(this.filter_type, this.out_depth))();
+    this.filters = new (new TypedObject.ArrayType(this.filter_type, this.out_depth))();
     for(let i = 0; i < this.out_depth; i++) { 
       this.filters[i] = new this.filter_type(); 
     }

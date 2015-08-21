@@ -5,12 +5,12 @@
 // all weights, and also stores all gradients w.r.t. 
 // the data. 
 
-export default class VolType extends StructType {
+export default class VolType extends TypedObject.StructType {
 
   constructor(sx = 1, sy = 1, depth = 1){
     return class Vol extends super({
-      w : new ArrayType(new ArrayType(new ArrayType(float64, depth), sy), sx),
-      dw : new ArrayType(new ArrayType(new ArrayType(float64, depth), sy), sx),
+      w : new TypedObject.ArrayType(new TypedObject.ArrayType(new TypedObject.ArrayType(float64, depth), sy), sx),
+      dw : new TypedObject.ArrayType(new TypedObject.ArrayType(new TypedObject.ArrayType(float64, depth), sy), sx),
       sx : int32,
       sy : int32,
       depth : int32
