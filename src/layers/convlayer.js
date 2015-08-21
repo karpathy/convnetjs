@@ -57,12 +57,12 @@ export default class ConvLayer extends Layer {
     // optimized code by @mdda that achieves 2x speedup over previous version
     this.out_act = new this.out_type();
 
-    let vw = new Float64Array(this.in_act.storage(this.in_act.w).buffer);
-    let vd = new Float64Array(this.in_act.storage(this.in_act.dw).buffer);
-    let v2w = new Float64Array(this.out_act.storage(this.out_act.w).buffer);
-    let v2d = new Float64Array(this.out_act.storage(this.out_act.dw).buffer);
-    let b = new Float64Array(this.biases.storage(this.biases.w).buffer);
-    let fw = new Float64Array(this.filters.storage(this.filters).buffer);
+    let vw = new Float64Array(this.in_act.constructor.storage(this.in_act.w).buffer);
+    let vd = new Float64Array(this.in_act.constructor.storage(this.in_act.dw).buffer);
+    let v2w = new Float64Array(this.out_act.constructor.storage(this.out_act.w).buffer);
+    let v2d = new Float64Array(this.out_act.constructor.storage(this.out_act.dw).buffer);
+    let b = new Float64Array(this.biases.constructor.storage(this.biases.w).buffer);
+    let fw = new Float64Array(this.filters.constructor.storage(this.filters).buffer);
     let x = (0|0), y = (0|0),
         xco = (0|0), fco = (0|0),
         fsx = (this.sx|0), fsy = (this.sy|0), fdep = (this.in_depth|0), fstep = (this.filters.byteLength/8/this.filters.length|0),
