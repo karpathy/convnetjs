@@ -32,7 +32,7 @@
 
 	"scripts" : {
 		"test" : "mocha",
-		"prepublish" : "bash build.sh"
+		"prepublish" : "./build.sh"
 	},
 
 	"license" : "MIT",
