@@ -16,12 +16,12 @@
 	"main" : "./build/convnet.js",
 
 	"dependencies" : {
+		"simd" : "2.0.0",
 		"typed-objects" : ">=1.0.0",
-		"babel-core" : ">=5.0.0"
+		"babel" : ">=5.0.0"
 	},
 
 	"devDependencies" : {
-		"babel" : ">=5.0.0",
 		"uglify-js" : ">=2.0.0",
 		"browserify" : ">=10.0.0",
 		"mocha" : "*",

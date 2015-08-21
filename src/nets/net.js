@@ -190,4 +190,4 @@ export function fromJSON(json) {
     json = JSON.parse(json);
   }
   return new Net(json.layers);
-}  
+}
