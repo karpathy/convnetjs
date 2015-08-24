@@ -24,7 +24,7 @@
     this.xsum = []; // used in adam or adadelta
 
     // check if regression is expected 
-    if(this.net.layers[this.net.layers.length].layer_type === "regression")
+    if(this.net.layers[this.net.layers.length - 1].layer_type === "regression")
       this.regression = true;
     else
       this.regression = false;
