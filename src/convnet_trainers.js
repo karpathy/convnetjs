@@ -22,6 +22,12 @@
     this.k = 0; // iteration counter
     this.gsum = []; // last iteration gradients (used for momentum calculations)
     this.xsum = []; // used in adam or adadelta
+
+    // check if regression is expected 
+    if(this.net.layers[this.net.layers.length - 1].layer_type === "regression")
+      this.regression = true;
+    else
+      this.regression = false;
   }
 
   Trainer.prototype = {
@@ -38,6 +44,9 @@
       var l1_decay_loss = 0.0;
       var end = new Date().getTime();
       var bwd_time = end - start;
+
+      if(this.regression && y.constructor !== Array)
+        console.log("Warning: a regression net requires an array as training output vector.");
       
       this.k++;
       if(this.k % this.batch_size === 0) {
