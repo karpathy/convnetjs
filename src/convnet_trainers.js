@@ -32,11 +32,11 @@
       var end = new Date().getTime();
       var fwd_time = end - start;
 
-      var start = new Date().getTime();
+      start = new Date().getTime();
       var cost_loss = this.net.backward(y);
       var l2_decay_loss = 0.0;
       var l1_decay_loss = 0.0;
-      var end = new Date().getTime();
+      end = new Date().getTime();
       var bwd_time = end - start;
       
       this.k++;

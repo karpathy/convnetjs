@@ -82,6 +82,7 @@
         switch(def.type) {
           case 'fc': this.layers.push(new global.FullyConnLayer(def)); break;
           case 'lrn': this.layers.push(new global.LocalResponseNormalizationLayer(def)); break;
+          case 'lstm' : this.layers.push(new global.LSTMLayer(def)); break;
           case 'dropout': this.layers.push(new global.DropoutLayer(def)); break;
           case 'input': this.layers.push(new global.InputLayer(def)); break;
           case 'softmax': this.layers.push(new global.SoftmaxLayer(def)); break;
