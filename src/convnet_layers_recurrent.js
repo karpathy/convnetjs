@@ -32,9 +32,9 @@
     this.layer_type = 'lstm';
 
     // initializations
-    this.context = new Vol(1, 1, this.filters); // C
-    this.prev_context = new Vol(1, 1, this.filters); // C
-    this.contextH = new Vol(1, 1, this.filters); // tanh(C) -> to simplify bp computation
+    this.context = new Vol(1, 1, this.out_depth, 0.0); // C
+    this.prev_context = new Vol(1, 1, this.out_depth, 0.0); // C
+    this.contextH = new Vol(1, 1, this.out_depth, 0.0); // tanh(C) -> to simplify bp computation
     
     this.filters = [];
     for(var i=0;i<this.out_depth;i++){
@@ -43,6 +43,7 @@
           //in, ig, fg, og
           gates.push(new Vol(1, 1, this.num_inputs));
         }
+        
         this.filters.push(gates);
     };
     
@@ -52,12 +53,12 @@
     // 4 gates per unit
     // w: the gate output AFTER transfer function
     // dw: the dw of the AFTER output after transfer function
-    this.gateOut = new Vol(4, 1, this.out_depth, 0); 
+    this.gateOut = new Vol(4, 1, this.out_depth, 0.0); 
     
     // 4 gates per unit
     // w: the gate output BEFORE transfer function
     // dw: the dw of the gate output BEFORE transfer function
-    this.gateSum = new Vol(4, 1, this.out_depth, 0); 
+    this.gateSum = new Vol(4, 1, this.out_depth, 0.0); 
   }
   
   function tanh(x) {
@@ -79,7 +80,7 @@
         var Xfg = 0.0;
         var Xog = 0.0;
         var wgates = this.filters[i];
-        
+       
         for(var d=0;d<this.num_inputs;d++) {
           Xin += Vw[d] * wgates[0].w[d];
           Xig += Vw[d] * wgates[1].w[d];
@@ -112,12 +113,15 @@
         // update prev context
         var pre_C = this.context.w[i];
         this.prev_context.w[i] = pre_C;
+        
         // compute new context
         this.context.w[i] = Yin * Yig + pre_C * Yfg;
         
         // compute the final output
         this.contextH.w[i] = tanh(this.context.w[i]);
+ 
         A.w[i] = this.contextH.w[i] * Yog;
+        
       }
       
       this.out_act = A;
@@ -144,6 +148,7 @@
         this.contextH.dw[i] = this.gateOut.get(3,0,i) * chain_grad;
         
         // calculate new loss into context
+        // Notice: this implementation is treating sequence length = 1
         var contextVal = this.context.w[i];
         var new_dEdcontext = (1 - contextVal * contextVal) * this.contextH.dw[i]; // derivative of tanh
         
@@ -259,5 +264,5 @@
     }
   }
   
-  global.ConvLayer = LSTMLayer;
+  global.LSTMLayer = LSTMLayer;
 })(convnetjs);
