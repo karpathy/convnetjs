@@ -24,6 +24,9 @@
     //this.sy = typeof opt.sy !== 'undefined' ? opt.sy : this.sx;
     this.l1_decay_mul = typeof opt.l1_decay_mul !== 'undefined' ? opt.l1_decay_mul : 0.0;
     this.l2_decay_mul = typeof opt.l2_decay_mul !== 'undefined' ? opt.l2_decay_mul : 1.0;
+    
+    this.maxC = typeof opt.maxC !== 'undefined' ? opt.maxC : 10.0;
+    this.maxCError = typeof opt.maxCError !== 'undefined' ? opt.maxCError : 10.0;
 
     // computed
     this.num_inputs = opt.in_sx * opt.in_sy * opt.in_depth;
@@ -61,9 +64,17 @@
     this.gateSum = new Vol(4, 1, this.out_depth, 0.0); 
   }
   
+  // lstm util function
   function tanh(x) {
     var y = Math.exp(2 * x);
     return (y - 1) / (y + 1);
+  }
+  
+  // capping value
+  function capValue(val, max, min){
+      var valCap = (val > max)? max : val;
+      valCap = (valCap < min)? min : valCap;
+      return valCap;
   }
   
   LSTMLayer.prototype = {
@@ -115,13 +126,28 @@
         this.prev_context.w[i] = pre_C;
         
         // compute new context
+        //resolve instability
         this.context.w[i] = Yin * Yig + pre_C * Yfg;
+        this.context.w[i] = capValue(Yin * Yig + pre_C * Yfg, this.maxC, -this.maxC);
         
         // compute the final output
         this.contextH.w[i] = tanh(this.context.w[i]);
  
         A.w[i] = this.contextH.w[i] * Yog;
-        
+        if(isNaN( A.w[i]) ){
+          console.log('FW NaN');
+          console.log(Xin);
+          console.log(Xig);
+          console.log(Xfg);
+          console.log(Xog);
+          console.log(Yin);
+          console.log(Yig);
+          console.log(Yfg);
+          console.log(Yog);
+          console.log(pre_C);
+          console.log(this.context.w[i]);
+          console.log(this.contextH.w[i]);
+        }
       }
       
       this.out_act = A;
@@ -154,7 +180,10 @@
         
         // update context loss
         this.prev_context.dw[i] = this.context.dw[i];
-        this.context.dw[i] += new_dEdcontext * this.gateOut.get(2,0,i); //Yog * new_dEdcontext + prev_dEdcontext = dEdcontext
+        
+        //Yog * new_dEdcontext + prev_dEdcontext = dEdcontext, subject to cap
+        //using cap function to prevent exploding gradient
+        this.context.dw[i] = capValue(this.context.dw[i] + new_dEdcontext * this.gateOut.get(2,0,i), this.maxCError, -this.maxCError);
         
         // dE/dYfg
         var dEdYfg = this.prev_context.w[i] * this.context.dw[i];
@@ -180,6 +209,16 @@
           }
           
           this.biases.set_grad(g,0,i, this.biases.get(g,0,i) +  this.gateSum.get_grad(g,0,i));
+        }
+        
+        if(isNaN(this.context.dw[i]) || isNaN(this.out_act.dw[i])){
+          console.log('BP NaN');
+          console.log(this.out_act.dw[i]);
+          console.log(dEdYog);
+          console.log(contextVal);
+          console.log(dEdYfg);
+          console.log(dEdYig);
+          console.log(dEdYin);
         }
       }
     },
