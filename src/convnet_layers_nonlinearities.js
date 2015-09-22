@@ -2,6 +2,92 @@
   "use strict";
   var Vol = global.Vol; // convenience
   
+  // Implements pull up layer (step function)
+  // x -> min_val (default 0) or max_val (default 1) 
+  // it simulate the output target cost function, and the output target depends on the sign of the bp error
+  
+  var StepLayer = function(opt){
+    var opt = opt || {};
+    
+    // optional
+    if(opt.min_val){
+      this.min_val = opt.min_val;
+    }else{
+      this.min_val = 0;
+    }
+    
+    if(opt.max_val){
+      this.max_val = opt.max_val;
+    }else{
+      this.max_val = 1;
+    }
+    
+    // computed
+    this.out_sx = opt.in_sx;
+    this.out_sy = opt.in_sy;
+    this.out_depth = opt.in_depth;
+    this.layer_type = 'step';
+  }
+  StepLayer.prototype = {
+    forward: function(V, is_training) {
+      this.in_act = V;
+      var V2 = V.clone();
+      var N = V.w.length;
+      var V2w = V2.w;
+      for(var i=0;i<N;i++) { 
+        if(V2w[i] < 0){
+          V2w[i] = this.min_val;
+        }else{
+          V2w[i] = this.max_val;
+        } // threshold at 0
+      }
+      this.out_act = V2;
+      return this.out_act;
+    },
+    
+    backward: function() {
+      var V = this.in_act; // we need to set dw of this
+      var V2 = this.out_act;
+      var N = V.w.length;
+      V.dw = global.zeros(N); // zero out gradient wrt data
+      
+      //TODO: clean up the magic value here
+      
+      for(var i=0;i<N;i++) {
+        if(V2.dw[i] > 0){
+          //ideal output = min_val, dw should be positive
+          V.dw[i] = Math.max(1 + V.w[i], 0); //in_act < -1 => dw = 0
+        }else{
+          //ideal output = max_val, dw should be negative
+          V.dw[i] = Math.min(-1 + V.w[i], 0); //cap dw at -10
+        }
+      }
+    },
+    
+    getParamsAndGrads: function() {
+      return [];
+    },
+    
+    toJSON: function() {
+      var json = {};
+      json.min_val = this.min_val;
+      json.max_val = this.max_val;
+      json.out_depth = this.out_depth;
+      json.out_sx = this.out_sx;
+      json.out_sy = this.out_sy;
+      json.layer_type = this.layer_type;
+      return json;
+    },
+    fromJSON: function(json) {
+      this.min_val = json.min_val;
+      this.max_val = json.max_val;
+      this.out_depth = json.out_depth;
+      this.out_sx = json.out_sx;
+      this.out_sy = json.out_sy;
+      this.layer_type = json.layer_type; 
+    }
+  }
+  
   // Implements ReLU nonlinearity elementwise
   // x -> max(0, x)
   // the output is in [0, inf)
@@ -282,6 +368,7 @@
     }
   }
   
+  global.StepLayer = StepLayer;
   global.TanhLayer = TanhLayer;
   global.MaxoutLayer = MaxoutLayer;
   global.ReluLayer = ReluLayer;

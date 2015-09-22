@@ -1048,6 +1048,92 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
   "use strict";
   var Vol = global.Vol; // convenience
   
+  // Implements pull up layer (step function)
+  // x -> min_val (default 0) or max_val (default 1) 
+  // it simulate the output target cost function, and the output target depends on the sign of the bp error
+  
+  var StepLayer = function(opt){
+    var opt = opt || {};
+    
+    // optional
+    if(opt.min_val){
+      this.min_val = opt.min_val;
+    }else{
+      this.min_val = 0;
+    }
+    
+    if(opt.max_val){
+      this.max_val = opt.max_val;
+    }else{
+      this.max_val = 1;
+    }
+    
+    // computed
+    this.out_sx = opt.in_sx;
+    this.out_sy = opt.in_sy;
+    this.out_depth = opt.in_depth;
+    this.layer_type = 'step';
+  }
+  StepLayer.prototype = {
+    forward: function(V, is_training) {
+      this.in_act = V;
+      var V2 = V.clone();
+      var N = V.w.length;
+      var V2w = V2.w;
+      for(var i=0;i<N;i++) { 
+        if(V2w[i] < 0){
+          V2w[i] = this.min_val;
+        }else{
+          V2w[i] = this.max_val;
+        } // threshold at 0
+      }
+      this.out_act = V2;
+      return this.out_act;
+    },
+    
+    backward: function() {
+      var V = this.in_act; // we need to set dw of this
+      var V2 = this.out_act;
+      var N = V.w.length;
+      V.dw = global.zeros(N); // zero out gradient wrt data
+      
+      //TODO: clean up the magic value here
+      
+      for(var i=0;i<N;i++) {
+        if(V2.dw[i] > 0){
+          //ideal output = min_val, dw should be positive
+          V.dw[i] = Math.max(1 + V.w[i], 0); //in_act < -1 => dw = 0
+        }else{
+          //ideal output = max_val, dw should be negative
+          V.dw[i] = Math.min(-1 + V.w[i], 0); //cap dw at -10
+        }
+      }
+    },
+    
+    getParamsAndGrads: function() {
+      return [];
+    },
+    
+    toJSON: function() {
+      var json = {};
+      json.min_val = this.min_val;
+      json.max_val = this.max_val;
+      json.out_depth = this.out_depth;
+      json.out_sx = this.out_sx;
+      json.out_sy = this.out_sy;
+      json.layer_type = this.layer_type;
+      return json;
+    },
+    fromJSON: function(json) {
+      this.min_val = json.min_val;
+      this.max_val = json.max_val;
+      this.out_depth = json.out_depth;
+      this.out_sx = json.out_sx;
+      this.out_sy = json.out_sy;
+      this.layer_type = json.layer_type; 
+    }
+  }
+  
   // Implements ReLU nonlinearity elementwise
   // x -> max(0, x)
   // the output is in [0, inf)
@@ -1328,6 +1414,7 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
     }
   }
   
+  global.StepLayer = StepLayer;
   global.TanhLayer = TanhLayer;
   global.MaxoutLayer = MaxoutLayer;
   global.ReluLayer = ReluLayer;
@@ -1564,9 +1651,10 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
     this.layer_type = 'lstm';
 
     // initializations
-    this.context = new Vol(1, 1, this.out_depth, 0.0); // C
-    this.prev_context = new Vol(1, 1, this.out_depth, 0.0); // C
-    this.contextH = new Vol(1, 1, this.out_depth, 0.0); // tanh(C) -> to simplify bp computation
+    this.reset();
+    
+    var bias = typeof opt.bias_pref !== 'undefined' ? opt.bias_pref : 0.0;
+    this.biases = new Vol(4, 1, this.out_depth, bias); // 4 gate per unit
     
     this.filters = [];
     for(var i=0;i<this.out_depth;i++){
@@ -1578,9 +1666,6 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
         
         this.filters.push(gates);
     };
-    
-    var bias = typeof opt.bias_pref !== 'undefined' ? opt.bias_pref : 0.0;
-    this.biases = new Vol(4, 1, this.out_depth, bias); // 4 gate per unit
     
     // 4 gates per unit
     // w: the gate output AFTER transfer function
@@ -1663,20 +1748,6 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
         this.contextH.w[i] = tanh(this.context.w[i]);
  
         A.w[i] = this.contextH.w[i] * Yog;
-        if(isNaN( A.w[i]) ){
-          console.log('FW NaN');
-          console.log(Xin);
-          console.log(Xig);
-          console.log(Xfg);
-          console.log(Xog);
-          console.log(Yin);
-          console.log(Yig);
-          console.log(Yfg);
-          console.log(Yog);
-          console.log(pre_C);
-          console.log(this.context.w[i]);
-          console.log(this.contextH.w[i]);
-        }
       }
       
       this.out_act = A;
@@ -1739,17 +1810,14 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
           
           this.biases.set_grad(g,0,i, this.biases.get(g,0,i) +  this.gateSum.get_grad(g,0,i));
         }
-        
-        if(isNaN(this.context.dw[i]) || isNaN(this.out_act.dw[i])){
-          console.log('BP NaN');
-          console.log(this.out_act.dw[i]);
-          console.log(dEdYog);
-          console.log(contextVal);
-          console.log(dEdYfg);
-          console.log(dEdYig);
-          console.log(dEdYin);
-        }
       }
+    },
+    
+    reset: function(){
+      // initializations
+      this.context = new Vol(1, 1, this.out_depth, 0.0); // C
+      this.prev_context = new Vol(1, 1, this.out_depth, 0.0); // C
+      this.contextH = new Vol(1, 1, this.out_depth, 0.0); // tanh(C) -> to simplify bp computation
     },
     
     getParamsAndGrads: function() {
@@ -1888,6 +1956,7 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
           if(typeof def.activation !== 'undefined') {
             if(def.activation==='relu') { new_defs.push({type:'relu'}); }
             else if (def.activation==='sigmoid') { new_defs.push({type:'sigmoid'}); }
+            else if (def.activation==='step') { new_defs.push({type:'step'}); }
             else if (def.activation==='tanh') { new_defs.push({type:'tanh'}); }
             else if (def.activation==='maxout') {
               // create maxout activation, and pass along group size, if provided
@@ -1927,6 +1996,7 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
           case 'conv': this.layers.push(new global.ConvLayer(def)); break;
           case 'pool': this.layers.push(new global.PoolLayer(def)); break;
           case 'relu': this.layers.push(new global.ReluLayer(def)); break;
+          case 'step': this.layers.push(new global.StepLayer(def)); break;
           case 'sigmoid': this.layers.push(new global.SigmoidLayer(def)); break;
           case 'tanh': this.layers.push(new global.TanhLayer(def)); break;
           case 'maxout': this.layers.push(new global.MaxoutLayer(def)); break;
@@ -1953,6 +2023,14 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
       var N = this.layers.length;
       var loss = this.layers[N-1].backward(y);
       return loss;
+    },
+    
+    reset: function(){
+      for(var i=0;i<this.layers.length;i++) {
+        if(typeof this.layers[i].reset === "function"){
+          this.layers[i].reset();
+        }
+      }
     },
     
     // backprop: compute gradients wrt all parameters
@@ -2016,6 +2094,9 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
         if(t==='fc') { L = new global.FullyConnLayer(); }
         if(t==='maxout') { L = new global.MaxoutLayer(); }
         if(t==='svm') { L = new global.SVMLayer(); }
+        if(t==='lstm') { L = new global.LSTMLayer(); }
+        if(t==='step') { L = new global.StepLayer(); }
+        
         L.fromJSON(Lj);
         this.layers.push(L);
       }

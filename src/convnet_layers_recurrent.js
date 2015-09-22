@@ -35,9 +35,10 @@
     this.layer_type = 'lstm';
 
     // initializations
-    this.context = new Vol(1, 1, this.out_depth, 0.0); // C
-    this.prev_context = new Vol(1, 1, this.out_depth, 0.0); // C
-    this.contextH = new Vol(1, 1, this.out_depth, 0.0); // tanh(C) -> to simplify bp computation
+    this.reset();
+    
+    var bias = typeof opt.bias_pref !== 'undefined' ? opt.bias_pref : 0.0;
+    this.biases = new Vol(4, 1, this.out_depth, bias); // 4 gate per unit
     
     this.filters = [];
     for(var i=0;i<this.out_depth;i++){
@@ -49,9 +50,6 @@
         
         this.filters.push(gates);
     };
-    
-    var bias = typeof opt.bias_pref !== 'undefined' ? opt.bias_pref : 0.0;
-    this.biases = new Vol(4, 1, this.out_depth, bias); // 4 gate per unit
     
     // 4 gates per unit
     // w: the gate output AFTER transfer function
@@ -134,20 +132,6 @@
         this.contextH.w[i] = tanh(this.context.w[i]);
  
         A.w[i] = this.contextH.w[i] * Yog;
-        if(isNaN( A.w[i]) ){
-          console.log('FW NaN');
-          console.log(Xin);
-          console.log(Xig);
-          console.log(Xfg);
-          console.log(Xog);
-          console.log(Yin);
-          console.log(Yig);
-          console.log(Yfg);
-          console.log(Yog);
-          console.log(pre_C);
-          console.log(this.context.w[i]);
-          console.log(this.contextH.w[i]);
-        }
       }
       
       this.out_act = A;
@@ -210,17 +194,14 @@
           
           this.biases.set_grad(g,0,i, this.biases.get(g,0,i) +  this.gateSum.get_grad(g,0,i));
         }
-        
-        if(isNaN(this.context.dw[i]) || isNaN(this.out_act.dw[i])){
-          console.log('BP NaN');
-          console.log(this.out_act.dw[i]);
-          console.log(dEdYog);
-          console.log(contextVal);
-          console.log(dEdYfg);
-          console.log(dEdYig);
-          console.log(dEdYin);
-        }
       }
+    },
+    
+    reset: function(){
+      // initializations
+      this.context = new Vol(1, 1, this.out_depth, 0.0); // C
+      this.prev_context = new Vol(1, 1, this.out_depth, 0.0); // C
+      this.contextH = new Vol(1, 1, this.out_depth, 0.0); // tanh(C) -> to simplify bp computation
     },
     
     getParamsAndGrads: function() {

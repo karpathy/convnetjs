@@ -51,6 +51,7 @@
           if(typeof def.activation !== 'undefined') {
             if(def.activation==='relu') { new_defs.push({type:'relu'}); }
             else if (def.activation==='sigmoid') { new_defs.push({type:'sigmoid'}); }
+            else if (def.activation==='step') { new_defs.push({type:'step'}); }
             else if (def.activation==='tanh') { new_defs.push({type:'tanh'}); }
             else if (def.activation==='maxout') {
               // create maxout activation, and pass along group size, if provided
@@ -90,6 +91,7 @@
           case 'conv': this.layers.push(new global.ConvLayer(def)); break;
           case 'pool': this.layers.push(new global.PoolLayer(def)); break;
           case 'relu': this.layers.push(new global.ReluLayer(def)); break;
+          case 'step': this.layers.push(new global.StepLayer(def)); break;
           case 'sigmoid': this.layers.push(new global.SigmoidLayer(def)); break;
           case 'tanh': this.layers.push(new global.TanhLayer(def)); break;
           case 'maxout': this.layers.push(new global.MaxoutLayer(def)); break;
@@ -116,6 +118,14 @@
       var N = this.layers.length;
       var loss = this.layers[N-1].backward(y);
       return loss;
+    },
+    
+    reset: function(){
+      for(var i=0;i<this.layers.length;i++) {
+        if(typeof this.layers[i].reset === "function"){
+          this.layers[i].reset();
+        }
+      }
     },
     
     // backprop: compute gradients wrt all parameters
@@ -179,6 +189,9 @@
         if(t==='fc') { L = new global.FullyConnLayer(); }
         if(t==='maxout') { L = new global.MaxoutLayer(); }
         if(t==='svm') { L = new global.SVMLayer(); }
+        if(t==='lstm') { L = new global.LSTMLayer(); }
+        if(t==='step') { L = new global.StepLayer(); }
+        
         L.fromJSON(Lj);
         this.layers.push(L);
       }
