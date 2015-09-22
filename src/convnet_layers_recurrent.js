@@ -42,13 +42,7 @@
     
     this.filters = [];
     for(var i=0;i<this.out_depth;i++){
-        var gates = [];
-        for(var j = 0; j < 4; j++){
-          //in, ig, fg, og
-          gates.push(new Vol(1, 1, this.num_inputs));
-        }
-        
-        this.filters.push(gates);
+        this.filters.push(new Vol(4, 1, this.num_inputs)); //4 gates per cell
     };
     
     // 4 gates per unit
@@ -88,13 +82,12 @@
         var Xig = 0.0;
         var Xfg = 0.0;
         var Xog = 0.0;
-        var wgates = this.filters[i];
        
         for(var d=0;d<this.num_inputs;d++) {
-          Xin += Vw[d] * wgates[0].w[d];
-          Xig += Vw[d] * wgates[1].w[d];
-          Xfg += Vw[d] * wgates[2].w[d];
-          Xog += Vw[d] * wgates[3].w[d];
+          Xin += Vw[d] * this.filters[i].get(0,0,d);
+          Xig += Vw[d] * this.filters[i].get(1,0,d);
+          Xfg += Vw[d] * this.filters[i].get(2,0,d);
+          Xog += Vw[d] * this.filters[i].get(3,0,d);
         }
         
         Xin += this.biases.get(0,0,i);
@@ -145,7 +138,6 @@
       
       // compute gradient wrt weights and data
       for(var i=0;i<this.out_depth;i++) {
-        var wgates = this.filters[i];
         var chain_grad = this.out_act.dw[i];
         
         // dE/dYog and dE/dXog
@@ -188,8 +180,8 @@
         
         for(var g = 0; g < 4; g++){
           for(var d=0;d<this.num_inputs;d++) {
-            wgates[g].dw[d] += V.w[d] * this.gateSum.get_grad(g,0,i);// grad wrt params
-            V.dw[d] +=  wgates[g].w[d] * this.gateSum.get_grad(g,0,i); // grad wrt input data
+            this.filters[i].add_grad(g,0,d,V.w[d] * this.gateSum.get_grad(g,0,i));// grad wrt params
+            V.dw[d] +=  this.filters[i].get(g,0,d) * this.gateSum.get_grad(g,0,i); // grad wrt input data
           }
           
           this.biases.set_grad(g,0,i, this.biases.get(g,0,i) +  this.gateSum.get_grad(g,0,i));
@@ -207,9 +199,7 @@
     getParamsAndGrads: function() {
       var response = [];
       for(var i=0;i<this.out_depth;i++) {
-        for(var g=0; g<4; g++){
-          response.push({params: this.filters[i][g].w, grads: this.filters[i][g].dw, l1_decay_mul: this.l1_decay_mul, l2_decay_mul: this.l2_decay_mul});
-        }
+        response.push({params: this.filters[i].w, grads: this.filters[i].dw, l1_decay_mul: this.l1_decay_mul, l2_decay_mul: this.l2_decay_mul});
       }
       response.push({params: this.biases.w, grads: this.biases.dw, l1_decay_mul: 0.0, l2_decay_mul: 0.0});
       return response;
@@ -226,12 +216,7 @@
       json.l2_decay_mul = this.l2_decay_mul;
       json.filters = [];
       for(var i=0;i<this.filters.length;i++) {
-        // parameters for 4 gates
-        var gateW = [];
-        for(var g=0; g<4; g++){
-          gateW = this.filters[i][g].toJSON();
-        }
-        json.filters.push(gateW);
+        json.filters.push(this.filters[i].toJSON());
       }
       json.biases = this.biases.toJSON();
       
@@ -254,14 +239,9 @@
       this.l2_decay_mul = typeof json.l2_decay_mul !== 'undefined' ? json.l2_decay_mul : 1.0;
       this.filters = [];
       for(var i=0;i<json.filters.length;i++) {
-        var gateRaw = json.filters[i];
-        var gateW = [];
-        for(var g=0; g < gateRaw.length; g++){
-          var v = new Vol(0,0,0,0);
-          v.fromJSON(gateRaw[g]);
-          gateW.push(v);
-        }
-        this.filters.push(gateW);
+        var v = new Vol(0,0,0,0);
+        v.fromJSON(json.filters[i]);
+        this.filters.push(v);
       }
       this.biases = new Vol(0,0,0,0);
       this.biases.fromJSON(json.biases);
