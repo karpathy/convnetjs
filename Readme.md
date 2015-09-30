@@ -20,7 +20,7 @@ For much more information, see the main page at [convnetjs.com](http://convnetjs
 - [Deep Q Learning Reinforcement Learning demo](http://cs.stanford.edu/people/karpathy/convnetjs/demo/rldemo.html)
 - [Image Regression ("Painting")](http://cs.stanford.edu/~karpathy/convnetjs/demo/image_regression.html)
 - [Comparison of SGD/Adagrad/Adadelta on MNIST](http://cs.stanford.edu/people/karpathy/convnetjs/demo/trainers.html)
-- [MagicNet classifying arbitary CSV data demo](http://cs.stanford.edu/people/karpathy/convnetjs/demo/automatic.html)
+- [MagicNet classifying arbitrary CSV data demo](http://cs.stanford.edu/people/karpathy/convnetjs/demo/automatic.html)
 
 ## Example Code
 
