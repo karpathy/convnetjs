@@ -4,7 +4,7 @@
   "version": "0.0.1",
   "author": {
     "name": "Lee Xiong",
-    "email": "lexion92@outlook.com",
+    "email": "lexion92@outlook.com"
   },
   "main": "./build/convnet.js",
   "keywords": [
