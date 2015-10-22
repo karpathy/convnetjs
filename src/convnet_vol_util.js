@@ -102,6 +102,20 @@
     return x;
   }
   
+  // concatinate v1.w with v2.w into 1D v3.w
+  var concat_vol = function(v1, v2){
+    var v3Len = v1.w.length + v2.w.length;
+    var v3 = new Vol(1,1, v3Len, 0.0);
+    for(var i = 0; i < v1.w.length; i++){
+      v3.w[i] = v1.w[i];
+    }
+    for(var i = 0; i < v2.w.length; i++){
+      v3.w[v1.w.length + i] = v2.w[i];
+    }
+    return v3;
+  }
+  
+  global.concat_vol = concat_vol;
   global.augment = augment;
   global.img_to_vol = img_to_vol;
 
