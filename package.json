@@ -3,8 +3,8 @@
   "description": "Neural Network Library Based on Convnetjs",
   "version": "0.0.1",
   "author": {
-    "name": "Lee Xiong"
-    "email": "lexion92@outlook.com"
+    "name": "Lee Xiong",
+    "email": "lexion92@outlook.com",
   },
   "main": "./build/convnet.js",
   "keywords": [
