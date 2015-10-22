@@ -4,11 +4,9 @@
   "version": "0.0.1",
   "author": {
     "name": "Lee Xiong"
-    "email": ""
+    "email": "lexion92@outlook.com"
   },
   "main": "./build/convnet.js",
-  "license": "",
-  "homepage": "",
   "keywords": [
     "neural",
     "network",
@@ -17,12 +15,4 @@
     "deep",
     "learning"
   ],
-  "maintainers": [
-    {
-      "name": "",
-      "email": ""
-    }
-  ],
-  "directories": {},
-  "readme": ""
 }
