@@ -122,6 +122,23 @@
     }
   }
 
+    // lstm util function
+  var tanh = function(x) {
+    var y = Math.exp(2 * x);
+    return (y - 1) / (y + 1);
+  }
+  
+  var sigmoid = function(x){
+    return 1.0/(1.0+Math.exp(-x));
+  }
+  
+  // capping value
+  var capValue = function(val, max, min){
+      var valCap = (val > max)? max : val;
+      valCap = (valCap < min)? min : valCap;
+      return valCap;
+  }
+
   global.randf = randf;
   global.randi = randi;
   global.randn = randn;
@@ -129,6 +146,11 @@
   global.maxmin = maxmin;
   global.randperm = randperm;
   global.weightedSample = weightedSample;
+  
+  global.tanh = tanh;
+  global.sigmoid = sigmoid;
+  global.capValue = capValue;
+  
   global.arrUnique = arrUnique;
   global.arrContains = arrContains;
   global.getopt = getopt;

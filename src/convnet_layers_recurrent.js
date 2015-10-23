@@ -19,7 +19,12 @@
       valCap = (valCap < min)? min : valCap;
       return valCap;
   }
-
+  
+  // TODO
+  // these two classes are not bug free
+  // need to address the error bp through the recurrent connection by using the table
+  //
+  
   // This file contains all layers that do dot products with input,
   // but usually in a different connectivity pattern and weight sharing
   // schemes: 

@@ -124,6 +124,23 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
     }
   }
 
+    // lstm util function
+  var tanh = function(x) {
+    var y = Math.exp(2 * x);
+    return (y - 1) / (y + 1);
+  }
+  
+  var sigmoid = function(x){
+    return 1.0/(1.0+Math.exp(-x));
+  }
+  
+  // capping value
+  var capValue = function(val, max, min){
+      var valCap = (val > max)? max : val;
+      valCap = (valCap < min)? min : valCap;
+      return valCap;
+  }
+
   global.randf = randf;
   global.randi = randi;
   global.randn = randn;
@@ -131,6 +148,11 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
   global.maxmin = maxmin;
   global.randperm = randperm;
   global.weightedSample = weightedSample;
+  
+  global.tanh = tanh;
+  global.sigmoid = sigmoid;
+  global.capValue = capValue;
+  
   global.arrUnique = arrUnique;
   global.arrContains = arrContains;
   global.getopt = getopt;
@@ -221,6 +243,7 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
     addFrom: function(V) { for(var k=0;k<this.w.length;k++) { this.w[k] += V.w[k]; }},
     addFromScaled: function(V, a) { for(var k=0;k<this.w.length;k++) { this.w[k] += a*V.w[k]; }},
     setConst: function(a) { for(var k=0;k<this.w.length;k++) { this.w[k] = a; }},
+    setGradConst: function(a) { for(var k=0;k<this.dw.length;k++) { this.dw[k] = a; }},
 
     toJSON: function() {
       // todo: we may want to only save d most significant digits to save space
@@ -1631,6 +1654,133 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
 (function(global) {
   "use strict";
   var Vol = global.Vol; // convenience
+  
+  var BufferLayer = function(opt) {
+      this.init(opt);
+  }
+  
+  BufferLayer.prototype = {
+    init : function(opt){
+      var opt = opt || {};
+
+      // required
+      this.sx = opt.sx; // filter size
+      this.in_depth = opt.in_depth;
+      this.in_sx = opt.in_sx;
+      this.in_sy = opt.in_sy;
+  
+      // optional
+      this.sy = typeof opt.sy !== 'undefined' ? opt.sy : this.sx;
+      this.bufferSize = typeof opt.bufferSize !== 'undefined' ? opt.bufferSize : 4; 
+      
+      // computed
+      this.out_sx = this.in_sx;
+      this.out_sy = this.in_sy;
+      this.out_depth = this.in_depth*this.bufferSize;
+      this.oneBufferSize = this.out_sx * this.out_sy * this.in_depth;
+      
+      this.cyclicBufferCnt = 0;
+      
+      this.layer_type = 'buffer';
+      // store switches for x,y coordinates for where the max comes from, for each output neuron
+      
+      this.bufferStore = global.zeros(this.out_sx*this.out_sy*this.out_depth);
+      this.out_act = new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0);
+    },
+    
+    purge: function(){
+      //empty the buffer
+      for(var i = 0; i < this.bufferStore.length; i++){
+        this.bufferStore[i] = 0;
+      }
+    },
+    
+    forward: function(V, is_training) {
+      this.in_act = V;
+      this.out_act.setConst(0.0);
+      
+      //fill in the new value
+      for(var b=0; b<this.bufferSize; b++){
+        var startingPoint = ((this.cyclicBufferCnt + this.bufferSize - b) % this.bufferSize) * this.oneBufferSize;
+        for(var d=0;d<this.in_depth;d++) {
+          for(var x=0; x<this.out_sx; x++) {
+            for(var y=0; y<this.out_sy; y++) {
+              
+              if(b == 0){
+                //inputting current value
+                this.bufferStore[startingPoint + x + y + d] = V.get(x,y,d);
+              }
+              this.out_act.set(x, y, d, this.bufferStore[startingPoint + x + y + d]);
+            }
+          }
+        }
+      }
+     
+      this.cyclicBufferCnt = (this.cyclicBufferCnt+1) % this.bufferSize;
+      return this.out_act;
+    },
+    
+    backward: function() { 
+      // pooling layers have no parameters, so simply compute 
+      // gradient wrt data here
+      this.in_act.setGradConst(0.0);
+      for(var d=0;d<this.in_depth;d++) {
+        for(var x=0; x<this.out_sx; x++) {
+          for(var y=0; y<this.out_sy; y++) {
+            var value = 0;
+            for(var b=0; b<this.bufferSize; b++){
+              value += this.out_act.get_grad[x, y, b * this.in_depth + d];
+            }
+            value = value / this.bufferSize;
+            this.in_act.set_grad(x, y, d, value); 
+          }
+        }
+      }
+    },
+    
+    
+    getParamsAndGrads: function() {
+      return [];
+    },
+    toJSON: function() {
+      var json = {};
+      json.sx = this.sx;
+      json.sy = this.sy;
+      json.bufferSize = this.bufferSize;
+      
+      json.in_depth = this.in_depth;
+      json.out_depth = this.out_depth;
+      json.out_sx = this.out_sx;
+      json.out_sy = this.out_sy;
+      json.layer_type = this.layer_type;
+      
+      return json;
+    },
+    fromJSON: function(json) {
+      this.out_depth = json.out_depth;
+      this.out_sx = json.out_sx;
+      this.out_sy = json.out_sy;
+      this.layer_type = json.layer_type;
+      this.sx = json.sx;
+      this.sy = json.sy;
+      this.bufferSize = json.bufferSize;
+      this.in_depth = json.in_depth;
+      
+      this.oneBufferSize = this.out_sx * this.out_sy * this.in_depth;
+      this.cyclicBufferCnt = 0;
+      
+      this.bufferStore = global.zeros(this.out_sx*this.out_sy*this.out_depth);
+      this.out_act = new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0);
+    }
+  }
+
+  global.BufferLayer = BufferLayer;
+  
+})(convnetjs);
+
+(function(global) {
+  "use strict";
+  var Vol = global.Vol; // convenience
   var concat_vol = global.concat_vol;
   
   // lstm util function
@@ -1649,7 +1799,12 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
       valCap = (valCap < min)? min : valCap;
       return valCap;
   }
-
+  
+  // TODO
+  // these two classes are not bug free
+  // need to address the error bp through the recurrent connection by using the table
+  //
+  
   // This file contains all layers that do dot products with input,
   // but usually in a different connectivity pattern and weight sharing
   // schemes: 
@@ -2167,10 +2322,10 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
   // For now constraints: Simple linear order of layers, first layer input last layer a cost layer
   var Net = function(options) {
     this.layers = [];
+    this.bufferLayer = [];
   }
 
   Net.prototype = {
-    
     // takes a list of layer definitions and creates the network layer objects
     makeLayers: function(defs) {
 
@@ -2244,6 +2399,11 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
           case 'fc': this.layers.push(new global.FullyConnLayer(def)); break;
           case 'lrn': this.layers.push(new global.LocalResponseNormalizationLayer(def)); break;
           case 'lstm' : this.layers.push(new global.LSTMLayer(def)); break;
+          case 'buffer' : 
+            var bufferLayer = new global.BufferLayer(def);
+            this.layers.push(bufferLayer); 
+            this.bufferLayer.push(bufferLayer)
+          break;
           case 'dropout': this.layers.push(new global.DropoutLayer(def)); break;
           case 'input': this.layers.push(new global.InputLayer(def)); break;
           case 'softmax': this.layers.push(new global.SoftmaxLayer(def)); break;
@@ -2350,6 +2510,7 @@ var convnetjs = convnetjs || { REVISION: 'ALPHA' };
         if(t==='maxout') { L = new global.MaxoutLayer(); }
         if(t==='svm') { L = new global.SVMLayer(); }
         if(t==='lstm') { L = new global.LSTMLayer(); }
+        if(t==='buffer') { L = new global.BufferLayer(); }
         if(t==='step') { L = new global.StepLayer(); }
         
         L.fromJSON(Lj);

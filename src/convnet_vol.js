@@ -81,6 +81,7 @@
     addFrom: function(V) { for(var k=0;k<this.w.length;k++) { this.w[k] += V.w[k]; }},
     addFromScaled: function(V, a) { for(var k=0;k<this.w.length;k++) { this.w[k] += a*V.w[k]; }},
     setConst: function(a) { for(var k=0;k<this.w.length;k++) { this.w[k] = a; }},
+    setGradConst: function(a) { for(var k=0;k<this.dw.length;k++) { this.dw[k] = a; }},
 
     toJSON: function() {
       // todo: we may want to only save d most significant digits to save space

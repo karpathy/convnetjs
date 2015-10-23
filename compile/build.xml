@@ -13,6 +13,7 @@
         <file name="convnet_layers_nonlinearities.js" />
         <file name="convnet_layers_dropout.js" />
         <file name="convnet_layers_normalization.js" />
+        <file name="convnet_layers_buffer.js" />
         <file name="convnet_layers_recurrent.js" />
         <file name="convnet_net.js" />
         <file name="convnet_trainers.js" />

@@ -7,10 +7,10 @@
   // For now constraints: Simple linear order of layers, first layer input last layer a cost layer
   var Net = function(options) {
     this.layers = [];
+    this.bufferLayer = [];
   }
 
   Net.prototype = {
-    
     // takes a list of layer definitions and creates the network layer objects
     makeLayers: function(defs) {
 
@@ -84,6 +84,11 @@
           case 'fc': this.layers.push(new global.FullyConnLayer(def)); break;
           case 'lrn': this.layers.push(new global.LocalResponseNormalizationLayer(def)); break;
           case 'lstm' : this.layers.push(new global.LSTMLayer(def)); break;
+          case 'buffer' : 
+            var bufferLayer = new global.BufferLayer(def);
+            this.layers.push(bufferLayer); 
+            this.bufferLayer.push(bufferLayer)
+          break;
           case 'dropout': this.layers.push(new global.DropoutLayer(def)); break;
           case 'input': this.layers.push(new global.InputLayer(def)); break;
           case 'softmax': this.layers.push(new global.SoftmaxLayer(def)); break;
@@ -190,6 +195,7 @@
         if(t==='maxout') { L = new global.MaxoutLayer(); }
         if(t==='svm') { L = new global.SVMLayer(); }
         if(t==='lstm') { L = new global.LSTMLayer(); }
+        if(t==='buffer') { L = new global.BufferLayer(); }
         if(t==='step') { L = new global.StepLayer(); }
         
         L.fromJSON(Lj);
