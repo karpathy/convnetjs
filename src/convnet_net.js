@@ -24,7 +24,7 @@
         for(var i=0;i<defs.length;i++) {
           var def = defs[i];
           
-          if(def.type==='softmax' || def.type==='svm') {
+          if(def.type==='softmax' || def.type==='svm' || def.type==='binaryReinforce') {
             // add an fc layer here, there is no reason the user should
             // have to worry about this and we almost always want to
             new_defs.push({type:'fc', num_neurons: def.num_classes});
@@ -92,6 +92,7 @@
           case 'dropout': this.layers.push(new global.DropoutLayer(def)); break;
           case 'input': this.layers.push(new global.InputLayer(def)); break;
           case 'softmax': this.layers.push(new global.SoftmaxLayer(def)); break;
+          case 'binaryReinforce': this.layers.push(new global.BinaryReinforceLayer(def)); break;
           case 'regression': this.layers.push(new global.RegressionLayer(def)); break;
           case 'conv': this.layers.push(new global.ConvLayer(def)); break;
           case 'pool': this.layers.push(new global.PoolLayer(def)); break;
@@ -194,6 +195,7 @@
         if(t==='fc') { L = new global.FullyConnLayer(); }
         if(t==='maxout') { L = new global.MaxoutLayer(); }
         if(t==='svm') { L = new global.SVMLayer(); }
+        if(t==='binaryReinforce') { L = new global.BinaryReinforceLayer(); }
         if(t==='lstm') { L = new global.LSTMLayer(); }
         if(t==='buffer') { L = new global.BufferLayer(); }
         if(t==='step') { L = new global.StepLayer(); }

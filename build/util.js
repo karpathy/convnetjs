@@ -15,7 +15,7 @@ var cnnutil = (function(exports){
     add: function(x) {
       //DEBUG
       if(isNaN(x)){
-        console.log('input to window is NaN:' + x);
+        //console.log('input to window is NaN:' + x);
         return;
       }
       
@@ -30,9 +30,9 @@ var cnnutil = (function(exports){
       if(this.v.length < this.minsize) return -1;
       
       if(isNaN(this.sum) || this.v.length == 0){
-        console.log('averaging error');
-        console.log(this.sum);
-        console.log(this.v.length);
+        // console.log('averaging error');
+        // console.log(this.sum);
+        // console.log(this.v.length);
         return -1;
       }
       

@@ -2,10 +2,23 @@
   "name": "convnetjs",
   "description": "Neural Network Library Based on Convnetjs",
   "version": "0.0.1",
+  "private": true,
   "author": {
     "name": "Lee Xiong",
     "email": "lexion92@outlook.com"
   },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/GritBear/convnetjs.git"
+  },
+  
+  "scripts": {
+    "browserify": "browserify lib.js | uglifyjs > ./build/convnetClient.js",
+    "browserify_only": "browserify lib.js > ./build/convnetClient.js",
+    "build": "ant -lib ./compile/yuicompressor-2.4.8.jar -f ./compile/build.xml & npm run browserify_only",
+    "build_prod": "ant -lib compile/yuicompressor-2.4.8.jar -f compile/build.xml & npm run browserify"
+  },
+  
   "main": "./build/convnet.js",
   "keywords": [
     "neural",
@@ -14,5 +27,11 @@
     "convolutional",
     "deep",
     "learning"
-  ]
+  ],
+  "dependencies": {
+    "browserify": "^11.2.0",
+    "buckets-js": "^1.90.0",
+    "uglify-js": "^2.5.0",
+    "watchify": "^3.5.0"
+  }
 }

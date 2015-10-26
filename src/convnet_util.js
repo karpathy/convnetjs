@@ -1,5 +1,6 @@
 (function(global) {
   "use strict";
+  
 
   // Random number utilities
   var return_v = false;
@@ -138,11 +139,12 @@
       valCap = (valCap < min)? min : valCap;
       return valCap;
   }
-
+  
   global.randf = randf;
   global.randi = randi;
   global.randn = randn;
   global.zeros = zeros;
+  
   global.maxmin = maxmin;
   global.randperm = randperm;
   global.weightedSample = weightedSample;

@@ -1,12 +1,25 @@
+var Buckets = require('buckets-js');
+
 (function(global) {
   "use strict";
   var Vol = global.Vol; // convenience
 
+  /**
+   * mode:
+   *    normal    : classic training method
+   *    hardcore  : keep training on the failed ones 10 times or until cost = 0
+   *    
+   */
   var Trainer = function(net, options) {
 
     this.net = net;
 
     var options = options || {};
+    // enhanced params
+    this.mode = typeof options.mode !== 'undefined' ? options.mode : "normal";
+    this.costThreshold = typeof options.costThreshold !== 'undefined' ? options.costThreshold : 0;
+    
+    // basic training params
     this.learning_rate = typeof options.learning_rate !== 'undefined' ? options.learning_rate : 0.01;
     this.l1_decay = typeof options.l1_decay !== 'undefined' ? options.l1_decay : 0.0;
     this.l2_decay = typeof options.l2_decay !== 'undefined' ? options.l2_decay : 0.0;
@@ -22,10 +35,53 @@
     this.k = 0; // iteration counter
     this.gsum = []; // last iteration gradients (used for momentum calculations)
     this.xsum = []; // used in adam or adadelta
+    
+    // constant
+    this.maxPQueueSize = 5;
+    this.maxPQueueRetry = 20;
+    
+    // init
+    this.costPQueue =  new Buckets.PriorityQueue(function(sampleA, sampleB){
+      if(sampleA.priority < sampleB.priority){
+        return -1;
+      }else if(sampleA.priority > sampleB.priority){
+        return 1;
+      }else{
+        return 0;
+      }
+    });
   }
 
   Trainer.prototype = {
     train: function(x, y) {
+      var trainStatus = this.trainCore(x,y);
+      
+      if(this.mode == "hardcore"){
+        var cost = trainStatus.cost_loss;
+        
+        if(cost > this.costThreshold && this.costPQueue.size() <= this.maxPQueueSize){
+          this.costPQueue.add({data:{x:x, y:y}, priority:cost}); //using inverse cost
+        }
+        
+        var iter = 0;
+        while(!this.costPQueue.isEmpty() && iter<this.maxPQueueRetry){
+          var trainingPair = this.costPQueue.dequeue().data;
+          trainStatus = this.trainCore(trainingPair.x, trainingPair.y);
+          cost = trainStatus.cost_loss;
+          if(cost > this.costThreshold){
+            // push the sample back
+            this.costPQueue.add({data:trainingPair, priority:cost});
+          }
+          iter++;
+        }
+        
+      }
+      
+      return trainStatus; // return the highest cost status
+    },
+    
+    
+    trainCore: function(x, y) {
 
       var start = new Date().getTime();
       this.net.forward(x, true); // also set the flag that lets the net know we're just training

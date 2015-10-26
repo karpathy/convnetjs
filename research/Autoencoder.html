@@ -1,0 +1,85 @@
+<!doctype html>
+<html lang="en">
+
+<head>
+  <meta charset="utf-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+  <title>Autoencoder Trainer</title>
+  <meta name="description" content="">
+  <meta name="author" content="">
+  <link rel="stylesheet" href="css/style.css">
+  <script src="js/jquery-1.8.3.min.js"></script>
+  <script src="../build/vis.js"></script>
+  <script src="../build/util.js"></script>
+  <script src="../build/convnetClient.js"></script>
+  <script src="js/autoencoder.js"></script>
+</head>
+
+<body>
+  <div id="wrap">
+    <h2 style="text-align: center;">Autoencoder Trainer</h2>
+    <h1>Description</h1>
+    <p>
+      Prototyping Autoencoder
+    </p>
+
+    <h1>Training Stats</h1>
+    <div class="divsec" style="270px;">
+      <div class="secpart">
+        Current training: <img id="input_image" src=""/>
+        <input id="buttontp" type="submit" value="resume" onclick="toggle_pause();"
+        />
+        <div id="trainstats"></div>
+
+        <div id="controls">
+          Learning rate:
+          <input name="lri" type="text" maxlength="20" id="lr_input" />
+          <input id="buttonlr" type="submit" value="change" onclick="change_lr();" />
+          <br />
+        </div>
+
+        <input id="buttondj" type="submit" value="save network snapshot as JSON" onclick="dump_json();" />
+        <br />
+        <input id="buttonlfj" type="submit" value="init network from JSON snapshot" onclick="load_from_json();" />
+        <br />
+        <textarea id="dumpjson" style="width:100%; height:100px;"></textarea>
+      </div>
+      <div class="secpart">
+
+        <div>
+          Loss:
+          <br />
+          <canvas id="lossgraph">
+          </canvas>
+          <br />
+          <input id="buttoncg" type="submit" value="clear graph" onclick="clear_graph();" />
+        </div>
+
+      </div>
+      <div>
+        <textarea id="newnet" style="width:100%; height:100px;"></textarea>
+        <br />
+        <input id="buttonnn" type="submit" value="reload" onclick="change_net();" style="width:200px; height: 40px;" />
+      </div>
+
+      <div style="clear:both;"></div>
+    </div>
+    
+    <div>
+      <h3>Test Output</h3>
+      <textarea id="output_sequence" style="width:100%; height:100px;"></textarea>
+    </div>
+    
+    <div>
+      <h3>Training Data</h3>
+      <input id="buttonlt" type="submit" value="Reload Data" onclick="load_training();"/>
+      <div id="training_data_stats"></div>
+      <textarea id="training_data" style="width:100%; height:100px;">
+ABCDEFGHIJKLMNOPQRSTUVWXYZ abcdefghijklmnopqrstuvwxyz1234567890!?:"'+-*/=@#$%^&*()!<>,.\{}[]~`|;
+</textarea>
+    </div>
+    
+  </div>
+</body>
+
+</html>

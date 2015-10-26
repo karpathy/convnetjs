@@ -1,7 +1,109 @@
 (function(global) {
   "use strict";
   var Vol = global.Vol; // convenience
+  // Customized Layers=============================
+  var BinaryReinforceLayer = function(opt) {
+    var opt = opt || {};
+    
+    // optional
+    this.min_val = typeof opt.min_val !== 'undefined' ? opt.min_val : 0;
+    this.max_val = typeof opt.max_val !== 'undefined' ? opt.max_val : 1.0;
+    this.threshold = typeof opt.threshold !== 'undefined' ? opt.threshold : 0.3; //arbitrary magic number
+    
+    // computed
+    this.num_inputs = opt.in_sx * opt.in_sy * opt.in_depth;
+    this.out_depth = this.num_inputs;
+    this.out_sx = 1;
+    this.out_sy = 1;
+    this.layer_type = 'binaryReinforce';
+    this.out_act = new Vol(this.out_sx |0, this.out_sy |0, this.out_depth |0, 0.0);
+    this.init();
+  }
   
+  BinaryReinforceLayer.prototype = {
+    init: function(){
+      this.out_act = new Vol(this.out_sx |0, this.out_sy |0, this.out_depth |0, 0.0);
+    },
+    
+    forward: function(V, is_training) {
+      this.in_act = V;
+      this.out_act.setConst(0.0);
+      for(var i = 0; i < this.in_act.w.length; i++){
+        this.out_act.w[i] = (this.in_act.w[i] < this.threshold) ? this.min_val : this.max_val;
+      }
+      return this.out_act; // identity function
+    },
+    
+    backward: function(y) {
+      //clear gradients
+      this.in_act.setGradConst(0.0);
+      var cost = 0.0;
+      var N = this.in_act.w.length;
+      var indicator;
+      // compute and accumulate gradient wrt weights and bias of this layer
+      if(!y.w){
+        //y is a scaler label
+        for(var i=0;i<N;i++) {
+          indicator = i === y? this.max_val : this.min_val;
+          //ideal output = max_val, dw should be negative
+          //ideal output = min_val, dw should be positive
+          if(indicator == this.max_val || this.out_act.w[i] == this.max_val){
+            //it is a fired neuron
+            this.in_act.dw[i] = (this.out_act.w[i] - indicator*1.1) * 3;
+          }
+          if(this.in_act.dw[i] != 0){
+            cost++;
+          }
+        }
+      }else{
+        //y is a volume
+        for(var i=0;i<N;i++) {
+          indicator = (y.w[i] < this.threshold) ? this.min_val : this.max_val;
+          if(indicator == this.max_val || this.out_act.w[i] == this.max_val){
+            //it is a fired neuron
+            this.in_act.dw[i] = (this.out_act.w[i] - indicator*1.1) * 3;
+          }
+          if(this.in_act.dw[i] != 0){
+            cost++;
+          }
+        }
+      }
+      
+      return cost;
+    },
+    getParamsAndGrads: function() { 
+      return [];
+    },
+    toJSON: function() {
+      var json = {};
+      json.min_val = this.min_val;
+      json.max_val = this.max_val;
+      json.threshold = this.threshold;
+      
+      json.out_depth = this.out_depth;
+      json.out_sx = this.out_sx;
+      json.out_sy = this.out_sy;
+      json.layer_type = this.layer_type;
+      json.num_inputs = this.num_inputs;
+      return json;
+    },
+    fromJSON: function(json) {
+      this.min_val = json.min_val;
+      this.max_val = json.max_val;
+      this.threshold = json.threshold || 0.3;
+      
+      this.out_depth = json.out_depth;
+      this.out_sx = json.out_sx;
+      this.out_sy = json.out_sy;
+      this.layer_type = json.layer_type;
+      this.num_inputs = json.num_inputs;
+      
+      this.init();
+    }
+  }
+  
+  
+  //===============================================
   // Layers that implement a loss. Currently these are the layers that 
   // can initiate a backward() pass. In future we probably want a more 
   // flexible system that can accomodate multiple losses to do multi-task
@@ -229,6 +331,6 @@
   global.RegressionLayer = RegressionLayer;
   global.SoftmaxLayer = SoftmaxLayer;
   global.SVMLayer = SVMLayer;
-
+  global.BinaryReinforceLayer = BinaryReinforceLayer;
 })(convnetjs);
 
