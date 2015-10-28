@@ -10,6 +10,7 @@
         <file name="convnet_layers_pool.js" />
         <file name="convnet_layers_input.js" />
         <file name="convnet_layers_loss.js" />
+        <file name="convnet_layers_inhibitory.js" />
         <file name="convnet_layers_nonlinearities.js" />
         <file name="convnet_layers_dropout.js" />
         <file name="convnet_layers_normalization.js" />

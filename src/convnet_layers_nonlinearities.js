@@ -39,14 +39,13 @@
     
     backward: function() {
       this.in_act.setGradConst(0.0);
-      var indicator;
       
       for(var i=0;i<this.in_act.w.length;i++) {
         if(this.out_act.dw[i] != 0){
-          indicator = (this.out_act.dw[i] > 0)? this.min_val : this.max_val;
+          var indicator = (this.out_act.dw[i] > 0)? this.min_val : this.max_val;
           //ideal output = min_val, dw should be positive
           //ideal output = max_val, dw should be negative
-          this.in_act.dw[i] = this.out_act.w[i] - indicator;
+          this.in_act.dw[i] = global.stepFunctionBP(this.out_act.w[i], indicator);
         }
       }
     },

@@ -47,7 +47,14 @@
           }
 
           new_defs.push(def);
-
+          
+          // Input/Output Gate
+          if(typeof def.inGate !== 'undefined') {
+            //TODO push a input gate layer in
+            
+            
+          }
+          
           if(typeof def.activation !== 'undefined') {
             if(def.activation==='relu') { new_defs.push({type:'relu'}); }
             else if (def.activation==='sigmoid') { new_defs.push({type:'sigmoid'}); }
@@ -60,6 +67,7 @@
             }
             else { console.log('ERROR unsupported activation ' + def.activation); }
           }
+          
           if(typeof def.drop_prob !== 'undefined' && def.type !== 'dropout') {
             new_defs.push({type:'dropout', drop_prob: def.drop_prob});
           }
@@ -92,7 +100,10 @@
           case 'dropout': this.layers.push(new global.DropoutLayer(def)); break;
           case 'input': this.layers.push(new global.InputLayer(def)); break;
           case 'softmax': this.layers.push(new global.SoftmaxLayer(def)); break;
+          
+          case 'ingate': this.layers.push(new global.InputGateLayer(def)); break;
           case 'binaryReinforce': this.layers.push(new global.BinaryReinforceLayer(def)); break;
+          
           case 'regression': this.layers.push(new global.RegressionLayer(def)); break;
           case 'conv': this.layers.push(new global.ConvLayer(def)); break;
           case 'pool': this.layers.push(new global.PoolLayer(def)); break;
@@ -195,7 +206,11 @@
         if(t==='fc') { L = new global.FullyConnLayer(); }
         if(t==='maxout') { L = new global.MaxoutLayer(); }
         if(t==='svm') { L = new global.SVMLayer(); }
+        
+        //TODO DEBUG
         if(t==='binaryReinforce') { L = new global.BinaryReinforceLayer(); }
+        if(t==='ingate') { L = new global.InputGateLayer(); }
+        
         if(t==='lstm') { L = new global.LSTMLayer(); }
         if(t==='buffer') { L = new global.BufferLayer(); }
         if(t==='step') { L = new global.StepLayer(); }

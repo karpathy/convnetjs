@@ -59,6 +59,12 @@
       var ix=((this.sx * y)+x)*this.depth+d;
       this.w[ix] += v; 
     },
+    
+    multiply: function(x, y, d, v) { 
+      var ix=((this.sx * y)+x)*this.depth+d;
+      this.w[ix] *= v; 
+    },
+    
     get_grad: function(x, y, d) { 
       var ix = ((this.sx * y)+x)*this.depth+d;
       return this.dw[ix]; 
@@ -71,6 +77,11 @@
       var ix = ((this.sx * y)+x)*this.depth+d;
       this.dw[ix] += v; 
     },
+    multiply_grad: function(x, y, d, v) { 
+      var ix = ((this.sx * y)+x)*this.depth+d;
+      this.dw[ix] *= v; 
+    },
+    
     cloneAndZero: function() { return new Vol(this.sx, this.sy, this.depth, 0.0)},
     clone: function() {
       var V = new Vol(this.sx, this.sy, this.depth, 0.0);

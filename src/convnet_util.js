@@ -1,6 +1,14 @@
 (function(global) {
   "use strict";
   
+  // custom transfer function derivative
+  var stepFunctionBP = function(output, target){
+    //Simply binary
+    //ideal output = min_val, dw should be positive
+    //ideal output = max_val, dw should be negative
+    return output - target;
+  }
+  
 
   // Random number utilities
   var return_v = false;
@@ -139,6 +147,8 @@
       valCap = (valCap < min)? min : valCap;
       return valCap;
   }
+  
+  global.stepFunctionBP = stepFunctionBP;
   
   global.randf = randf;
   global.randi = randi;
