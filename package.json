@@ -11,15 +11,13 @@
     "type": "git",
     "url": "https://github.com/GritBear/convnetjs.git"
   },
-  
   "scripts": {
-    "browserify": "browserify lib.js | uglifyjs > ./build/convnetClient.js",
-    "browserify_only": "browserify lib.js > ./build/convnetClient.js",
+    "browserify": "browserify lib.js | uglifyjs > ./build/convnetLib.js",
+    "browserify_only": "browserify lib.js > ./build/convnetLib.js",
     "build": "ant -lib ./compile/yuicompressor-2.4.8.jar -f ./compile/build.xml & npm run browserify_only",
     "build_prod": "ant -lib compile/yuicompressor-2.4.8.jar -f compile/build.xml & npm run browserify"
   },
-  
-  "main": "./build/convnet.js",
+  "main": "./build/convnetLib.js",
   "keywords": [
     "neural",
     "network",
@@ -29,9 +27,25 @@
     "learning"
   ],
   "dependencies": {
+    "babel-preset-es2015": "^6.0.15",
+    "babelify": "^7.2.0",
     "browserify": "^11.2.0",
     "buckets-js": "^1.90.0",
+    "object-assign": "^4.0.1",
     "uglify-js": "^2.5.0",
     "watchify": "^3.5.0"
+  },
+  "browserify": {
+    "transform": [
+      [
+        "babelify",
+        {
+          "compact": false,
+          "presets": [
+            "es2015"
+          ]
+        }
+      ]
+    ]
   }
 }

@@ -5,12 +5,13 @@
 
   // Net manages a set of layers
   // For now constraints: Simple linear order of layers, first layer input last layer a cost layer
-  var Net = function(options) {
+  var Net = function() {
     this.layers = [];
     this.bufferLayer = [];
   }
 
   Net.prototype = {
+    
     // takes a list of layer definitions and creates the network layer objects
     makeLayers: function(defs) {
 
@@ -45,14 +46,20 @@
               // and will never get any gradient and never contribute any computation. Dead relu.
             }
           }
-
+          
+          if(def.type==='fc' && typeof(def.inputGate) !=='undefined'){
+              console.log(typeof(def.inputGate) !=='undefined');
+              var inGateNumber = def.inputGate.gate_depth;
+              def.num_neurons += inGateNumber; 
+          }
+          
           new_defs.push(def);
           
-          // Input/Output Gate
-          if(typeof def.inGate !== 'undefined') {
-            //TODO push a input gate layer in
-            
-            
+          // Input Gate
+          if(typeof def.inputGate !== 'undefined') {
+            var inGateParam = def.inputGate;
+            inGateParam.type = 'ingate';
+            new_defs.push(inGateParam);
           }
           
           if(typeof def.activation !== 'undefined') {

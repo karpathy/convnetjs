@@ -10,7 +10,7 @@ layer_defs.push({type:'softmax', num_classes:127});\n\
 net = new convnetjs.Net();\n\
 net.makeLayers(layer_defs);\n\
 \n\
-trainer = new convnetjs.Trainer(net, {learning_rate:0.5, method:'adadelta', batch_size:1, l2_decay:0.00000001, l1_decay:0.0});\n\
+trainer = new convnetjs.Trainer(net, {learning_rate:0.5, method:'adadelta', batch_size:25, l2_decay:0.00001, l1_decay:0.0});\n\
 ";
 
 var literature_str;
@@ -149,7 +149,8 @@ var int2binArray = function(intValue, arrLength){
 
 var load_and_step = function() {
   if(paused) return;
-  trainPicker = (trainPicker+1) % indCnt;
+  
+  trainPicker = Math.round(Math.random()*indCnt) % indCnt;
   //trainPicker = (trainPicker + Math.random() * 100) % literature_length; //randomly pick the next inter
   var inputCharCode = literature_str.charCodeAt(trainPicker);
   
@@ -182,7 +183,8 @@ var step = function(sample) {
   // train on it with network
   // var stats = trainer.train(sample.x, sample.x.w); //for regression
   var stats = trainer.train(sample.x, sample.label); 
-  if(isNaN(stats.cost_loss)){
+  
+  if(isNaN(stats.loss)){
     // console.log('trainer returns NaN');
     // console.log(sample);
     // console.log(stats);

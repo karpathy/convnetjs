@@ -54,6 +54,8 @@ var Buckets = require('buckets-js');
 
   Trainer.prototype = {
     train: function(x, y) {
+      this.net.forward(x, true);
+      
       var trainStatus = this.trainCore(x,y);
       
       if(this.mode == "hardcore"){
@@ -125,13 +127,17 @@ var Buckets = require('buckets-js');
           // learning rate for some parameters.
           var l2_decay_mul = typeof pg.l2_decay_mul !== 'undefined' ? pg.l2_decay_mul : 1.0;
           var l1_decay_mul = typeof pg.l1_decay_mul !== 'undefined' ? pg.l1_decay_mul : 1.0;
+          
+          
           var l2_decay = this.l2_decay * l2_decay_mul;
           var l1_decay = this.l1_decay * l1_decay_mul;
-
+          
           var plen = p.length;
+          
           for(var j=0;j<plen;j++) {
             l2_decay_loss += l2_decay*p[j]*p[j]/2; // accumulate weight decay loss
             l1_decay_loss += l1_decay*Math.abs(p[j]);
+            
             var l1grad = l1_decay * (p[j] > 0 ? 1 : -1);
             var l2grad = l2_decay * (p[j]);
 

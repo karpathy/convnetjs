@@ -15,10 +15,13 @@
   var InputGateLayer = function(opt){
     var opt = opt || {};
     
+    //required
+    this.gate_depth = typeof opt.gate_depth !== 'undefined' ? opt.gate_depth : 1;
+    
     // optional
     this.min_val = typeof opt.min_val !== 'undefined' ? opt.min_val : 0;
     this.max_val = typeof opt.max_val !== 'undefined' ? opt.max_val : 1.0;
-    this.threshold = typeof opt.threshold !== 'undefined' ? opt.threshold : 0.5; //arbitrary magic number
+    this.threshold = typeof opt.threshold !== 'undefined' ? opt.threshold : 0.3; //arbitrary magic number
     this.l1_decay_mul = typeof opt.l1_decay_mul !== 'undefined' ? opt.l1_decay_mul : 0.0;
     this.l2_decay_mul = typeof opt.l2_decay_mul !== 'undefined' ? opt.l2_decay_mul : 1.0;
     
@@ -27,8 +30,7 @@
     this.out_sy = opt.in_sy;
     this.out_depth_temp = opt.in_depth;
     
-    this.gate_depth = typeof opt.gate_depth !== 'undefined' ? opt.gate_depth : Math.min(1, Math.ceil(this.out_depth * 0.2)); //0.2 is magic number, every 10 neuron there are 2 gates
-    
+        
     this.out_depth = this.out_depth_temp - this.gate_depth;
     this.num_inputs = this.out_sx * this.out_sy *this.out_depth;
     
@@ -68,7 +70,7 @@
         for(var y = 0; y < this.out_sy; y++){
           for(var d = 0; d < this.out_depth; d++){
             var iOut = ((this.out_sx * y)+x)*this.out_depth+d;
-            var iIn = ((this.out_sx * y)+x)*(this.this.out_depth + this.gate_depth) +d;
+            var iIn = ((this.out_sx * y)+x)*(this.out_depth + this.gate_depth) +d;
             
             var gateSum = 0;
             
@@ -77,7 +79,9 @@
               gateSum += this.filters[iOut].w[wd] * this.gate_act.get(x,y,wd);
             }
             
-            this.gate_act_aggregate.w[iOut];
+            this.gate_act_aggregate.w[iOut] = gateSum;
+            
+            console.log(gateSum > this.threshold);
             
             //============ IMPORTANT==============
             // inhibitaion function (large gateSume -> 0 throughput)
@@ -101,7 +105,7 @@
           for(var d = 0; d < this.out_depth; d++){
             
             var iOut = ((this.out_sx * y)+x)*this.out_depth+d;
-            var iIn = ((this.out_sx * y)+x)*(this.this.out_depth + this.gate_depth) +d;
+            var iIn = ((this.out_sx * y)+x)*(this.out_depth + this.gate_depth) +d;
             
             if(this.out_act.dw[iOut] != 0){
               //reproduce the inhibition field
@@ -125,9 +129,10 @@
       for(var x = 0; x < this.out_sx; x++){
         for(var y = 0; y < this.out_sy; y++){
           for(var d = 0; d < this.out_depth; d++){
-            var iOut = ((this.out_sx * y)+x)*this.out_depth+d;
+            iOut = ((this.out_sx * y)+x)*this.out_depth+d;
             for(var wd = 0; wd < this.gate_depth; wd++){
               var dCdYagg = this.gate_act_aggregate.get_grad(x,y,d);
+              
               this.filters[iOut].dw[wd] = dCdYagg * this.gate_act.get(x,y,wd);
               this.gate_act.add_grad(x,y,wd, dCdYagg *  this.filters[iOut].w[wd]);
             }
@@ -140,7 +145,7 @@
         for(var y = 0; y < this.out_sy; y++){
           for(var wd = 0; wd < this.gate_depth; wd++){
             var indicator2 = (this.gate_act.get_grad(x,y,wd) > 0)? this.min_val : this.max_val;
-            this.in_act.set_grad(x,y,wd + this.out_depth, global.stepFunctionBP(this.in_act.get(x,y,d + this.out_depth), indicator2));
+            this.in_act.set_grad(x,y,wd + this.out_depth, global.stepFunctionBP(this.in_act.get(x,y,wd + this.out_depth), indicator2));
           }
         }
       }
@@ -151,7 +156,6 @@
       for(var i=0;i<this.filters.length;i++) {
         response.push({params: this.filters[i].w, grads: this.filters[i].dw, l1_decay_mul: this.l1_decay_mul, l2_decay_mul: this.l2_decay_mul});
       }
-      
       return response;
     },
     
