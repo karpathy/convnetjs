@@ -1,6 +1,6 @@
 (function(global) {
   "use strict";
-  var Vol = global.Vol; // convenience
+  //var Vol = global.Vol; // convenience
   var assert = global.assert;
 
   // Net manages a set of layers
@@ -11,6 +11,13 @@
   }
 
   Net.prototype = {
+    getBuffer: function(){
+      var bufferLayerOut = [];
+      for(var i = 0; i < this.bufferLayer.length; i++){
+        bufferLayerOut.push(this.bufferLayer[i].out_act);
+      }
+      return bufferLayerOut;
+    },
     
     // takes a list of layer definitions and creates the network layer objects
     makeLayers: function(defs) {
@@ -25,13 +32,13 @@
         for(var i=0;i<defs.length;i++) {
           var def = defs[i];
           
-          if(def.type==='softmax' || def.type==='svm' || def.type==='binaryReinforce') {
+          if(def.type==='softmax' || def.type==='svm') {
             // add an fc layer here, there is no reason the user should
             // have to worry about this and we almost always want to
             new_defs.push({type:'fc', num_neurons: def.num_classes});
           }
 
-          if(def.type==='regression') {
+          if(def.type==='regression'|| def.type==='binaryReinforce') {
             // add an fc layer here, there is no reason the user should
             // have to worry about this and we almost always want to
             new_defs.push({type:'fc', num_neurons: def.num_neurons});
@@ -47,6 +54,7 @@
             }
           }
           
+          // inhibitory gate
           if(def.type==='fc' && typeof(def.inputGate) !=='undefined'){
               console.log(typeof(def.inputGate) !=='undefined');
               var inGateNumber = def.inputGate.gate_depth;
@@ -98,12 +106,15 @@
         switch(def.type) {
           case 'fc': this.layers.push(new global.FullyConnLayer(def)); break;
           case 'lrn': this.layers.push(new global.LocalResponseNormalizationLayer(def)); break;
+          
           case 'lstm' : this.layers.push(new global.LSTMLayer(def)); break;
+          
           case 'buffer' : 
             var bufferLayer = new global.BufferLayer(def);
             this.layers.push(bufferLayer); 
             this.bufferLayer.push(bufferLayer)
           break;
+          
           case 'dropout': this.layers.push(new global.DropoutLayer(def)); break;
           case 'input': this.layers.push(new global.InputLayer(def)); break;
           case 'softmax': this.layers.push(new global.SoftmaxLayer(def)); break;

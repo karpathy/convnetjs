@@ -17,6 +17,7 @@
     this.out_sy = 1;
     this.layer_type = 'binaryReinforce';
     this.out_act = new Vol(this.out_sx |0, this.out_sy |0, this.out_depth |0, 0.0);
+    
     this.init();
   }
   
@@ -31,6 +32,7 @@
       for(var i = 0; i < this.in_act.w.length; i++){
         this.out_act.w[i] = (this.in_act.w[i] < this.threshold) ? this.min_val : this.max_val;
       }
+      
       return this.out_act; // identity function
     },
     
@@ -41,7 +43,7 @@
       var N = this.in_act.w.length;
       var indicator;
       // compute and accumulate gradient wrt weights and bias of this layer
-      if(!y.w){
+      if(!y.length){
         //y is a scaler label
         for(var i=0;i<N;i++) {
           indicator = i === y? this.max_val : this.min_val;
@@ -49,7 +51,7 @@
           //ideal output = min_val, dw should be positive
           if(indicator == this.max_val || this.out_act.w[i] == this.max_val){
             //it is a fired neuron
-            this.in_act.dw[i] = (this.out_act.w[i] - indicator*1.1) * 3;
+            this.in_act.dw[i] = (this.out_act.w[i] - indicator);
           }
           if(this.in_act.dw[i] != 0){
             cost++;
@@ -58,10 +60,10 @@
       }else{
         //y is a volume
         for(var i=0;i<N;i++) {
-          indicator = (y.w[i] < this.threshold) ? this.min_val : this.max_val;
+          indicator = (y[i] < this.threshold) ? this.min_val : this.max_val;
           if(indicator == this.max_val || this.out_act.w[i] == this.max_val){
             //it is a fired neuron
-            this.in_act.dw[i] = (this.out_act.w[i] - indicator*1.1) * 3;
+            this.in_act.dw[i] = (this.out_act.w[i] - indicator);
           }
           if(this.in_act.dw[i] != 0){
             cost++;
@@ -122,13 +124,17 @@
     this.out_sx = 1;
     this.out_sy = 1;
     this.layer_type = 'softmax';
+    
+    this.init();
   }
 
   SoftmaxLayer.prototype = {
+    init: function(){
+      this.out_act = new Vol(this.out_sx |0, this.out_sy |0, this.out_depth |0, 0.0);
+    },
+    
     forward: function(V, is_training) {
       this.in_act = V;
-
-      var A = new Vol(1, 1, this.out_depth, 0.0);
 
       // compute max activation
       var as = V.w;
@@ -149,11 +155,10 @@
       // normalize and output to sum to one
       for(var i=0;i<this.out_depth;i++) {
         es[i] /= esum;
-        A.w[i] = es[i];
+        this.out_act.w[i] = es[i];
       }
 
       this.es = es; // save these for backprop
-      this.out_act = A;
       return this.out_act;
     },
     backward: function(y) {
@@ -189,6 +194,8 @@
       this.out_sy = json.out_sy;
       this.layer_type = json.layer_type;
       this.num_inputs = json.num_inputs;
+      
+      this.init();
     }
   }
 
@@ -204,13 +211,21 @@
     this.out_sx = 1;
     this.out_sy = 1;
     this.layer_type = 'regression';
+    
+    this.init();
   }
 
   RegressionLayer.prototype = {
+    init: function(){
+      this.out_act = new Vol(this.out_sx |0, this.out_sy |0, this.out_depth |0, 0.0);
+    },
+    
     forward: function(V, is_training) {
       this.in_act = V;
-      this.out_act = V;
-      return V; // identity function
+      for(var i = 0; i < this.in_act.w.length; i++){
+        this.out_act.w[i] = this.in_act.w[i];
+      }
+      return this.out_act; // identity function
     },
     // y is a list here of size num_inputs
     // or it can be a number if only one value is regressed
@@ -262,6 +277,8 @@
       this.out_sy = json.out_sy;
       this.layer_type = json.layer_type;
       this.num_inputs = json.num_inputs;
+      
+      this.init();
     }
   }
 
@@ -274,13 +291,21 @@
     this.out_sx = 1;
     this.out_sy = 1;
     this.layer_type = 'svm';
+    
+    this.init();
   }
 
   SVMLayer.prototype = {
+    init: function(){
+      this.out_act = new Vol(this.out_sx |0, this.out_sy |0, this.out_depth |0, 0.0);
+    },
+    
     forward: function(V, is_training) {
       this.in_act = V;
-      this.out_act = V; // nothing to do, output raw scores
-      return V;
+      for(var i = 0; i < this.in_act.w.length; i++){
+        this.out_act.w[i] = this.in_act.w[i];
+      }
+      return this.out_act; // identity function
     },
     backward: function(y) {
 
@@ -325,6 +350,8 @@
       this.out_sy = json.out_sy;
       this.layer_type = json.layer_type;
       this.num_inputs = json.num_inputs;
+      
+      this.init();
     }
   }
   

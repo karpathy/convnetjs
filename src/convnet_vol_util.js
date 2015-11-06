@@ -118,5 +118,4 @@
   global.concat_vol = concat_vol;
   global.augment = augment;
   global.img_to_vol = img_to_vol;
-
 })(convnetjs);

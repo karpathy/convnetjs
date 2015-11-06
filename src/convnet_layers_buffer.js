@@ -11,13 +11,11 @@
       var opt = opt || {};
 
       // required
-      this.sx = opt.sx; // filter size
       this.in_depth = opt.in_depth;
       this.in_sx = opt.in_sx;
       this.in_sy = opt.in_sy;
   
       // optional
-      this.sy = typeof opt.sy !== 'undefined' ? opt.sy : this.sx;
       this.bufferSize = typeof opt.bufferSize !== 'undefined' ? opt.bufferSize : 4; 
       
       // computed
@@ -34,8 +32,8 @@
       this.bufferStore = global.zeros(this.out_sx*this.out_sy*this.out_depth);
       this.out_act = new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0);
     },
-    
-    purge: function(){
+
+    reset: function(){
       //empty the buffer
       for(var i = 0; i < this.bufferStore.length; i++){
         this.bufferStore[i] = 0;
@@ -52,7 +50,6 @@
         for(var d=0;d<this.in_depth;d++) {
           for(var x=0; x<this.out_sx; x++) {
             for(var y=0; y<this.out_sy; y++) {
-              
               if(b == 0){
                 //inputting current value
                 this.bufferStore[startingPoint + x + y + d] = V.get(x,y,d);
@@ -85,14 +82,12 @@
       }
     },
     
-    
     getParamsAndGrads: function() {
       return [];
     },
+    
     toJSON: function() {
       var json = {};
-      json.sx = this.sx;
-      json.sy = this.sy;
       json.bufferSize = this.bufferSize;
       
       json.in_depth = this.in_depth;
@@ -103,13 +98,12 @@
       
       return json;
     },
+    
     fromJSON: function(json) {
       this.out_depth = json.out_depth;
       this.out_sx = json.out_sx;
       this.out_sy = json.out_sy;
       this.layer_type = json.layer_type;
-      this.sx = json.sx;
-      this.sy = json.sy;
       this.bufferSize = json.bufferSize;
       this.in_depth = json.in_depth;
       

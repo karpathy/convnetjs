@@ -1,6 +1,6 @@
 "use strict";
 var lib = require('./build/convnetjs');
-lib.netprototype = require('./src/network/convnet_prototype_net');
+lib.netprototype = require('./src/network/prime_net');
 
 if(typeof window !== "undefined"){
 	window.convnetjs = lib; // in ordinary browser attach library to window
