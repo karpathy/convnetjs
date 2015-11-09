@@ -12,6 +12,7 @@
     "url": "https://github.com/GritBear/convnetjs.git"
   },
   "scripts": {
+    "test": "jest",
     "browserify": "browserify lib.js | uglifyjs > ./build/convnetLib.js",
     "browserify_only": "browserify lib.js > ./build/convnetLib.js",
     "build": "ant -lib ./compile/yuicompressor-2.4.8.jar -f ./compile/build.xml & npm run browserify_only",
@@ -47,5 +48,8 @@
         }
       ]
     ]
+  },
+  "devDependencies": {
+    "jest-cli": "^0.7.1"
   }
 }

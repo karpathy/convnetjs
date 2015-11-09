@@ -8,12 +8,15 @@ module.exports.smartCopy = function(v1, v2, startInd){
 		startInd = 0;
 	}
 	
-  	for(var i = 0; i < v1.w.length; i++){
+	var v1w = v1.getW();
+	var v2w = v2.getW();
+	
+  	for(var i = 0; i < v1w.length; i++){
 		var ind = startInd + i;
-		if(ind >= v2.w.length){
+		if(ind >= v2w.length){
 		break;
 		}
-		v2.w[ind] = v1.w[i];
+		v2w[ind] = v1w[i];
 	}
 	return v2;
 };

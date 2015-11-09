@@ -47,6 +47,15 @@
   }
 
   Vol.prototype = {
+    getLength: function(){
+      return this.w.length;
+    },
+    getW: function(){
+      return this.w;
+    },
+    getDw: function(){
+      return this.dw;
+    },
     get: function(x, y, d) { 
       var ix=((this.sx * y)+x)*this.depth+d;
       return this.w[ix];

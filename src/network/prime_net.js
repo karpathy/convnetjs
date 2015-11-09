@@ -1,7 +1,7 @@
 "use strict";
 
 var convnetjs = require('../../build/convnetjs');
-var workflow = require('./workflow.js');
+var Workflow = require('./workflow.js');
 var util = require('./util.js');
 
 class AutoEncoder extends convnetjs.Net{
@@ -25,6 +25,8 @@ class AutoEncoder extends convnetjs.Net{
 		var hiddenNeuron = this.in_depth * this.in_sx * this.in_sy;
 		var outputNeuron = this.out_depth * this.out_sx * this.out_sy;
 		
+		this.outputLength = outputNeuron;
+		
 		this.layer_defs = [];
 		this.layer_defs.push({type:'input', out_sx:this.in_sx, out_sy:this.in_sy, out_depth:this.in_depth});
 		this.layer_defs.push({type:'fc', num_neurons:this.bufferSize, bias_pref: 1.0, activation: this.activation});
@@ -40,24 +42,19 @@ class AutoEncoder extends convnetjs.Net{
 	init(){
 		this.inputVol = new convnetjs.Vol(this.in_sx, this.in_sy, this.in_depth, 0);
 		this.trainer = new convnetjs.Trainer(this, {learning_rate:0.5, method:'adadelta', batch_size:25, l2_decay:0.00001, l1_decay:0.0});
-		this.workflow = workflow;
+		this.workflow = new Workflow();
 	}
 	
-	
-	forward(V, is_training, startInd){
-		if(!V || !V.w){
-			return null;
+	forward(is_training, V, startInd){
+		if(V && V.w){
+			util.smartCopy(V, this.inputVol, startInd); //copy values
 		}
-		
-		util.smartCopy(V, this.inputVol, startInd); //copy values
 		
 		this.is_training = is_training;
 		this.act = super.forward(this.inputVol,is_training);
 		this.workflow.emitFire(is_training);
 		return this.act;
 	}
-	
-	
 	  
 	train(x,y){
 		if(!x){
