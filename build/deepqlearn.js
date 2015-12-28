@@ -1,4 +1,7 @@
 var deepqlearn = deepqlearn || { REVISION: 'ALPHA' };
+// dependencies linked for nodejs
+var convnetjs = require(__dirname+'/convnet.js');
+var cnnutil = require(__dirname+'/util.js');
 
 (function(global) {
   "use strict";
