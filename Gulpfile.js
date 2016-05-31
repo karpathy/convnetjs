@@ -39,4 +39,7 @@ gulp.task('server', function () {
 gulp.task('default', function () {
     gulp.run('jshint', 'copy', 'server');
 });
+gulp.task('serve', function () {
+    gulp.run('default');
+});
 
