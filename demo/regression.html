@@ -1,71 +1,86 @@
 <html>
 <head>
-<title>ConvNetJS demo: Classify toy 2D data</title>
-<link href='http://fonts.googleapis.com/css?family=Cabin' rel='stylesheet' type='text/css'>
-<link rel="stylesheet" href="css/style.css">
+    <title>ConvNetJS demo: Classify toy 2D data</title>
+    <link href='http://fonts.googleapis.com/css?family=Cabin' rel='stylesheet' type='text/css'>
+    <link rel="stylesheet" href="css/style.css">
 
-<script>
-      (function(i,s,o,g,r,a,m){i['GoogleAnalyticsObject']=r;i[r]=i[r]||function(){
-      (i[r].q=i[r].q||[]).push(arguments)},i[r].l=1*new Date();a=s.createElement(o),
-      m=s.getElementsByTagName(o)[0];a.async=1;a.src=g;m.parentNode.insertBefore(a,m)
-      })(window,document,'script','//www.google-analytics.com/analytics.js','ga');
+    <script>
+        (function (i, s, o, g, r, a, m) {
+            i['GoogleAnalyticsObject'] = r;
+            i[r] = i[r] || function () {
+                        (i[r].q = i[r].q || []).push(arguments)
+                    }, i[r].l = 1 * new Date();
+            a = s.createElement(o),
+                    m = s.getElementsByTagName(o)[0];
+            a.async = 1;
+            a.src = g;
+            m.parentNode.insertBefore(a, m)
+        })(window, document, 'script', '//www.google-analytics.com/analytics.js', 'ga');
+        ga('create', 'UA-3698471-21', 'stanford.edu');
+        ga('send', 'pageview');
 
-      ga('create', 'UA-3698471-21', 'stanford.edu');
-      ga('send', 'pageview');
+    </script>
 
-</script>
+    <script src="js/jquery-1.8.3.min.js"></script>
+    <script src="js/npgmain.js"></script>
+    <script src="../build/convnet.js"></script>
+    <script src="js/regression.js"></script>
 
-<script src="js/jquery-1.8.3.min.js"></script>
-<script src="js/npgmain.js"></script>
-<script src="../build/convnet.js"></script>
-<script src="js/regression.js"></script>
+    <style type="text/css">
+        canvas {
+            border: 1px solid #555;
+            margin-top: 10px;
+        }
 
-<style type="text/css">
-canvas { 
-    border: 1px solid #555;
-    margin-top: 10px;
-}
-#wrap {
-  width: 800px;
-  margin-right: auto;
-  margin-left: auto;
-  margin-bottom: 200px;
-}
-</style>
+        #wrap {
+            width: 800px;
+            margin-right: auto;
+            margin-left: auto;
+            margin-bottom: 200px;
+        }
+    </style>
 
 </head>
 
 <body onLoad="NPGinit(10);">
 
 <div id="wrap">
-<h1><a href="http://cs.stanford.edu/people/karpathy/convnetjs">ConvnetJS</a> demo: toy 1d regression</h1>
+    <h1><a href="http://cs.stanford.edu/people/karpathy/convnetjs">ConvnetJS</a> demo: toy 1d regression</h1>
 
-<p>The simulation below is a 1-dimensional regression where a neural network is trained to regress to y coordinates for every given point x through an L2 loss. That is, the minimized cost function computes the squared difference between the predicted y-coordinate and the "correct" y coordinate. Every 10th of a second, all points are fed to the network multiple times through the trainer class to train the network.</p>
+    <p>The simulation below is a 1-dimensional regression where a neural network is trained to regress to y coordinates
+        for every given point x through an L2 loss. That is, the minimized cost function computes the squared difference
+        between the predicted y-coordinate and the "correct" y coordinate. Every 10th of a second, all points are fed to
+        the network multiple times through the trainer class to train the network.</p>
 
-<p>The simulation below will eval() whatever you have in the text area and reload. Feel free to explore and use ConvNetJS to instantiate your own network!</p>
+    <p>The simulation below will eval() whatever you have in the text area and reload. Feel free to explore and use
+        ConvNetJS to instantiate your own network!</p>
 
-<p>Report questions/bugs/suggestions to <a href="https://twitter.com/karpathy">@karpathy</a>.</p>
+    <p>Report questions/bugs/suggestions to <a href="https://twitter.com/karpathy">@karpathy</a>.</p>
 
 <textarea id="layerdef" style="width:100%; height:250px;">
 </textarea>
-<br /><br  />
-<input id="buttontp" type="submit" value="change network" onclick="reload();" style="width: 300px; height: 50px;"/>
+    <label for="layerdef"></label>
+    <br/><br/>
+    <input id="buttontp" type="submit" value="change network" onclick="reload();" style="width: 300px; height: 50px;"/>
 
-<div style="float: right;">
-Number of points to generate:  <input type="text" name="num_points" id="num_data" value="20">
-<input type="submit" value="regenerate data" style="height:50px;" onclick="regen_data();" />
-</div>
+    <div style="float: right;">
+        Number of points to generate: <input type="text" name="num_points" id="num_data" value="20">
+        <input type="submit" value="regenerate data" style="height:50px;" onclick="regen_data();"/>
+    </div>
 
-<br />
-<p style="color: red">Add data points by clicking!</p>
-<br />
-<input type="checkbox" name="draw_layer_outputs" id="layer_outs">
-Also draw outputs of a layer (click layer button below) in red.
-<br /><div id="layer_ixes"></div>
+    <br/>
 
-<canvas id="NPGcanvas" width="800" height="500">Browser not supported for Canvas. Get a real browser.</canvas>
+    <p style="color: red">Add data points by clicking!</p>
+    <br/>
+    <input type="checkbox" name="draw_layer_outputs" id="layer_outs">
+    Also draw outputs of a layer (click layer button below) in red.
+    <br/>
 
-<p>Go <a href="http://cs.stanford.edu/people/karpathy/convnetjs/">back to ConvNetJS</a></p>
+    <div id="layer_ixes"></div>
+
+    <canvas id="NPGcanvas" width="800" height="500">Browser not supported for Canvas. Get a real browser.</canvas>
+
+    <p>Go <a href="http://cs.stanford.edu/people/karpathy/convnetjs/">back to ConvNetJS</a></p>
 
 </div>
 
