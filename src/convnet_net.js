@@ -129,11 +129,14 @@
     getParamsAndGrads: function() {
       // accumulate parameters and gradients for the entire network
       var response = [];
-      for(var i=0;i<this.layers.length;i++) {
-        var layer_reponse = this.layers[i].getParamsAndGrads();
+      function inner(layer) {
+        var layer_reponse = layer.getParamsAndGrads();
         for(var j=0;j<layer_reponse.length;j++) {
           response.push(layer_reponse[j]);
         }
+      }
+      for(var i=0;i<this.layers.length;i++) {
+        inner(this.layers[i]);
       }
       return response;
     },
