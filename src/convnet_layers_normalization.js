@@ -29,24 +29,27 @@
 
       var A = V.cloneAndZero();
       this.S_cache_ = V.cloneAndZero();
-      var n2 = Math.floor(this.n/2);
-      for(var x=0;x<V.sx;x++) {
-        for(var y=0;y<V.sy;y++) {
-          for(var i=0;i<V.depth;i++) {
+      var n2 = Math.floor(this.n / 2);
+      for (var x = 0; x < V.sx; x++) {
+        for (var y = 0; y < V.sy; y++) {
+          for (var i = 0; i < V.depth; i++) {
 
-            var ai = V.get(x,y,i);
+            var a_i = V.get(x, y, i);
+            var f0 = this.k;
+            var f1 = this.alpha / this.n;
+            var sum = 0.0;
 
             // normalize in a window of size n
-            var den = 0.0;
-            for(var j=Math.max(0,i-n2);j<=Math.min(i+n2,V.depth-1);j++) {
-              var aa = V.get(x,y,j);
-              den += aa*aa;
+            for (var j = Math.max(0, i - n2); j <= Math.min(i + n2, V.depth - 1); j++) {
+              var aa = V.get(x, y, j);
+              sum += aa * aa;
             }
-            den *= this.alpha / this.n;
-            den += this.k;
-            this.S_cache_.set(x,y,i,den); // will be useful for backprop
-            den = Math.pow(den, this.beta);
-            A.set(x,y,i,ai/den);
+
+            // will be useful for backprop
+            var scale_i = f0 + f1 * sum;
+            this.S_cache_.set(x, y, i, scale_i);
+            var b_i = a_i * Math.pow(scale_i, -this.beta);
+            A.set(x, y, i, b_i);
           }
         }
       }
@@ -60,26 +63,29 @@
       V.dw = global.zeros(V.w.length); // zero out gradient wrt data
       var A = this.out_act; // computed in forward pass 
 
-      var n2 = Math.floor(this.n/2);
-      for(var x=0;x<V.sx;x++) {
-        for(var y=0;y<V.sy;y++) {
-          for(var i=0;i<V.depth;i++) {
+      var n2 = Math.floor(this.n / 2);
+      for (var x = 0; x < V.sx; x++) {
+        for (var y = 0; y < V.sy; y++) {
+          for (var i = 0; i < V.depth; i++) {
 
-            var chain_grad = this.out_act.get_grad(x,y,i);
-            var S = this.S_cache_.get(x,y,i);
-            var SB = Math.pow(S, this.beta);
-            var SB2 = SB*SB;
+            var scale_i = this.S_cache_.get(x, y, i);
+            var a_i = V.get(x, y, i);
+            var be_i = A.get_grad(x, y, i);
+            var f0 = Math.pow(scale_i, -this.beta) * be_i;
+            var f1 = 2.0 * this.alpha * this.beta / this.n * a_i;
+            var sum = 0.0;
 
             // normalize in a window of size n
-            for(var j=Math.max(0,i-n2);j<=Math.min(i+n2,V.depth-1);j++) {              
-              var aj = V.get(x,y,j); 
-              var g = -aj*this.beta*Math.pow(S,this.beta-1)*this.alpha/this.n*2*aj;
-              if(j===i) g+= SB;
-              g /= SB2;
-              g *= chain_grad;
-              V.add_grad(x,y,j,g);
+            for (var j = Math.max(0, i - n2); j <= Math.min(i + n2, V.depth - 1); j++) {
+              var b_j = A.get(x, y, j);
+              var be_j = A.get_grad(x, y, j);
+              var scale_j = this.S_cache_.get(x, y, j);
+
+              sum += be_j * b_j / scale_j;
             }
 
+            var ae_i = f0 - f1 * sum;
+            V.set_grad(x, y, i, ae_i);
           }
         }
       }
