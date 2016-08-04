@@ -96,8 +96,8 @@
               // adam update
               gsumi[j] = gsumi[j] * this.beta1 + (1- this.beta1) * gij; // update biased first moment estimate
               xsumi[j] = xsumi[j] * this.beta2 + (1-this.beta2) * gij * gij; // update biased second moment estimate
-              var biasCorr1 = gsumi[j] * (1 - Math.pow(this.beta1, this.k)); // correct bias first moment estimate
-              var biasCorr2 = xsumi[j] * (1 - Math.pow(this.beta2, this.k)); // correct bias second moment estimate
+              var biasCorr1 = gsumi[j] / (1 - Math.pow(this.beta1, this.k)); // correct bias first moment estimate
+              var biasCorr2 = xsumi[j] / (1 - Math.pow(this.beta2, this.k)); // correct bias second moment estimate
               var dx =  - this.learning_rate * biasCorr1 / (Math.sqrt(biasCorr2) + this.eps);
               p[j] += dx;
             } else if(this.method === 'adagrad') {
