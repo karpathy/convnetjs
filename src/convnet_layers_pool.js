@@ -36,9 +36,8 @@
       var n=0; // a counter for switches
       for(var d=0;d<this.out_depth;d++) {
         var x = -this.pad;
-        var y = -this.pad;
         for(var ax=0; ax<this.out_sx; x+=this.stride,ax++) {
-          y = -this.pad;
+          var y = -this.pad;
           for(var ay=0; ay<this.out_sy; y+=this.stride,ay++) {
 
             // convolve centered at this particular location
@@ -76,16 +75,11 @@
 
       var n = 0;
       for(var d=0;d<this.out_depth;d++) {
-        var x = -this.pad;
-        var y = -this.pad;
-        for(var ax=0; ax<this.out_sx; x+=this.stride,ax++) {
-          y = -this.pad;
-          for(var ay=0; ay<this.out_sy; y+=this.stride,ay++) {
-
+        for(var ax=0; ax<this.out_sx; ax++) {
+          for(var ay=0; ay<this.out_sy; ay++) {
             var chain_grad = this.out_act.get_grad(ax,ay,d);
             V.add_grad(this.switchx[n], this.switchy[n], d, chain_grad);
             n++;
-
           }
         }
       }
