@@ -477,8 +477,8 @@
           if(e.sensed_type === -1 || e.sensed_type === 0) { 
             ctx.strokeStyle = "rgb(0,0,0)"; // wall or nothing
           }
-          if(e.sensed_type === 1) { ctx.strokeStyle = "rgb(255,150,150)"; } // apples
-          if(e.sensed_type === 2) { ctx.strokeStyle = "rgb(150,255,150)"; } // poison
+          if(e.sensed_type === 1) { ctx.strokeStyle = "rgb(150,255,150)"; } // apples
+          if(e.sensed_type === 2) { ctx.strokeStyle = "rgb(255,150,150)"; } // poison
           ctx.beginPath();
           ctx.moveTo(a.op.x, a.op.y);
           ctx.lineTo(a.op.x + sr * Math.sin(a.oangle + e.angle),
@@ -491,8 +491,8 @@
       ctx.strokeStyle = "rgb(0,0,0)";
       for(var i=0,n=w.items.length;i<n;i++) {
         var it = w.items[i];
-        if(it.type === 1) ctx.fillStyle = "rgb(255, 150, 150)";
-        if(it.type === 2) ctx.fillStyle = "rgb(150, 255, 150)";
+        if(it.type === 1) ctx.fillStyle = "rgb(150, 255, 150)"; // apples
+        if(it.type === 2) ctx.fillStyle = "rgb(255, 150, 150)"; // poison
         ctx.beginPath();
         ctx.arc(it.p.x, it.p.y, it.rad, 0, Math.PI*2, true); 
         ctx.fill();
