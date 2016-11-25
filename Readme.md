@@ -86,7 +86,7 @@ net = new convnetjs.Net();
 net.makeLayers(layer_defs);
 
 // helpful utility for converting images into Vols is included
-var x = convnetjs.img_to_vol(document.getElementById('#some_image'))
+var x = convnetjs.img_to_vol(document.getElementById('some_image'))
 var output_probabilities_vol = net.forward(x)
 ```
 
