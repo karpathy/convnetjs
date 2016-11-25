@@ -33,7 +33,7 @@
         }
       } else {
         // scale the activations during prediction
-        for(var i=0;i<N;i++) { V2.w[i]*=this.drop_prob; }
+        for(var i=0;i<N;i++) { V2.w[i]*=(1-this.drop_prob); }
       }
       this.out_act = V2;
       return this.out_act; // dummy identity function for now
