@@ -43,13 +43,14 @@
   }
 
   var arrUnique = function(arr) {
-    var b = [];
-    for(var i=0,n=arr.length;i<n;i++) {
-      if(!arrContains(b, arr[i])) {
-        b.push(arr[i]);
-      }
+    var h = {}, output = [];
+    for(var i=0,n=arr.length;i<n;i++){
+      if(!h[arr[i]]){
+        h[arr[i]] = true;
+        output.push(arr[i]);
+      } 
     }
-    return b;
+    return output;
   }
 
   // return max and min of a given non-empty array.
