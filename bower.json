@@ -27,5 +27,8 @@
     "bower_components",
     "test",
     "tests"
-  ]
+  ],
+  "dependencies": {
+    "jsdoc3": "~3.2.2"
+  }
 }
