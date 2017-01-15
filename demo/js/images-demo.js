@@ -447,10 +447,12 @@ var test_predict = function() {
     probsdiv.className = 'probsdiv';
     div.appendChild(probsdiv);
 
-    // add it into DOM
+     // add it into DOM
     $(div).prependTo($("#testset_vis")).hide().fadeIn('slow').slideDown('slow');
-    if($(".probsdiv").length>200) {
-      $("#testset_vis > .probsdiv").last().remove(); // pop to keep upper bound of shown items
+    // if there are more than 'images_per_page' pictures - remove the last one
+    if($("#testset_vis")[0].childElementCount>images_per_page) {
+      var list=document.getElementById("testset_vis");
+      list.removeChild(list.childNodes[images_per_page]);
     }
   }
   testAccWindow.add(num_correct/num_total);
@@ -502,6 +504,7 @@ var trainAccWindow = new cnnutil.Window(100);
 var valAccWindow = new cnnutil.Window(100);
 var testAccWindow = new cnnutil.Window(50, 1);
 var step_num = 0;
+var images_per_page = 20;
 var step = function(sample) {
 
   var x = sample.x;
@@ -613,7 +616,7 @@ var clear_graph = function() {
 }
 var reset_all = function() {
   // reinit trainer
-  trainer = new convnetjs.SGDTrainer(net, {learning_rate:trainer.learning_rate, momentum:trainer.momentum, batch_size:trainer.batch_size, l2_decay:trainer.l2_decay});
+  trainer = new convnetjs.SGDTrainer(net, {method: trainer.method, learning_rate:trainer.learning_rate, momentum:trainer.momentum, batch_size:trainer.batch_size, l2_decay:trainer.l2_decay});
   update_net_param_display();
 
   // reinit windows that keep track of val/train accuracies
