@@ -1,6 +1,6 @@
 import * as util from "./convnet_util";
 import { Vol } from "./convnet_vol";
-import { Net } from "./convnet_net";
+import { Net, NetJSON } from "./convnet_net";
 import { Trainer, TrainerOptions } from "./convnet_trainers";
 import { LayerOptions } from "./layers";
 
@@ -33,6 +33,10 @@ export interface MagicNetOptions {
     neurons_max?: number;
 }
 
+export interface MagicNetJSON{
+    nets?: NetJSON[];
+}
+
 export interface Fold {
     train_ix: number[];
     test_ix: number[];
@@ -46,6 +50,7 @@ export interface Candidate {
     net?: Net;
     trainer?: Trainer;
 }
+
 /*
 A MagicNet takes data: a list of convnetjs.Vol(), and labels
 which for now are assumed to be class indeces 0..K. MagicNet then:
@@ -351,7 +356,7 @@ export class MagicNet {
     toJSON() {
         // dump the top ensemble_size networks as a list
         const nv = Math.min(this.ensemble_size, this.evaluated_candidates.length);
-        const json: any = {};
+        const json: MagicNetJSON = {};
         json.nets = [];
         for (let i = 0; i < nv; i++) {
             json.nets.push(this.evaluated_candidates[i].net.toJSON());
@@ -359,7 +364,7 @@ export class MagicNet {
         return json;
     }
 
-    fromJSON(json: any) {
+    fromJSON(json: MagicNetJSON) {
         this.ensemble_size = json.nets.length;
         this.evaluated_candidates = [];
         for (let i = 0; i < this.ensemble_size; i++) {

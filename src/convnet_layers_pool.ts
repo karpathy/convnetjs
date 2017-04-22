@@ -1,5 +1,5 @@
 import { Vol } from "./convnet_vol";
-import { LayerBase, LayerOptions, ILayer } from "./layers";
+import { LayerBase, LayerOptions, ILayer, LayerJSON, ParamsAndGrads } from "./layers";
 import * as util from "./convnet_util";
 
 export interface PoolLayerOptions extends LayerOptions {
@@ -113,11 +113,13 @@ export class PoolLayer extends LayerBase implements ILayer {
             }
         }
     }
-    getParamsAndGrads(): any[] {
+
+    getParamsAndGrads(): ParamsAndGrads[] {
         return [];
     }
+
     toJSON() {
-        const json: any = {};
+        const json: LayerJSON = {};
         json.sx = this.sx;
         json.sy = this.sy;
         json.stride = this.stride;
@@ -129,16 +131,16 @@ export class PoolLayer extends LayerBase implements ILayer {
         json.pad = this.pad;
         return json;
     }
-    fromJSON(json: any) {
-        this.out_depth = json.out_depth;
-        this.out_sx = json.out_sx;
-        this.out_sy = json.out_sy;
-        this.layer_type = json.layer_type;
-        this.sx = json.sx;
-        this.sy = json.sy;
-        this.stride = json.stride;
-        this.in_depth = json.in_depth;
-        this.pad = typeof json.pad !== 'undefined' ? json.pad : 0; // backwards compatibility
+    fromJSON(json: LayerJSON) {
+        this.out_depth = json.out_depth as number;
+        this.out_sx = json.out_sx as number;
+        this.out_sy = json.out_sy as number;
+        this.layer_type = json.layer_type as string;
+        this.sx = json.sx as number;
+        this.sy = json.sy as number;
+        this.stride = json.stride as number;
+        this.in_depth = json.in_depth as number;
+        this.pad = (typeof json.pad !== 'undefined' ? json.pad : 0) as number; // backwards compatibility
         this.switchx = util.zeros(this.out_sx * this.out_sy * this.out_depth); // need to re-init these appropriately
         this.switchy = util.zeros(this.out_sx * this.out_sy * this.out_depth);
     }

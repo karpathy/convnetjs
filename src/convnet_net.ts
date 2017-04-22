@@ -1,5 +1,5 @@
 import { Vol } from "./convnet_vol";
-import { LayerOptions, ILayer } from "./layers";
+import { LayerOptions, ILayer, LayerJSON, ParamsAndGrads } from "./layers";
 import * as util from "./convnet_util";
 import { LossLayerOptions, SVMLayer, RegressionLayer, SoftmaxLayer } from "./convnet_layers_loss";
 import { DotproductsLayerOptions, FullyConnLayer, ConvLayer } from "./convnet_layers_dotproducts";
@@ -10,6 +10,10 @@ import { DropoutLayer } from "./convnet_layers_dropout";
 import { LocalResponseNormalizationLayer } from "./convnet_layers_normalization";
 
 const assert = util.assert;
+
+export interface NetJSON{
+    layers?: LayerJSON[];
+}
 
 /**
  * Net manages a set of layers
@@ -142,7 +146,7 @@ export class Net {
         }
         return loss;
     }
-    getParamsAndGrads(): any[] {
+    getParamsAndGrads(): ParamsAndGrads[] {
         // accumulate parameters and gradients for the entire network
         const response = [];
         for (let i = 0; i < this.layers.length; i++) {
@@ -169,15 +173,15 @@ export class Net {
         }
         throw Error("to getPrediction, the last layer must be softmax");
     }
-    toJSON() {
-        const json: any = {};
+    toJSON(): NetJSON {
+        const json: NetJSON = {};
         json.layers = [];
         for (let i = 0; i < this.layers.length; i++) {
             json.layers.push(this.layers[i].toJSON());
         }
         return json;
     }
-    fromJSON(json: any) {
+    fromJSON(json: NetJSON) {
         this.layers = [];
         for (let i = 0; i < json.layers.length; i++) {
             const Lj = json.layers[i]

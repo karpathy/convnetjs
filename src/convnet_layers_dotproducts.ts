@@ -1,5 +1,5 @@
-import { Vol } from "./convnet_vol";
-import { LayerBase, LayerOptions, ILayer } from "./layers";
+import { Vol, VolJSON } from "./convnet_vol";
+import { LayerBase, LayerOptions, ILayer, LayerJSON, ParamsAndGrads } from "./layers";
 import * as util from "./convnet_util";
 
 // This file contains all layers that do dot products with input,
@@ -177,8 +177,8 @@ export class ConvLayer extends DotproductsLayer {
         }
         return 0;
     }
-    getParamsAndGrads(): any[] {
-        const response = [];
+    getParamsAndGrads(): ParamsAndGrads[] {
+        const response = [] as ParamsAndGrads[];
         for (let i = 0; i < this.out_depth; i++) {
             response.push({ params: this.filters[i].w, grads: this.filters[i].dw, l2_decay_mul: this.l2_decay_mul, l1_decay_mul: this.l1_decay_mul });
         }
@@ -186,7 +186,7 @@ export class ConvLayer extends DotproductsLayer {
         return response;
     }
     toJSON() {
-        const json: any = {};
+        const json: LayerJSON = {};
         json.sx = this.sx; // filter size in x, y dims
         json.sy = this.sy;
         json.stride = this.stride;
@@ -205,26 +205,26 @@ export class ConvLayer extends DotproductsLayer {
         json.biases = this.biases.toJSON();
         return json;
     }
-    fromJSON(json: any) {
-        this.out_depth = json.out_depth;
-        this.out_sx = json.out_sx;
-        this.out_sy = json.out_sy;
-        this.layer_type = json.layer_type;
-        this.sx = json.sx; // filter size in x, y dims
-        this.sy = json.sy;
-        this.stride = json.stride;
-        this.in_depth = json.in_depth; // depth of input volume
+    fromJSON(json: LayerJSON) {
+        this.out_depth = json.out_depth as number;
+        this.out_sx = json.out_sx as number;
+        this.out_sy = json.out_sy as number;
+        this.layer_type = json.layer_type as string;
+        this.sx = json.sx as number; // filter size in x, y dims
+        this.sy = json.sy as number;
+        this.stride = json.stride as number;
+        this.in_depth = json.in_depth as number; // depth of input volume
         this.filters = [];
-        this.l1_decay_mul = typeof json.l1_decay_mul !== 'undefined' ? json.l1_decay_mul : 1.0;
-        this.l2_decay_mul = typeof json.l2_decay_mul !== 'undefined' ? json.l2_decay_mul : 1.0;
-        this.pad = typeof json.pad !== 'undefined' ? json.pad : 0;
+        this.l1_decay_mul = (typeof json.l1_decay_mul !== 'undefined' ? json.l1_decay_mul : 1.0) as number;
+        this.l2_decay_mul = (typeof json.l2_decay_mul !== 'undefined' ? json.l2_decay_mul : 1.0) as number;
+        this.pad = (typeof json.pad !== 'undefined' ? json.pad : 0) as number;
         for (let i = 0; i < json.filters.length; i++) {
             const v = new Vol(0, 0, 0, 0);
             v.fromJSON(json.filters[i]);
             this.filters.push(v);
         }
         this.biases = new Vol(0, 0, 0, 0);
-        this.biases.fromJSON(json.biases);
+        this.biases.fromJSON(json.biases as VolJSON);
     }
 }
 
@@ -289,7 +289,7 @@ export class FullyConnLayer extends DotproductsLayer implements ILayer {
             this.biases.dw[i] += chain_grad;
         }
     }
-    getParamsAndGrads(): any[] {
+    getParamsAndGrads(): ParamsAndGrads[] {
         const response = [];
         for (let i = 0; i < this.out_depth; i++) {
             response.push({ params: this.filters[i].w, grads: this.filters[i].dw, l1_decay_mul: this.l1_decay_mul, l2_decay_mul: this.l2_decay_mul });
@@ -298,7 +298,7 @@ export class FullyConnLayer extends DotproductsLayer implements ILayer {
         return response;
     }
     toJSON() {
-        const json: any = {};
+        const json: LayerJSON = {};
         json.out_depth = this.out_depth;
         json.out_sx = this.out_sx;
         json.out_sy = this.out_sy;
@@ -306,21 +306,21 @@ export class FullyConnLayer extends DotproductsLayer implements ILayer {
         json.num_inputs = this.num_inputs;
         json.l1_decay_mul = this.l1_decay_mul;
         json.l2_decay_mul = this.l2_decay_mul;
-        json.filters = [];
+        json.filters = [] as VolJSON[];
         for (let i = 0; i < this.filters.length; i++) {
             json.filters.push(this.filters[i].toJSON());
         }
-        json.biases = this.biases.toJSON();
+        json.biases = this.biases.toJSON() as VolJSON;
         return json;
     }
-    fromJSON(json: any) {
-        this.out_depth = json.out_depth;
-        this.out_sx = json.out_sx;
-        this.out_sy = json.out_sy;
-        this.layer_type = json.layer_type;
-        this.num_inputs = json.num_inputs;
-        this.l1_decay_mul = typeof json.l1_decay_mul !== 'undefined' ? json.l1_decay_mul : 1.0;
-        this.l2_decay_mul = typeof json.l2_decay_mul !== 'undefined' ? json.l2_decay_mul : 1.0;
+    fromJSON(json: LayerJSON) {
+        this.out_depth = json.out_depth as number;
+        this.out_sx = json.out_sx as number;
+        this.out_sy = json.out_sy as number;
+        this.layer_type = json.layer_type as string;
+        this.num_inputs = json.num_inputs as number;
+        this.l1_decay_mul = (typeof json.l1_decay_mul !== 'undefined' ? json.l1_decay_mul : 1.0) as number;
+        this.l2_decay_mul = (typeof json.l2_decay_mul !== 'undefined' ? json.l2_decay_mul : 1.0) as number;
         this.filters = [];
         for (let i = 0; i < json.filters.length; i++) {
             const v = new Vol(0, 0, 0, 0);
@@ -328,7 +328,7 @@ export class FullyConnLayer extends DotproductsLayer implements ILayer {
             this.filters.push(v);
         }
         this.biases = new Vol(0, 0, 0, 0);
-        this.biases.fromJSON(json.biases);
+        this.biases.fromJSON(json.biases as Vol);
     }
 }
 

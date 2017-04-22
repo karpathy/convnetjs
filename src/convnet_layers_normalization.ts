@@ -1,5 +1,5 @@
 import { Vol } from "./convnet_vol";
-import { LayerBase, LayerOptions, ILayer } from "./layers";
+import { LayerBase, LayerOptions, ILayer, LayerJSON, ParamsAndGrads } from "./layers";
 import * as util from "./convnet_util";
 
 export interface LocalResponseNormalizationLayerOptions extends LayerOptions {
@@ -106,9 +106,12 @@ export class LocalResponseNormalizationLayer extends LayerBase implements ILayer
             }
         }
     }
-    getParamsAndGrads(): any[] { return []; }
+    getParamsAndGrads(): ParamsAndGrads[] {
+        return [];
+    }
+
     toJSON() {
-        const json: any = {};
+        const json: LayerJSON = {};
         json.k = this.k;
         json.n = this.n;
         json.alpha = this.alpha; // normalize by size
@@ -119,14 +122,14 @@ export class LocalResponseNormalizationLayer extends LayerBase implements ILayer
         json.layer_type = this.layer_type;
         return json;
     }
-    fromJSON(json: any) {
-        this.k = json.k;
-        this.n = json.n;
-        this.alpha = json.alpha; // normalize by size
-        this.beta = json.beta;
-        this.out_sx = json.out_sx;
-        this.out_sy = json.out_sy;
-        this.out_depth = json.out_depth;
-        this.layer_type = json.layer_type;
+    fromJSON(json: LayerJSON) {
+        this.k = json.k as number;
+        this.n = json.n as number;
+        this.alpha = json.alpha as number; // normalize by size
+        this.beta = json.beta as number;
+        this.out_sx = json.out_sx as number;
+        this.out_sy = json.out_sy as number;
+        this.out_depth = json.out_depth as number;
+        this.layer_type = json.layer_type as string;
     }
 }

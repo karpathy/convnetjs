@@ -1,5 +1,5 @@
 import { Vol } from "./convnet_vol";
-import { LayerBase, LayerOptions, ILayer } from "./layers";
+import { LayerBase, LayerOptions, ILayer, LayerJSON, ParamsAndGrads } from "./layers";
 import * as util from "./convnet_util";
 
 // Layers that implement a loss. Currently these are the layers that
@@ -85,11 +85,11 @@ export class SoftmaxLayer extends LayerBase implements ILayer {
         // loss is the class negative log likelihood
         return -Math.log(this.es[y]);
     }
-    getParamsAndGrads(): any[] {
+    getParamsAndGrads(): ParamsAndGrads[] {
         return [];
     }
     toJSON() {
-        const json: any = {};
+        const json: LayerJSON = {};
         json.out_depth = this.out_depth;
         json.out_sx = this.out_sx;
         json.out_sy = this.out_sy;
@@ -97,12 +97,12 @@ export class SoftmaxLayer extends LayerBase implements ILayer {
         json.num_inputs = this.num_inputs;
         return json;
     }
-    fromJSON(json: any) {
-        this.out_depth = json.out_depth;
-        this.out_sx = json.out_sx;
-        this.out_sy = json.out_sy;
-        this.layer_type = json.layer_type;
-        this.num_inputs = json.num_inputs;
+    fromJSON(json: LayerJSON) {
+        this.out_depth = json.out_depth as number;
+        this.out_sx = json.out_sx as number;
+        this.out_sy = json.out_sy as number;
+        this.layer_type = json.layer_type as string;
+        this.num_inputs = json.num_inputs as number;
     }
 }
 
@@ -166,11 +166,11 @@ export class RegressionLayer extends LayerBase implements ILayer {
         }
         return loss;
     }
-    getParamsAndGrads(): any[] {
+    getParamsAndGrads(): ParamsAndGrads[] {
         return [];
     }
     toJSON() {
-        const json: any = {};
+        const json: LayerJSON = {};
         json.out_depth = this.out_depth;
         json.out_sx = this.out_sx;
         json.out_sy = this.out_sy;
@@ -178,12 +178,12 @@ export class RegressionLayer extends LayerBase implements ILayer {
         json.num_inputs = this.num_inputs;
         return json;
     }
-    fromJSON(json: any) {
-        this.out_depth = json.out_depth;
-        this.out_sx = json.out_sx;
-        this.out_sy = json.out_sy;
-        this.layer_type = json.layer_type;
-        this.num_inputs = json.num_inputs;
+    fromJSON(json: LayerJSON) {
+        this.out_depth = json.out_depth as number;
+        this.out_sx = json.out_sx as number;
+        this.out_sy = json.out_sy as number;
+        this.layer_type = json.layer_type as string;
+        this.num_inputs = json.num_inputs as number;
     }
 }
 
@@ -236,11 +236,11 @@ export class SVMLayer extends LayerBase implements ILayer {
 
         return loss;
     }
-    getParamsAndGrads(): any[] {
+    getParamsAndGrads(): ParamsAndGrads[] {
         return [];
     }
     toJSON() {
-        const json: any = {};
+        const json: LayerJSON = {};
         json.out_depth = this.out_depth;
         json.out_sx = this.out_sx;
         json.out_sy = this.out_sy;
@@ -248,12 +248,12 @@ export class SVMLayer extends LayerBase implements ILayer {
         json.num_inputs = this.num_inputs;
         return json;
     }
-    fromJSON(json: any) {
-        this.out_depth = json.out_depth;
-        this.out_sx = json.out_sx;
-        this.out_sy = json.out_sy;
-        this.layer_type = json.layer_type;
-        this.num_inputs = json.num_inputs;
+    fromJSON(json: LayerJSON) {
+        this.out_depth = json.out_depth as number;
+        this.out_sx = json.out_sx as number;
+        this.out_sy = json.out_sy as number;
+        this.layer_type = json.layer_type as string;
+        this.num_inputs = json.num_inputs as number;
     }
 }
 

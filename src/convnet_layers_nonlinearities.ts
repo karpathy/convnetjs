@@ -1,5 +1,5 @@
 import { Vol } from "./convnet_vol";
-import { LayerBase, LayerOptions, ILayer } from "./layers";
+import { LayerBase, LayerOptions, ILayer, LayerJSON, ParamsAndGrads } from "./layers";
 import * as util from "./convnet_util";
 
 export interface OutputLayerOptions extends LayerOptions {
@@ -73,22 +73,22 @@ export class ReluLayer extends OutputLayer implements ILayer {
             }
         }
     }
-    getParamsAndGrads(): any[] {
+    getParamsAndGrads(): ParamsAndGrads[] {
         return [];
     }
     toJSON() {
-        const json: any = {};
+        const json: LayerJSON = {};
         json.out_depth = this.out_depth;
         json.out_sx = this.out_sx;
         json.out_sy = this.out_sy;
         json.layer_type = this.layer_type;
         return json;
     }
-    fromJSON(json: any) {
-        this.out_depth = json.out_depth;
-        this.out_sx = json.out_sx;
-        this.out_sy = json.out_sy;
-        this.layer_type = json.layer_type;
+    fromJSON(json: LayerJSON) {
+        this.out_depth = json.out_depth as number;
+        this.out_sx = json.out_sx as number;
+        this.out_sy = json.out_sy as number;
+        this.layer_type = json.layer_type as string;
     }
 }
 
@@ -128,22 +128,22 @@ export class SigmoidLayer extends OutputLayer implements ILayer {
             V.dw[i] = v2wi * (1.0 - v2wi) * V2.dw[i];
         }
     }
-    getParamsAndGrads(): any[] {
+    getParamsAndGrads(): ParamsAndGrads[] {
         return [];
     }
     toJSON() {
-        const json: any = {};
+        const json: LayerJSON = {};
         json.out_depth = this.out_depth;
         json.out_sx = this.out_sx;
         json.out_sy = this.out_sy;
         json.layer_type = this.layer_type;
         return json;
     }
-    fromJSON(json: any) {
-        this.out_depth = json.out_depth;
-        this.out_sx = json.out_sx;
-        this.out_sy = json.out_sy;
-        this.layer_type = json.layer_type;
+    fromJSON(json: LayerJSON) {
+        this.out_depth = json.out_depth as number;
+        this.out_sx = json.out_sx as number;
+        this.out_sy = json.out_sy as number;
+        this.layer_type = json.layer_type as string;
     }
 }
 
@@ -245,11 +245,11 @@ export class MaxoutLayer extends OutputLayer implements ILayer {
             }
         }
     }
-    getParamsAndGrads(): any[] {
+    getParamsAndGrads(): ParamsAndGrads[] {
         return [];
     }
     toJSON() {
-        const json: any = {};
+        const json: LayerJSON = {};
         json.out_depth = this.out_depth;
         json.out_sx = this.out_sx;
         json.out_sy = this.out_sy;
@@ -257,12 +257,12 @@ export class MaxoutLayer extends OutputLayer implements ILayer {
         json.group_size = this.group_size;
         return json;
     }
-    fromJSON(json: any) {
-        this.out_depth = json.out_depth;
-        this.out_sx = json.out_sx;
-        this.out_sy = json.out_sy;
-        this.layer_type = json.layer_type;
-        this.group_size = json.group_size;
+    fromJSON(json: LayerJSON) {
+        this.out_depth = json.out_depth as number;
+        this.out_sx = json.out_sx as number;
+        this.out_sy = json.out_sy as number;
+        this.layer_type = json.layer_type as string;
+        this.group_size = json.group_size as number;
         this.switches = util.zeros(this.group_size);
     }
 }
@@ -306,21 +306,21 @@ export class TanhLayer extends OutputLayer implements ILayer {
             V.dw[i] = (1.0 - v2wi * v2wi) * V2.dw[i];
         }
     }
-    getParamsAndGrads(): any[] {
+    getParamsAndGrads(): ParamsAndGrads[] {
         return [];
     }
     toJSON() {
-        const json: any = {};
+        const json: LayerJSON = {};
         json.out_depth = this.out_depth;
         json.out_sx = this.out_sx;
         json.out_sy = this.out_sy;
         json.layer_type = this.layer_type;
         return json;
     }
-    fromJSON(json: any) {
-        this.out_depth = json.out_depth;
-        this.out_sx = json.out_sx;
-        this.out_sy = json.out_sy;
-        this.layer_type = json.layer_type;
+    fromJSON(json: LayerJSON) {
+        this.out_depth = json.out_depth as number;
+        this.out_sx = json.out_sx as number;
+        this.out_sy = json.out_sy as number;
+        this.layer_type = json.layer_type as string;
     }
 }

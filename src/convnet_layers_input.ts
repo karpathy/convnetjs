@@ -1,5 +1,5 @@
 import { Vol } from "./convnet_vol";
-import { LayerBase, LayerOptions, ILayer } from "./layers";
+import { LayerBase, LayerOptions, ILayer, LayerJSON, ParamsAndGrads } from "./layers";
 import * as util from "./convnet_util";
 const getopt = util.getopt;
 
@@ -42,21 +42,21 @@ export class InputLayer extends LayerBase implements ILayer {
         return this.out_act; // simply identity function for now
     }
     backward() { }
-    getParamsAndGrads(): any[] {
+    getParamsAndGrads(): ParamsAndGrads[] {
         return [];
     }
-    toJSON() {
-        const json: any = {};
+    toJSON(): LayerJSON {
+        const json: LayerJSON = {};
         json.out_depth = this.out_depth;
         json.out_sx = this.out_sx;
         json.out_sy = this.out_sy;
         json.layer_type = this.layer_type;
         return json;
     }
-    fromJSON(json: any) {
-        this.out_depth = json.out_depth;
-        this.out_sx = json.out_sx;
-        this.out_sy = json.out_sy;
-        this.layer_type = json.layer_type;
+    fromJSON(json: LayerJSON) {
+        this.out_depth = json.out_depth as number;
+        this.out_sx = json.out_sx as number;
+        this.out_sy = json.out_sy as number;
+        this.layer_type = json.layer_type as string;
     }
 }
