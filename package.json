@@ -1,8 +1,8 @@
 {
-    "name": "neuralnetworkjs",
+    "name": "convnetjs-ts",
     "version": "0.0.1",
-    "description": "ConvNetJS is a Javascript implementation of Neural networks, together with nice browser-based demos. It currently supports:",
-    "main": "index.js",
+    "description": "ConvNetJS is a Javascript implementation of Neural networks.",
+    "main": "lib/index.js",
     "directories": {
         "test": "test"
     },
@@ -14,7 +14,7 @@
     },
     "repository": {
         "type": "git",
-        "url": "git+https://github.com/yoskeoka/neuralnetworkjs.git"
+        "url": "git+https://github.com/yoskeoka/convnetjs-ts.git"
     },
     "keywords": [
         "neural-network",
@@ -24,9 +24,9 @@
     "author": "yoskeoka",
     "license": "MIT",
     "bugs": {
-        "url": "https://github.com/yoskeoka/neuralnetworkjs/issues"
+        "url": "https://github.com/yoskeoka/convnetjs-ts/issues"
     },
-    "homepage": "https://github.com/yoskeoka/neuralnetworkjs#readme",
+    "homepage": "https://github.com/yoskeoka/convnetjs-ts#readme",
     "dependencies": {
         "tslib": "^1.6.0"
     },
