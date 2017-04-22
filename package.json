@@ -1,11 +1,9 @@
 {
     "name": "convnetjs-ts",
-    "version": "0.0.3",
+    "version": "0.0.5",
     "description": "ConvNetJS is a Javascript implementation of Neural networks.",
-    "main": "lib/index.js",
-    "directories": {
-        "test": "test"
-    },
+    "main": "lib/index",
+    "typings": "lib/index",
     "scripts": {
         "pretest": "npm run buildtest",
         "buildtest": "tsc -p tsconfig.test.json",
