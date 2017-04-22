@@ -3,9 +3,7 @@ import * as Chai from "chai";
 
 const expect = Chai.expect;
 describe("deepqlearn", () => {
-    describe("Can run a simple example", function () {
-        beforeEach(function () {
-        });
+    describe("Can run a simple example", () => {
 
         it("get an optimal action from the learned policy", function () {
             const brainOpt = { start_learn_threshold: 100 };

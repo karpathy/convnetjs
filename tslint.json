@@ -11,6 +11,9 @@
 		"no-unused-new": true,
 		"indent": [true, "spaces"],
 		"linebreak-style": [true, "LF"],
-        "prefer-const": true
+        "prefer-const": true,
+        "ordered-imports": [ false ],
+        "quotemark": [ "double", "single" ],
+        "max-classes-per-file": [ false ]
 	}
 }

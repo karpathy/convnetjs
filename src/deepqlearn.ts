@@ -10,7 +10,7 @@ import { TrainerOptions, Trainer } from "./convnet_trainers";
  * environment then assigns reward0 and provides new state, state1
  * Experience nodes store all this information, which is used in the
  * Q-learning update step
-*/
+ */
 export class Experience {
     state0: number[];
     action0: number;
