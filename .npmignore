@@ -1,0 +1,38 @@
+.git/
+
+# for npm
+node_modules/
+npm-shrinkwrap.json
+
+# for grunt
+typings/
+.tscache/
+
+# codes
+test/
+*.debug.ts
+*.debug.d.ts
+*.debug.js
+*.debug.map
+
+# mocha temp
+tmp/
+
+# for https://github.com/Microsoft/TypeScript/issues/4667
+lib/**/*.ts
+!lib/**/*.d.ts
+
+# misc
+.gitignore
+.editorconfig
+.travis.yml
+circle.yml
+setup.sh
+Gruntfile.js
+_tslint.json
+
+test-results.xml
+npm-debug.log
+
+# profile codes
+profile

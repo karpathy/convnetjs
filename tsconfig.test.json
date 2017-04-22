@@ -1,0 +1,30 @@
+{
+    "compileOnSave": true,
+    "compilerOptions": {
+        "target": "es5",
+        "module": "commonjs",
+        "noImplicitAny": true,
+        "noUnusedLocals": true,
+        "noUnusedParameters": true,
+        "noImplicitUseStrict": true,
+        "importHelpers": true,
+        "newLine": "LF",
+        "removeComments": false,
+        "preserveConstEnums": true,
+        "outDir": "test/build",
+        "sourceMap": true,
+        "declaration": true,
+        "watch": false,
+        "typeRoots": [
+            "./node_modules/@types"
+        ]
+    },
+    "include": [
+        "test/**.*"
+    ],
+    "exclude": [
+        "node_modules",
+        "src/**.*",
+        "test/build/**.*"
+    ]
+}

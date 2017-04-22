@@ -1,0 +1,44 @@
+{
+    "name": "neuralnetworkjs",
+    "version": "0.0.1",
+    "description": "ConvNetJS is a Javascript implementation of Neural networks, together with nice browser-based demos. It currently supports:",
+    "main": "index.js",
+    "directories": {
+        "test": "test"
+    },
+    "scripts": {
+        "pretest": "npm run buildtest",
+        "buildtest": "tsc -p tsconfig.test.json",
+        "test": "mocha test/build/test/*.spec.js --no-timeouts --colors",
+        "build": "tsc -p . && webpack"
+    },
+    "repository": {
+        "type": "git",
+        "url": "git+https://github.com/yoskeoka/neuralnetworkjs.git"
+    },
+    "keywords": [
+        "neural-network",
+        "cnn",
+        "deep-learning"
+    ],
+    "author": "yoskeoka",
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/yoskeoka/neuralnetworkjs/issues"
+    },
+    "homepage": "https://github.com/yoskeoka/neuralnetworkjs#readme",
+    "dependencies": {
+        "tslib": "^1.6.0"
+    },
+    "devDependencies": {
+        "@types/chai": "^3.5.0",
+        "@types/mocha": "^2.2.38",
+        "@types/node": "^7.0.0",
+        "chai": "^3.5.0",
+        "mocha": "^3.2.0",
+        "ts-node": "^3.0.0",
+        "tslint": "^5.0.0",
+        "typescript": "^2.3.0",
+        "webpack": "^2.4.0"
+    }
+}

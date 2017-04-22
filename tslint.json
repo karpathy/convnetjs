@@ -1,0 +1,16 @@
+{
+	"rules": {
+		"no-unused-expression": true,
+		"no-duplicate-variable": true,
+		"curly": true,
+		"class-name": true,
+		"semicolon": ["always"],
+		"triple-equals": true,
+		"no-var-keyword": true,
+		"no-trailing-whitespace": true,
+		"no-unused-new": true,
+		"indent": [true, "spaces"],
+		"linebreak-style": [true, "LF"],
+        "prefer-const": true
+	}
+}
