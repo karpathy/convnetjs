@@ -111,7 +111,7 @@ var output_probabilities_vol = net.forward(x)
 and a very simple Reinforce-Learning smaple([This code refer to this sample](http://cs.stanford.edu/people/karpathy/convnetjs/docs.html)):
 ```js
 import { deepqlearn } from "convnetjs-ts";
-const brainOpt: BrainOptions = { start_learn_threshold: 100 };
+const brainOpt = { start_learn_threshold: 100 };
 const brain = new deepqlearn.Brain(3, 2, brainOpt); // 3 inputs, 2 possible outputs (0,1)
 const state = [0, 0, 0];
 for (let k = 0; k < 1000; k++) {

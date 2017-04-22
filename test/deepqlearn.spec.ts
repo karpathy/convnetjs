@@ -1,7 +1,6 @@
 import { deepqlearn } from "../src/index";
-
 import * as Chai from "chai";
-import { BrainOptions } from "../src/deepqlearn";
+
 const expect = Chai.expect;
 describe("deepqlearn", () => {
     describe("Can run a simple example", function () {
@@ -9,7 +8,7 @@ describe("deepqlearn", () => {
         });
 
         it("get an optimal action from the learned policy", function () {
-            const brainOpt: BrainOptions = { start_learn_threshold: 100 };
+            const brainOpt = { start_learn_threshold: 100 };
             const brain = new deepqlearn.Brain(3, 2, brainOpt); // 3 inputs, 2 possible outputs (0,1)
             const state = [0, 0, 0];
             for (let k = 0; k < 1000; k++) {
