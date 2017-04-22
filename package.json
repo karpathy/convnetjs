@@ -1,6 +1,6 @@
 {
     "name": "convnetjs-ts",
-    "version": "0.0.2",
+    "version": "0.0.3",
     "description": "ConvNetJS is a Javascript implementation of Neural networks.",
     "main": "lib/index.js",
     "directories": {
@@ -21,7 +21,7 @@
         "cnn",
         "deep-learning"
     ],
-    "author": "yoskeoka",
+    "author": "yoskeoka <yoske.oka@gmail.com>, Andrej Karpathy <andrej.karpathy@gmail.com> (Original)",
     "license": "MIT",
     "bugs": {
         "url": "https://github.com/yoskeoka/convnetjs-ts/issues"

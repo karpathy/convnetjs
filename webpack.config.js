@@ -3,7 +3,7 @@ const packageJson = JSON.parse(fs.readFileSync(__dirname + "/package.json").toSt
 
 // for the time versioning process works
 // const file = "convnetjs-" + packageJson.version + ".js";
-const file = "convnetjs.js";
+const file = "convnet.js";
 
 module.exports = {
   entry: './lib/index.js',

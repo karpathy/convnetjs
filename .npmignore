@@ -9,6 +9,7 @@ typings/
 .tscache/
 
 # codes
+demo/
 test/
 *.debug.ts
 *.debug.d.ts
