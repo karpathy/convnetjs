@@ -1,3 +1,29 @@
+[![Build Status](https://travis-ci.org/yoskeoka/convnetjs-ts.svg?branch=master)](https://travis-ci.org/yoskeoka/convnetjs-ts)
+
+# convnetjs-ts
+
+This is a porting from ConvNetJS.
+Now fully added type annotations and webpacked, so you can use this library in TypeScript for node.js and browser!
+Of course you can use it in JavaScript.
+
+## Install
+
+Install
+```
+npm install convnetjs-ts
+```
+
+Import to your project
+
+JavaScript(ES6 or later/ TypeScript style)
+```js
+import * as convnetjs from "convnetjs-ts"; 
+```
+
+JavaScript(ES5 style)
+```js
+var convnetjs = require("convnetjs-ts");
+```
 
 # ConvNetJS
 
@@ -10,24 +36,14 @@ ConvNetJS is a Javascript implementation of Neural networks, together with nice 
 
 For much more information, see the main page at [convnetjs.com](http://convnetjs.com)
 
-**Note**: I am not actively maintaining ConvNetJS anymore because I simply don't have time. I think the npm repo might not work at this point.
-
-## Online Demos
-- [Convolutional Neural Network on MNIST digits](http://cs.stanford.edu/~karpathy/convnetjs/demo/mnist.html)
-- [Convolutional Neural Network on CIFAR-10](http://cs.stanford.edu/~karpathy/convnetjs/demo/cifar10.html)
-- [Toy 2D data](http://cs.stanford.edu/~karpathy/convnetjs/demo/classify2d.html)
-- [Toy 1D regression](http://cs.stanford.edu/~karpathy/convnetjs/demo/regression.html)
-- [Training an Autoencoder on MNIST digits](http://cs.stanford.edu/~karpathy/convnetjs/demo/autoencoder.html)
-- [Deep Q Learning Reinforcement Learning demo](http://cs.stanford.edu/people/karpathy/convnetjs/demo/rldemo.html)
-- [Image Regression ("Painting")](http://cs.stanford.edu/~karpathy/convnetjs/demo/image_regression.html)
-- [Comparison of SGD/Adagrad/Adadelta on MNIST](http://cs.stanford.edu/people/karpathy/convnetjs/demo/trainers.html)
-
 ## Example Code
 
 Here's a minimum example of defining a **2-layer neural network** and training
 it on a single data point:
 
-```javascript
+```js
+import * as convnetjs from "convnetjs-ts"; 
+
 // species a 2-layer neural network with one hidden layer of 20 neurons
 var layer_defs = [];
 // input layer declares size of input. here: 2-D data
@@ -59,9 +75,11 @@ console.log('probability that x is class 0: ' + prob2.w[0]);
 // the class we trained the network with (zero)
 ```
 
-and here is a small **Convolutional Neural Network** if you wish to predict on images:
+and here is a small **Convolutional Neural Network** if you wish to predict on images:  
+TODO: convert function for Node.js
 
-```javascript
+```js
+import * as convnetjs from "convnetjs-ts"; 
 var layer_defs = [];
 layer_defs.push({type:'input', out_sx:32, out_sy:32, out_depth:3}); // declare size of input
 // output Vol is of size 32x32x3 here
@@ -90,29 +108,35 @@ var x = convnetjs.img_to_vol(document.getElementById('some_image'))
 var output_probabilities_vol = net.forward(x)
 ```
 
+and a very simple Reinforce-Learning smaple([This code refer to this sample](http://cs.stanford.edu/people/karpathy/convnetjs/docs.html)):
+```js
+import { deepqlearn } from "convnetjs-ts";
+const brainOpt: BrainOptions = { start_learn_threshold: 100 };
+const brain = new deepqlearn.Brain(3, 2, brainOpt); // 3 inputs, 2 possible outputs (0,1)
+const state = [0, 0, 0];
+for (let k = 0; k < 1000; k++) {
+    const action = brain.forward(state); // returns index of chosen action
+    const reward = action === 1 ? 1.0 : 0.0; //give a reward for action 1 (no matter what state is)
+    brain.backward(reward); // <-- learning magic happens here
+    state[Math.floor(Math.random() * 3)] = Math.random(); // change state
+}
+brain.epsilon_test_time = 0.0; // don't make any more random choices
+brain.learning = false;
+// get an optimal action from the learned policy
+const input = [1, 1, 1];
+const chosen_action = brain.forward(input);
+console.log("chosen action after learning: " + chosen_action);
+// tanh are their own layers. Softmax gets its own fully connected layer.
+// this should all get desugared just fine.
+```
+
 ## Getting Started
 A [Getting Started](http://cs.stanford.edu/people/karpathy/convnetjs/started.html) tutorial is available on main page.
 
 The full [Documentation](http://cs.stanford.edu/people/karpathy/convnetjs/docs.html) can also be found there.
 
+TODO: release convnetjs-ts  
 See the **releases** page for this project to get the minified, compiled library, and a direct link to is also available below for convenience (but please host your own copy)
-
-- [convnet.js](http://cs.stanford.edu/people/karpathy/convnetjs/build/convnet.js)
-- [convnet-min.js](http://cs.stanford.edu/people/karpathy/convnetjs/build/convnet-min.js)
-
-## Compiling the library from src/ to build/
-If you would like to add features to the library, you will have to change the code in `src/` and then compile the library into the `build/` directory. The compilation script simply concatenates files in `src/` and then minifies the result.
-
-The compilation is done using an ant task: it compiles `build/convnet.js` by concatenating the source files in `src/` and then minifies the result into `build/convnet-min.js`. Make sure you have **ant** installed (on Ubuntu you can simply *sudo apt-get install* it), then cd into `compile/` directory and run:
-
-    $ ant -lib yuicompressor-2.4.8.jar -f build.xml
-
-The output files will be in `build/`
-## Use in Node
-The library is also available on *node.js*:
-
-1. Install it: `$ npm install convnetjs`
-2. Use it: `var convnetjs = require("convnetjs");`
 
 ## License
 MIT
