@@ -17,12 +17,12 @@ Import to your project
 
 JavaScript(ES6 or later/ TypeScript style)
 ```js
-import * as convnetjs from "convnetjs-ts"; 
+import * as convnetjs from "convnetjs"; 
 ```
 
 JavaScript(ES5 style)
 ```js
-var convnetjs = require("convnetjs-ts");
+var convnetjs = require("convnetjs");
 ```
 
 # ConvNetJS
@@ -42,7 +42,7 @@ Here's a minimum example of defining a **2-layer neural network** and training
 it on a single data point:
 
 ```js
-import * as convnetjs from "convnetjs-ts"; 
+import * as convnetjs from "convnetjs"; 
 
 // species a 2-layer neural network with one hidden layer of 20 neurons
 var layer_defs = [];
@@ -79,7 +79,7 @@ and here is a small **Convolutional Neural Network** if you wish to predict on i
 TODO: convert function for Node.js
 
 ```js
-import * as convnetjs from "convnetjs-ts"; 
+import * as convnetjs from "convnetjs"; 
 var layer_defs = [];
 layer_defs.push({type:'input', out_sx:32, out_sy:32, out_depth:3}); // declare size of input
 // output Vol is of size 32x32x3 here
@@ -110,7 +110,7 @@ var output_probabilities_vol = net.forward(x)
 
 and a very simple Reinforce-Learning smaple([This code refer to this sample](http://cs.stanford.edu/people/karpathy/convnetjs/docs.html)):
 ```js
-import { deepqlearn } from "convnetjs-ts";
+import { deepqlearn } from "convnetjs";
 const brainOpt = { start_learn_threshold: 100 };
 const brain = new deepqlearn.Brain(3, 2, brainOpt); // 3 inputs, 2 possible outputs (0,1)
 const state = [0, 0, 0];
