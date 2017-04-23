@@ -1,18 +1,21 @@
 // direct export
-export {Vol} from "./convnet_vol";
-export {Net} from "./convnet_net";
+export { Vol } from "./convnet_vol";
+export { Net } from "./convnet_net";
+export { MagicNet } from "./convnet_magicnet";
 
 // module export
 import * as cnnvis from "./cnnvis";
 import * as cnnutil from "./cnnutil";
 import * as util from "./convnet_util";
+import * as volutil from "./convnet_vol_util";
 import * as deepqlearn from "./deepqlearn";
 
-export {util};
-export {cnnvis};
-export {cnnutil};
-export {deepqlearn};
+export { cnnvis };
+export { cnnutil };
+export { util };
+export { volutil };
+export { deepqlearn };
 
 // rename
-import {Trainer} from "./convnet_trainers";
-export {Trainer, Trainer as SGDTrainer};
+import { Trainer } from "./convnet_trainers";
+export { Trainer, Trainer as SGDTrainer };
