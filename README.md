@@ -19,8 +19,6 @@ JavaScript(ES6 or later/ TypeScript style)
 ```js
 import * as convnetjs from "convnetjs-ts"; 
 ```
-NOTE: in TypeScript, you have to turn off --noImplicitAny for now.
-
 
 JavaScript(ES5 style)
 ```js
