@@ -1,86 +1,98 @@
 <html>
+
 <head>
-<title>ConvNetJS demo: Classify toy 2D data</title>
-<link href='http://fonts.googleapis.com/css?family=Cabin' rel='stylesheet' type='text/css'>
+    <title>ConvNetJS demo: Classify toy 2D data</title>
+    <link href='http://fonts.googleapis.com/css?family=Cabin' rel='stylesheet' type='text/css'>
 
-<script src="js/jquery-1.8.3.min.js"></script>
-<script src="js/npgmain.js"></script>
-<script src="../build/convnet.js"></script>
-<script src="../build/util.js"></script>
-<script src="js/classify2d.js"></script>
+    <script src="js/jquery-1.8.3.min.js"></script>
+    <script src="js/npgmain.js"></script>
+    <script src="../build/convnet.js"></script>
+    <script src="js/classify2d.js"></script>
 
-<style type="text/css">
-body {
-  font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
-  color: #333;
-  padding: 20px;
-}
-canvas { 
-    border: 1px solid #555;
-}
-#wrap {
-  width: 900px;
-  margin-right: auto;
-  margin-left: auto;
-  margin-bottom: 200px;
-}
-.pane {
-  width: 420px;
-  display: inline-block;
-  vertical-align: top;
-}
-input[type="submit"]
-{
-  margin: 3px;
-}
+    <style type="text/css">
+        body {
+            font-family: Arial, "Helvetica Neue", Helvetica, sans-serif;
+            color: #333;
+            padding: 20px;
+        }
 
-</style>
+        canvas {
+            border: 1px solid #555;
+        }
+
+        #wrap {
+            width: 900px;
+            margin-right: auto;
+            margin-left: auto;
+            margin-bottom: 200px;
+        }
+
+        .pane {
+            width: 420px;
+            display: inline-block;
+            vertical-align: top;
+        }
+
+        input[type="submit"] {
+            margin: 3px;
+        }
+    </style>
 
 </head>
 
 <body>
 
-<div id="wrap">
-<h1><a href="http://cs.stanford.edu/people/karpathy/convnetjs">ConvnetJS</a> demo: toy 2d classification with 2-layer neural network</h1>
+    <div id="wrap">
+        <h1><a href="http://cs.stanford.edu/people/karpathy/convnetjs">ConvnetJS</a> demo: toy 2d classification with 2-layer
+            neural network</h1>
 
-<p>The simulation below shows a toy binary problem with a few data points of class 0 (red) and 1 (green). The network is set up as:</p>
+        <p>The simulation below shows a toy binary problem with a few data points of class 0 (red) and 1 (green). The network
+            is set up as:</p>
 
-<textarea id="layerdef" style="width:100%; height:200px;">
+        <textarea id="layerdef" style="width:100%; height:200px;">
 </textarea>
-<br>
-<input id="buttontp" type="submit" value="change network" onclick="reload();" style="width: 300px; height: 50px;"/>
+        <br>
+        <input id="buttontp" type="submit" value="change network" onclick="reload();" style="width: 300px; height: 50px;" />
 
-<p>Feel free to change this, the text area above gets eval()'d when you hit the button and the network gets reloaded. Every 10th of a second, all points are fed to the network multiple times through the trainer class to train the network. The resulting predictions of the network are then "painted" under the data points to show you the generalization.</p>
+        <p>Feel free to change this, the text area above gets eval()'d when you hit the button and the network gets reloaded.
+            Every 10th of a second, all points are fed to the network multiple times through the trainer class to train the
+            network. The resulting predictions of the network are then "painted" under the data points to show you the generalization.</p>
 
-<p>On the right we visualize the transformed representation of all grid points in the original space and the data, for a given layer and only for 2 neurons at a time. The number in the bracket shows the total number of neurons at that level of representation. If the number is more than 2, you will only see the two visualized but you can cycle through all of them with the cycle button.</p>
+        <p>On the right we visualize the transformed representation of all grid points in the original space and the data, for
+            a given layer and only for 2 neurons at a time. The number in the bracket shows the total number of neurons at
+            that level of representation. If the number is more than 2, you will only see the two visualized but you can
+            cycle through all of them with the cycle button.</p>
 
-<div class="panes">
-<div class="pane">
-<canvas id="NPGcanvas" width="400" height="400">Browser not supported for Canvas. Get a real browser.</canvas>
-<input id="buttondata1" type="submit" value="simple data" onclick="original_data();" style="width: 100px; height: 30px;"/>
-<input id="buttondata2" type="submit" value="circle data" onclick="circle_data();" style="width: 100px; height: 30px;"/>
-<input id="buttondata3" type="submit" value="spiral data" onclick="spiral_data();" style="width: 100px; height: 30px;"/><br>
-<input id="buttondata4" type="submit" value="random data" onclick="random_data();" style="width: 100px; height: 30px;"/><br>
-<p>
-Controls:<br>
-<b>CLICK</b>: Add red data point<br>
-<b>SHIFT+CLICK</b>: Add green data point<br>
-<b>CTRL+CLICK</b>: Remove closest data point<br>
-</p>
-</div>
+        <div class="panes">
+            <div class="pane">
+                <canvas id="NPGcanvas" width="400" height="400">Browser not supported for Canvas. Get a real browser.</canvas>
+                <input id="buttondata1" type="submit" value="simple data" onclick="original_data();" style="width: 100px; height: 30px;"
+                />
+                <input id="buttondata2" type="submit" value="circle data" onclick="circle_data();" style="width: 100px; height: 30px;" />
+                <input id="buttondata3" type="submit" value="spiral data" onclick="spiral_data();" style="width: 100px; height: 30px;" /><br>
+                <input id="buttondata4" type="submit" value="random data" onclick="random_data();" style="width: 100px; height: 30px;" /><br>
+                <p>
+                    Controls:<br>
+                    <b>CLICK</b>: Add red data point<br>
+                    <b>SHIFT+CLICK</b>: Add green data point<br>
+                    <b>CTRL+CLICK</b>: Remove closest data point<br>
+                </p>
+            </div>
 
-<div class="pane">
-  <canvas id="viscanvas" width="400" height="400">Browser not supported for Canvas. Get a real browser.</canvas>
-  <div id="cyclestatus"></div>
-<div id="layer_ixes"></div>
-<input id="buttoncycle" type="submit" value="cycle through visualized neurons at selected layer (if more than 2)" onclick="cycle();" style="height: 40px;"/>
-</div>
+            <div class="pane">
+                <canvas id="viscanvas" width="400" height="400">Browser not supported for Canvas. Get a real browser.</canvas>
+                <div id="cyclestatus"></div>
+                <div id="layer_ixes"></div>
+                <input id="buttoncycle" type="submit" value="cycle through visualized neurons at selected layer (if more than 2)" onclick="cycle();"
+                    style="height: 40px;" />
+            </div>
 
-</div>
+        </div>
 
-<p>Go <a href="http://cs.stanford.edu/people/karpathy/convnetjs/">back to ConvNetJS</a></p>
+        <p>Go <a href="http://cs.stanford.edu/people/karpathy/convnetjs/">back to ConvNetJS</a></p>
 
-</div>
+    </div>
 
 </body>
+
 </html>

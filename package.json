@@ -1,6 +1,6 @@
 {
     "name": "convnetjs-ts",
-    "version": "0.0.7",
+    "version": "0.0.8",
     "description": "ConvNetJS is a Javascript implementation of Neural networks.",
     "main": "lib/index",
     "typings": "lib/index",
@@ -8,7 +8,8 @@
         "pretest": "npm run buildtest",
         "buildtest": "tsc -p tsconfig.test.json",
         "test": "mocha test/build/test/*.spec.js --no-timeouts --colors",
-        "build": "tsc -p . && webpack"
+        "build": "tsc -p . && webpack",
+        "start": "npm run build && ws"
     },
     "repository": {
         "type": "git",
@@ -33,6 +34,7 @@
         "@types/mocha": "^2.2.38",
         "@types/node": "^7.0.0",
         "chai": "^3.5.0",
+        "local-web-server": "^1.2.7",
         "mocha": "^3.2.0",
         "ts-node": "^3.0.0",
         "tslint": "^5.0.0",

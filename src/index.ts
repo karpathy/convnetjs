@@ -2,6 +2,8 @@
 export { Vol } from "./convnet_vol";
 export { Net } from "./convnet_net";
 export { MagicNet } from "./convnet_magicnet";
+export { randf, randi, randn, randperm } from "./convnet_util";
+export { ConvLayer } from "./convnet_layers_dotproducts";
 
 // module export
 import * as cnnvis from "./cnnvis";

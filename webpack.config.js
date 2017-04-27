@@ -1,4 +1,6 @@
 const fs = require("fs");
+const path = require("path");
+const webpack = require("webpack");
 const packageJson = JSON.parse(fs.readFileSync(__dirname + "/package.json").toString());
 
 // for the time versioning process works
@@ -6,9 +8,13 @@ const packageJson = JSON.parse(fs.readFileSync(__dirname + "/package.json").toSt
 const file = "convnet.js";
 
 module.exports = {
-  entry: './lib/index.js',
-  output: {
-    path: __dirname + "/build",
-    filename: file
-  }
+    entry: {
+        convnetjs: "./lib/index.js"
+    },
+    output: {
+        path: __dirname + "/build",
+        filename: file,
+        libraryTarget: "var",
+        library: "convnetjs"
+    }
 };
