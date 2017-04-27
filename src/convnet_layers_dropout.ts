@@ -3,9 +3,7 @@ import { LayerBase, LayerOptions, ILayer, LayerJSON, ParamsAndGrads } from "./la
 import * as util from "./convnet_util";
 
 export interface DorpoutLayerOptions extends LayerOptions {
-    in_sx: number;
-    in_sy: number;
-    in_depth: number;
+    /** <required> */
     drop_prob: number;
 }
 
@@ -29,9 +27,9 @@ export class DropoutLayer extends LayerBase implements ILayer {
         super(dopt);
 
         // computed
-        this.out_sx = dopt.in_sx;
-        this.out_sy = dopt.in_sy;
-        this.out_depth = dopt.in_depth;
+        this.out_sx = dopt.in_sx as number;
+        this.out_sy = dopt.in_sy as number;
+        this.out_depth = dopt.in_depth as number;
         this.layer_type = 'dropout';
         this.drop_prob = typeof dopt.drop_prob !== 'undefined' ? dopt.drop_prob : 0.5;
         const d = <number[]>util.zeros(this.out_sx * this.out_sy * this.out_depth);
@@ -84,5 +82,8 @@ export class DropoutLayer extends LayerBase implements ILayer {
         this.out_sy = json.out_sy as number;
         this.layer_type = json.layer_type as string;
         this.drop_prob = json.drop_prob as number;
+
+        const d = <number[]>util.zeros(this.out_sx * this.out_sy * this.out_depth);
+        this.dropped = d.map((v) => v !== 0);
     }
 }

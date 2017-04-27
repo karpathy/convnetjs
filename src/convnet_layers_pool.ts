@@ -3,13 +3,14 @@ import { LayerBase, LayerOptions, ILayer, LayerJSON, ParamsAndGrads } from "./la
 import * as util from "./convnet_util";
 
 export interface PoolLayerOptions extends LayerOptions {
+    /** <required> filter size */
     sx: number;
-    sy: number;
-    in_depth: number;
-    in_sx: number;
-    in_sy: number;
-    stride: number;
-    pad: number;
+    /** <optional> filter size */
+    sy?: number;
+    /** <optional> */
+    stride?: number;
+    /** <optional> */
+    pad?: number;
 }
 
 export class PoolLayer extends LayerBase implements ILayer {
@@ -32,9 +33,9 @@ export class PoolLayer extends LayerBase implements ILayer {
 
         // required
         this.sx = popt.sx; // filter size
-        this.in_depth = popt.in_depth;
-        this.in_sx = popt.in_sx;
-        this.in_sy = popt.in_sy;
+        this.in_depth = popt.in_depth as number;
+        this.in_sx = popt.in_sx as number;
+        this.in_sy = popt.in_sy as number;
 
         // optional
         this.sy = typeof popt.sy !== 'undefined' ? popt.sy : this.sx;

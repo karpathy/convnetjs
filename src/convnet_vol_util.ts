@@ -31,7 +31,7 @@ export function augment(V: Vol, crop: number, dx?: number, dy?: number, fliplr?:
 
     if (fliplr) {
         // flip volume horziontally
-        let W2 = W.cloneAndZero();
+        const W2 = W.cloneAndZero();
         for (let x = 0; x < W.sx; x++) {
             for (let y = 0; y < W.sy; y++) {
                 for (let d = 0; d < W.depth; d++) {
@@ -50,10 +50,10 @@ export function img_to_vol(img: HTMLImageElement, convert_grayscale?: boolean) {
 
     if (typeof (convert_grayscale) === 'undefined') { convert_grayscale = false; }
 
-    let canvas = document.createElement('canvas');
+    const canvas = document.createElement('canvas');
     canvas.width = img.width;
     canvas.height = img.height;
-    let ctx = canvas.getContext("2d");
+    const ctx = canvas.getContext("2d");
 
     // due to a Firefox bug
     try {
@@ -78,10 +78,10 @@ export function img_to_vol(img: HTMLImageElement, convert_grayscale?: boolean) {
     }
 
     // prepare the input: get pixels and normalize them
-    let p = img_data.data;
-    let W = img.width;
-    let H = img.height;
-    let pv = []
+    const p = img_data.data;
+    const W = img.width;
+    const H = img.height;
+    const pv = []
     for (let i = 0; i < p.length; i++) {
         pv.push(p[i] / 255.0 - 0.5); // normalize image pixels to [-0.5, 0.5]
     }
@@ -90,7 +90,7 @@ export function img_to_vol(img: HTMLImageElement, convert_grayscale?: boolean) {
 
     if (convert_grayscale) {
         // flatten into depth=1 array
-        let x1 = new Vol(W, H, 1, 0.0);
+        const x1 = new Vol(W, H, 1, 0.0);
         for (let i = 0; i < W; i++) {
             for (let j = 0; j < H; j++) {
                 x1.set(i, j, 0, x.get(i, j, 0));

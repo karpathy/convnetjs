@@ -2,31 +2,25 @@ import { Vol } from "./convnet_vol";
 import { LayerBase, LayerOptions, ILayer, LayerJSON, ParamsAndGrads } from "./layers";
 import * as util from "./convnet_util";
 
-export interface OutputLayerOptions extends LayerOptions {
-    in_sx: number;
-    in_sy: number;
-    in_depth: number;
+export interface ReluLayerOptions extends LayerOptions {
 }
-
-export interface ReluLayerOptions extends OutputLayerOptions {
+export interface SigmoidLayerOptions extends LayerOptions {
 }
-export interface SigmoidLayerOptions extends OutputLayerOptions {
-}
-export interface MaxLayerOptions extends OutputLayerOptions {
+export interface MaxLayerOptions extends LayerOptions {
+    /** <required> group_size must be the integral multiple of the input size   */
     group_size: number;
 }
-export interface TanhLayerOptions extends OutputLayerOptions {
+export interface TanhLayerOptions extends LayerOptions {
 }
 
 export class OutputLayer extends LayerBase {
     in_act: Vol;
     out_act: Vol;
     constructor(opt: LayerOptions) {
-        const oopt = <OutputLayerOptions>opt;
-        super(oopt);
-        this.out_sx = oopt.in_sx;
-        this.out_sy = oopt.in_sy;
-        this.out_depth = oopt.in_depth;
+        super(opt);
+        this.out_sx = opt.in_sx as number;
+        this.out_sy = opt.in_sy as number;
+        this.out_depth = opt.in_depth as number;
     }
 }
 
@@ -36,7 +30,6 @@ export class OutputLayer extends LayerBase {
  * the output is in [0, inf)
  */
 export class ReluLayer extends OutputLayer implements ILayer {
-
 
     constructor(opt?: LayerOptions) {
         if (!opt) { return; }
@@ -165,7 +158,7 @@ export class MaxoutLayer extends OutputLayer implements ILayer {
         this.group_size = typeof mopt.group_size !== 'undefined' ? mopt.group_size : 2;
 
         // computed
-        this.out_depth = Math.floor(mopt.in_depth / this.group_size);
+        this.out_depth = Math.floor(<number>mopt.in_depth / this.group_size);
         this.layer_type = 'maxout';
 
         this.switches = util.zeros(this.out_sx * this.out_sy * this.out_depth); // useful for backprop

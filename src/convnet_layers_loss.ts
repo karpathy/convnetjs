@@ -9,9 +9,7 @@ import * as util from "./convnet_util";
 // file must be the final layer in a Net.
 
 export interface LossLayerOptions extends LayerOptions {
-    in_sx: number;
-    in_sy: number;
-    in_depth: number;
+    /** <required> */
     num_classes: number;
 }
 
@@ -25,14 +23,13 @@ export class SoftmaxLayer extends LayerBase implements ILayer {
     out_act: Vol;
     es: number[] | Float64Array;
 
-
     constructor(opt?: LayerOptions) {
         if (!opt) { return; }
         const lopt = <LossLayerOptions>opt;
         super(lopt);
 
         // computed
-        this.num_inputs = lopt.in_sx * lopt.in_sy * lopt.in_depth;
+        this.num_inputs = <number>lopt.in_sx * <number>lopt.in_sy * <number>lopt.in_depth;
         this.out_depth = this.num_inputs;
         this.out_sx = 1;
         this.out_sy = 1;
@@ -123,7 +120,7 @@ export class RegressionLayer extends LayerBase implements ILayer {
         super(lopt);
 
         // computed
-        this.num_inputs = lopt.in_sx * lopt.in_sy * lopt.in_depth;
+        this.num_inputs = <number>lopt.in_sx * <number>lopt.in_sy * <number>lopt.in_depth;
         this.out_depth = this.num_inputs;
         this.out_sx = 1;
         this.out_sy = 1;
@@ -194,12 +191,12 @@ export class SVMLayer extends LayerBase implements ILayer {
 
 
     constructor(opt?: LayerOptions) {
-        if(!opt){return;}
+        if (!opt) { return; }
         const lopt = <LossLayerOptions>opt;
         super(lopt);
 
         // computed
-        this.num_inputs = lopt.in_sx * lopt.in_sy * lopt.in_depth;
+        this.num_inputs = <number>lopt.in_sx * <number>lopt.in_sy * <number>lopt.in_depth;
         this.out_depth = this.num_inputs;
         this.out_sx = 1;
         this.out_sy = 1;

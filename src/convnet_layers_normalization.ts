@@ -3,12 +3,13 @@ import { LayerBase, LayerOptions, ILayer, LayerJSON, ParamsAndGrads } from "./la
 import * as util from "./convnet_util";
 
 export interface LocalResponseNormalizationLayerOptions extends LayerOptions {
-    in_sx: number;
-    in_sy: number;
-    in_depth: number;
+    /** <required> */
     k: number;
+    /** <required> */
     n: number;
+    /** <required> */
     alpha: number;
+    /** <required> */
     beta: number;
 }
 /**
@@ -38,9 +39,9 @@ export class LocalResponseNormalizationLayer extends LayerBase implements ILayer
         this.beta = lrnopt.beta;
 
         // computed
-        this.out_sx = lrnopt.in_sx;
-        this.out_sy = lrnopt.in_sy;
-        this.out_depth = lrnopt.in_depth;
+        this.out_sx = lrnopt.in_sx as number;
+        this.out_sy = lrnopt.in_sy as number;
+        this.out_depth = lrnopt.in_depth as number;
         this.layer_type = 'lrn';
 
         // checks

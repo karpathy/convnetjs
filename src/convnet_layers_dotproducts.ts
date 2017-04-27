@@ -10,24 +10,30 @@ import * as util from "./convnet_util";
 // putting them together in one file because they are very similar
 
 export interface DotproductsLayerOptions extends LayerOptions {
-    bias_pref?: number;
-    l1_decay_mul: number;
-    l2_decay_mul: number;
-    filters: number;
-    in_sx: number;
-    in_sy: number;
-    in_depth: number;
+    filters?: number;
+    // optional
+    /** <optional> add dropout layer with drop probability */
+    drop_prob?: number;
+    /** <optional> set activation function. */
     activation?: string;
+    bias_pref?: number;
+    l1_decay_mul?: number;
+    l2_decay_mul?: number;
 }
 
 export interface ConvLayerOptions extends DotproductsLayerOptions {
-    filters: number;
-    stride: number;
-    pad: number;
-    l1_decay_mul: number;
-    l2_decay_mul: number;
+    /** <required> */
     sx: number;
-    sy: number;
+    /** <optional> */
+    sy?: number;
+    /** <optional> */
+    stride?: number;
+    /** <optional> */
+    pad?: number;
+    /** <optional> */
+    l1_decay_mul?: number;
+    /** <optional> */
+    l2_decay_mul?: number;
 }
 
 export interface FullyConnLayerOptions extends DotproductsLayerOptions {
@@ -73,9 +79,9 @@ export class ConvLayer extends DotproductsLayer {
         // required
         this.out_depth = copt.filters;
         this.sx = copt.sx; // filter size. Should be odd if possible, it's cleaner.
-        this.in_depth = copt.in_depth;
-        this.in_sx = copt.in_sx;
-        this.in_sy = copt.in_sy;
+        this.in_depth = copt.in_depth as number;
+        this.in_sx = copt.in_sx as number;
+        this.in_sy = copt.in_sy as number;
 
         // optional
         this.sy = typeof copt.sy !== 'undefined' ? copt.sy : this.sx;
@@ -246,7 +252,7 @@ export class FullyConnLayer extends DotproductsLayer implements ILayer {
         this.out_depth = typeof fcopt.num_neurons !== 'undefined' ? fcopt.num_neurons : fcopt.filters;
 
         // computed
-        this.num_inputs = fcopt.in_sx * fcopt.in_sy * fcopt.in_depth;
+        this.num_inputs = <number>fcopt.in_sx * <number>fcopt.in_sy * <number>fcopt.in_depth;
         this.out_sx = 1;
         this.out_sy = 1;
         this.layer_type = 'fc';

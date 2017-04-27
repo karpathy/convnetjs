@@ -1,9 +1,14 @@
 // direct export
 export { Vol } from "./convnet_vol";
 export { Net } from "./convnet_net";
-export { MagicNet } from "./convnet_magicnet";
+export { MagicNet, MagicNetOptions } from "./convnet_magicnet";
 export { randf, randi, randn, randperm } from "./convnet_util";
-export { ConvLayer } from "./convnet_layers_dotproducts";
+export { ConvLayer, FullyConnLayer, ConvLayerOptions, FullyConnLayerOptions } from "./convnet_layers_dotproducts";
+export { DropoutLayer, DorpoutLayerOptions } from "./convnet_layers_dropout";
+export { RegressionLayer, SVMLayer, SoftmaxLayer, LossLayerOptions } from "./convnet_layers_loss";
+export { LocalResponseNormalizationLayer, LocalResponseNormalizationLayerOptions } from "./convnet_layers_normalization";
+export { PoolLayer, PoolLayerOptions } from "./convnet_layers_pool";
+export { TrainerOptions } from "./convnet_trainers";
 
 // module export
 import * as cnnvis from "./cnnvis";
