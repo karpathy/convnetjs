@@ -2,7 +2,7 @@
 // contains various utility functions 
 var cnnvis = (function(exports){
 
-  // can be used to graph loss, or accuract over time
+  // can be used to graph loss or accuracy over time
   var Graph = function(options) {
     var options = options || {};
     this.step_horizon = options.step_horizon || 1000;
