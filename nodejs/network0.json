@@ -1,0 +1,47 @@
+[
+    {
+        "type": "input",
+        "out_sx": 1,
+        "out_sy": 1,
+        "out_depth": 2
+    },
+    {
+        "type": "fc",
+        "num_neurons": 20,
+        "activation": "relu"
+    },
+    {
+        "type": "fc",
+        "num_neurons": 20,
+        "activation": "relu"
+    },
+    {
+        "type": "fc",
+        "num_neurons": 20,
+        "activation": "relu"
+    },
+    {
+        "type": "fc",
+        "num_neurons": 20,
+        "activation": "relu"
+    },
+    {
+        "type": "fc",
+        "num_neurons": 20,
+        "activation": "relu"
+    },
+    {
+        "type": "fc",
+        "num_neurons": 20,
+        "activation": "relu"
+    },
+    {
+        "type": "fc",
+        "num_neurons": 20,
+        "activation": "relu"
+    },
+    {
+        "type": "regression",
+        "num_neurons": 3
+    }
+]

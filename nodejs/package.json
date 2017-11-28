@@ -1,0 +1,19 @@
+{
+  "name": "Convnetjs Node Scripts",
+  "version": "1.0.0",
+  "description": "Neural Networks Scripts Running on Node.js",
+  "main": "main.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "dependencies": {
+    "convnetjs": "^0.3.0",
+    "pngjs2":"^2.0.0"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/thomasmatecki/convnetjs.git"
+  },
+  "author": "",
+  "license": "ISC"
+}
