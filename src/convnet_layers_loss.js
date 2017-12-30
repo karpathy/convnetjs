@@ -137,6 +137,9 @@
         var i = y.dim;
         var yi = y.val;
         var dy = x.w[i] - yi;
+        if (isNaN(dy)) {
+          dy = 0;
+        }
         x.dw[i] = dy;
         loss += 0.5*dy*dy;
       }
