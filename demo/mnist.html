@@ -55,7 +55,8 @@
 </head>
 <body>
   <div id="wrap">
-  <h2 style="text-align: center;"><a href="http://cs.stanford.edu/people/karpathy/convnetjs/">ConvNetJS</a> MNIST demo</h2>
+  <h2 style="text-align: center;">
+    <a href="http://cs.stanford.edu/people/karpathy/convnetjs/">ConvNetJS</a> MNIST demo</h2>
   <h1>Description</h1>
   <p>
     This demo trains a Convolutional Neural Network on the <a href="http://yann.lecun.com/exdb/mnist/">MNIST digits dataset</a> in your browser, with nothing but Javascript. The dataset is fairly easy and one should expect to get somewhere around 99% accuracy within few minutes. I used <a href="mnist_parse.zip">this python script</a> to parse the <a href="http://deeplearning.net/tutorial/gettingstarted.html">original files</a> into batches of images that can be easily loaded into page DOM with img tags.
@@ -103,7 +104,7 @@
         <input id="buttoncg" type="submit" value="clear graph" onclick="clear_graph();"/>
       </div>
     </div>
-    <div class="secpart"> 
+    <div class="secpart">
       <div id="upload_box">
         Test an image from your computer:
         <div id="img_div">
@@ -127,16 +128,13 @@
   <h1>Network Visualization</h1>
     <div id="visnet"></div>
   </div>
-  
+
   <div class="divsec">
   <h1>Example predictions on Test set</h1>
     <div id="testset_acc"></div>
 	<div id="testset_vis"></div>
   </div>
 
-  </div>  
+  </div>
 </body>
 </html>
-
-
-
