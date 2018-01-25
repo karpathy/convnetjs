@@ -1,0 +1,50 @@
+<!doctype html>
+<html>
+  <head>
+    <title>
+      Hello wurl
+    </title>
+    <body>
+      <script src="../../build/convnet-min.js"></script>
+      <script>
+        //for regression as opposed to classification
+        //we can proceed similarly just replace the classifier
+        //layer from softmax
+        const layer_defs = []
+        layer_defs.push({
+          type: 'input',
+          out_sx: 1,
+          out_sy: 1,
+          out_depth: 2
+        })
+        layer_defs.push({
+          type: 'fc',
+          num_neurons: 5,
+          activation: 'sigmoid'
+        })
+        layer_defs.push({
+          type: 'regression',
+          num_neurons: 1
+        })
+
+        const net = new convnetjs.Net()
+        net.makeLayers(layer_defs)
+        const x = new convnetjs.Vol([0.5, -1.3])
+        const trainer = new convnetjs.SGDTrainer(net, {
+          learning_rate: 0.01,
+          momentum: 0.0,
+          batch_size: 1,
+          l2_decay: 0.001
+        })
+        //train on the datapoint, saying [0.5, -1.3]
+        //should map to value 0.7
+        for (var i = 0; i < 200; i++) {
+          trainer.train(Object.assign({}, x), [0.7])
+        }
+
+        const predicted_values = net.forward(x)
+        console.log(predicted_values.w)
+      </script>
+    </body>
+  </head>
+</html>
