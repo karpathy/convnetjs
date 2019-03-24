@@ -136,18 +136,23 @@ var deepqlearn = deepqlearn || { REVISION: 'ALPHA' };
         }
       }
     },
-    policy: function(s) {
-      // compute the value of doing any action in this state
-      // and return the argmax action and its value
-      var svol = new convnetjs.Vol(1, 1, this.net_inputs);
+    policy: function (s) {
+      const inputLayer = this.value_net.layers[0];
+      const svol_sx = inputLayer.out_sx;
+      const svol_sy = inputLayer.out_sy;
+      const svol_depth = inputLayer.out_depth;
+      var svol = new convnetjs.Vol(svol_sx, svol_sy, svol_depth);
       svol.w = s;
       var action_values = this.value_net.forward(svol);
-      var maxk = 0; 
+      var maxk = 0;
       var maxval = action_values.w[0];
-      for(var k=1;k<this.num_actions;k++) {
-        if(action_values.w[k] > maxval) { maxk = k; maxval = action_values.w[k]; }
+      for (var k = 1; k < this.num_actions; k++) {
+        if (action_values.w[k] > maxval) {
+          maxk = k;
+          maxval = action_values.w[k];
+        }
       }
-      return {action:maxk, value:maxval};
+      return { action: maxk, value: maxval };
     },
     getNetInput: function(xt) {
       // return s = (x,a,x,a,x,a,xt) state vector. 
