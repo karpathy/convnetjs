@@ -55,7 +55,7 @@
     }
   }
 
-  // Implements Sigmoid nnonlinearity elementwise
+  // Implements Sigmoid nonlinearity elementwise
   // x -> 1/(1+e^(-x))
   // so the output is between 0 and 1.
   var SigmoidLayer = function(opt) {
@@ -109,7 +109,7 @@
     }
   }
 
-  // Implements Maxout nnonlinearity that computes
+  // Implements Maxout nonlinearity that computes
   // x -> max(x)
   // where x is a vector of size group_size. Ideally of course,
   // the input size should be exactly divisible by group_size
@@ -230,7 +230,7 @@
     var y = Math.exp(2 * x);
     return (y - 1) / (y + 1);
   }
-  // Implements Tanh nnonlinearity elementwise
+  // Implements Tanh nonlinearity elementwise
   // x -> tanh(x) 
   // so the output is between -1 and 1.
   var TanhLayer = function(opt) {
