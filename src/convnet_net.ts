@@ -37,7 +37,7 @@ class InvalidCostTypeError extends TypeError {
     }
 }
 
-export const smartBackward = (y: number | number[] | Float64Array | { [key: string]: number }, layer: LayerType) => {
+export const smartBackward = (y: number | number[] | Float64Array | { [key: string]: number }, layer: LayerType): number => {
     if (layer instanceof RegressionLayer) {
         return layer.backward(y);
     } else {
@@ -45,7 +45,7 @@ export const smartBackward = (y: number | number[] | Float64Array | { [key: stri
             throw new InvalidCostTypeError();
         }
 
-        layer.backward(y);
+        return layer.backward(y) || 0;
     }
 }
 
