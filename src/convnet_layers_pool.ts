@@ -13,7 +13,7 @@ export interface PoolLayerOptions extends LayerOptions {
     pad?: number;
 }
 
-export class PoolLayer extends LayerBase implements ILayer {
+export class PoolLayer extends LayerBase<'pool'> implements ILayer<'pool'> {
     sx: number;
     sy: number;
     in_depth: number;
@@ -29,7 +29,7 @@ export class PoolLayer extends LayerBase implements ILayer {
     constructor(opt?: LayerOptions) {
         if (!opt) { return; }
         const popt = <PoolLayerOptions>opt;
-        super(popt);
+        super('pool', popt);
 
         // required
         this.sx = popt.sx; // filter size
@@ -46,7 +46,7 @@ export class PoolLayer extends LayerBase implements ILayer {
         this.out_depth = this.in_depth;
         this.out_sx = Math.floor((this.in_sx + this.pad * 2 - this.sx) / this.stride + 1);
         this.out_sy = Math.floor((this.in_sy + this.pad * 2 - this.sy) / this.stride + 1);
-        this.layer_type = 'pool';
+
         // store switches for x,y coordinates for where the max comes from, for each output neuron
         this.switchx = util.zeros(this.out_sx * this.out_sy * this.out_depth);
         this.switchy = util.zeros(this.out_sx * this.out_sy * this.out_depth);
@@ -136,7 +136,7 @@ export class PoolLayer extends LayerBase implements ILayer {
         this.out_depth = json.out_depth as number;
         this.out_sx = json.out_sx as number;
         this.out_sy = json.out_sy as number;
-        this.layer_type = json.layer_type as string;
+        this.layer_type = json.layer_type as 'pool';
         this.sx = json.sx as number;
         this.sy = json.sy as number;
         this.stride = json.stride as number;

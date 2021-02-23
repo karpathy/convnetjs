@@ -17,7 +17,7 @@ export interface LocalResponseNormalizationLayerOptions extends LayerOptions {
  * the gradient check is a bit funky. I'll look into this a bit later.
  * Local Response Normalization in window, along depths of volumes
  */
-export class LocalResponseNormalizationLayer extends LayerBase implements ILayer {
+export class LocalResponseNormalizationLayer extends LayerBase<'lrn'> implements ILayer<'lrn'> {
     k: number;
     n: number;
     alpha: number;
@@ -30,7 +30,7 @@ export class LocalResponseNormalizationLayer extends LayerBase implements ILayer
     constructor(opt?: LayerOptions) {
         if (!opt) { return; }
         const lrnopt = <LocalResponseNormalizationLayerOptions>opt;
-        super(lrnopt);
+        super('lrn', lrnopt);
 
         // required
         this.k = lrnopt.k;
@@ -131,6 +131,6 @@ export class LocalResponseNormalizationLayer extends LayerBase implements ILayer
         this.out_sx = json.out_sx as number;
         this.out_sy = json.out_sy as number;
         this.out_depth = json.out_depth as number;
-        this.layer_type = json.layer_type as string;
+        this.layer_type = json.layer_type as 'lrn';
     }
 }

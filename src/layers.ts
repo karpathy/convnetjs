@@ -17,8 +17,8 @@ export interface ParamsAndGrads {
 }
 
 
-export interface ILayer {
-    layer_type: string;
+export interface ILayer<T extends string> {
+    layer_type: T;
     in_sx: number;
     in_sy: number;
     in_depth: number;
@@ -32,15 +32,16 @@ export interface ILayer {
     fromJSON(json: LayerJSON): void;
 }
 
-export class LayerBase {
-    layer_type: string;
+export class LayerBase<T extends string> {
+    layer_type: T;
     in_sx: number;
     in_sy: number;
     in_depth: number;
     out_sx: number;
     out_sy: number;
     out_depth: number;
-    constructor(opt?: LayerOptions) {
+    constructor(layerType: T, opt?: LayerOptions) {
+        this.layer_type = layerType;
         if (!opt) { return; }
     }
 }

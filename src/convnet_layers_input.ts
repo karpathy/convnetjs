@@ -15,7 +15,7 @@ export interface InputLayerOptions extends LayerOptions {
     sy: number;
 }
 
-export class InputLayer extends LayerBase implements ILayer {
+export class InputLayer extends LayerBase<'input'> implements ILayer<'input'> {
     out_depth: number;
     out_sx: number;
     out_sy: number;
@@ -24,7 +24,7 @@ export class InputLayer extends LayerBase implements ILayer {
 
     constructor(opt?: LayerOptions) {
         if (!opt) { return; }
-        super(opt);
+        super('input', opt);
 
         // required: depth
         this.out_depth = getopt(opt, ['out_depth', 'depth'], 0);
@@ -32,9 +32,6 @@ export class InputLayer extends LayerBase implements ILayer {
         // optional: default these dimensions to 1
         this.out_sx = getopt(opt, ['out_sx', 'sx', 'width'], 1);
         this.out_sy = getopt(opt, ['out_sy', 'sy', 'height'], 1);
-
-        // computed
-        this.layer_type = 'input';
     }
     forward(V: Vol, ) {
         this.in_act = V;
@@ -57,6 +54,6 @@ export class InputLayer extends LayerBase implements ILayer {
         this.out_depth = json.out_depth as number;
         this.out_sx = json.out_sx as number;
         this.out_sy = json.out_sy as number;
-        this.layer_type = json.layer_type as string;
+        this.layer_type = json.layer_type as 'input';
     }
 }

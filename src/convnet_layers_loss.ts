@@ -17,7 +17,7 @@ export interface LossLayerOptions extends LayerOptions {
  * it gets a stream of N incoming numbers and computes the softmax
  * function (exponentiate and normalize to sum to 1 as probabilities should)
  */
-export class SoftmaxLayer extends LayerBase implements ILayer {
+export class SoftmaxLayer extends LayerBase<'softmax'> implements ILayer<'softmax'> {
     in_act: Vol;
     num_inputs: number;
     out_act: Vol;
@@ -26,14 +26,13 @@ export class SoftmaxLayer extends LayerBase implements ILayer {
     constructor(opt?: LayerOptions) {
         if (!opt) { return; }
         const lopt = <LossLayerOptions>opt;
-        super(lopt);
+        super('softmax', lopt);
 
         // computed
         this.num_inputs = <number>lopt.in_sx * <number>lopt.in_sy * <number>lopt.in_depth;
         this.out_depth = this.num_inputs;
         this.out_sx = 1;
         this.out_sy = 1;
-        this.layer_type = 'softmax';
     }
 
     forward(V: Vol, ) {
@@ -98,7 +97,7 @@ export class SoftmaxLayer extends LayerBase implements ILayer {
         this.out_depth = json.out_depth as number;
         this.out_sx = json.out_sx as number;
         this.out_sy = json.out_sy as number;
-        this.layer_type = json.layer_type as string;
+        this.layer_type = json.layer_type as 'softmax';
         this.num_inputs = json.num_inputs as number;
     }
 }
@@ -108,7 +107,7 @@ export class SoftmaxLayer extends LayerBase implements ILayer {
  * so penalizes \sum_i(||x_i - y_i||^2), where x is its input
  * and y is the user-provided array of "correct" values.
  */
-export class RegressionLayer extends LayerBase implements ILayer {
+export class RegressionLayer extends LayerBase<'regression'> implements ILayer<'regression'> {
     num_inputs: number;
     in_act: Vol;
     out_act: Vol;
@@ -117,7 +116,7 @@ export class RegressionLayer extends LayerBase implements ILayer {
     constructor(opt?: LayerOptions) {
         if (!opt) { return; }
         const lopt = <LossLayerOptions>opt;
-        super(lopt);
+        super('regression', lopt);
 
         // computed
         this.num_inputs = <number>lopt.in_sx * <number>lopt.in_sy * <number>lopt.in_depth;
@@ -179,28 +178,26 @@ export class RegressionLayer extends LayerBase implements ILayer {
         this.out_depth = json.out_depth as number;
         this.out_sx = json.out_sx as number;
         this.out_sy = json.out_sy as number;
-        this.layer_type = json.layer_type as string;
+        this.layer_type = json.layer_type as 'regression';
         this.num_inputs = json.num_inputs as number;
     }
 }
 
-export class SVMLayer extends LayerBase implements ILayer {
+export class SVMLayer extends LayerBase<'svm'> implements ILayer<'svm'> {
     num_inputs: number;
     in_act: Vol;
     out_act: Vol;
 
-
     constructor(opt?: LayerOptions) {
         if (!opt) { return; }
         const lopt = <LossLayerOptions>opt;
-        super(lopt);
+        super('svm', lopt);
 
         // computed
         this.num_inputs = <number>lopt.in_sx * <number>lopt.in_sy * <number>lopt.in_depth;
         this.out_depth = this.num_inputs;
         this.out_sx = 1;
         this.out_sy = 1;
-        this.layer_type = 'svm';
     }
 
     forward(V: Vol, ) {
@@ -249,7 +246,7 @@ export class SVMLayer extends LayerBase implements ILayer {
         this.out_depth = json.out_depth as number;
         this.out_sx = json.out_sx as number;
         this.out_sy = json.out_sy as number;
-        this.layer_type = json.layer_type as string;
+        this.layer_type = json.layer_type as 'svm';
         this.num_inputs = json.num_inputs as number;
     }
 }

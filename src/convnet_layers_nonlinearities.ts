@@ -13,11 +13,11 @@ export interface MaxLayerOptions extends LayerOptions {
 export interface TanhLayerOptions extends LayerOptions {
 }
 
-export class OutputLayer extends LayerBase {
+export class OutputLayer<T extends string> extends LayerBase<T> {
     in_act: Vol;
     out_act: Vol;
-    constructor(opt: LayerOptions) {
-        super(opt);
+    constructor(layerType: T, opt: LayerOptions) {
+        super(layerType, opt);
         this.out_sx = opt.in_sx as number;
         this.out_sy = opt.in_sy as number;
         this.out_depth = opt.in_depth as number;
@@ -29,14 +29,11 @@ export class OutputLayer extends LayerBase {
  * x -> max(0, x)
  * the output is in [0, inf)
  */
-export class ReluLayer extends OutputLayer implements ILayer {
+export class ReluLayer extends OutputLayer<'relu'> implements ILayer<'relu'> {
 
     constructor(opt?: LayerOptions) {
         if (!opt) { return; }
-        super(opt);
-
-        // computed
-        this.layer_type = 'relu';
+        super('relu', opt);
     }
     forward(V: Vol, ) {
         this.in_act = V;
@@ -81,7 +78,7 @@ export class ReluLayer extends OutputLayer implements ILayer {
         this.out_depth = json.out_depth as number;
         this.out_sx = json.out_sx as number;
         this.out_sy = json.out_sy as number;
-        this.layer_type = json.layer_type as string;
+        this.layer_type = json.layer_type as 'relu';
     }
 }
 
@@ -90,11 +87,11 @@ export class ReluLayer extends OutputLayer implements ILayer {
  * x -> 1/(1+e^(-x))
  * so the output is between 0 and 1.
  */
-export class SigmoidLayer extends OutputLayer implements ILayer {
+export class SigmoidLayer extends OutputLayer<'sigmoid'> implements ILayer<'sigmoid'> {
 
     constructor(opt?: LayerOptions) {
         if (!opt) { return; }
-        super(opt);
+        super('sigmoid', opt);
 
         // computed
         this.layer_type = 'sigmoid';
@@ -136,7 +133,7 @@ export class SigmoidLayer extends OutputLayer implements ILayer {
         this.out_depth = json.out_depth as number;
         this.out_sx = json.out_sx as number;
         this.out_sy = json.out_sy as number;
-        this.layer_type = json.layer_type as string;
+        this.layer_type = json.layer_type as 'sigmoid';
     }
 }
 
@@ -144,7 +141,7 @@ export class SigmoidLayer extends OutputLayer implements ILayer {
 // x -> max(x)
 // where x is a vector of size group_size. Ideally of course,
 // the input size should be exactly divisible by group_size
-export class MaxoutLayer extends OutputLayer implements ILayer {
+export class MaxoutLayer extends OutputLayer<'maxout'> implements ILayer<'maxout'> {
     group_size: number;
     switches: number[] | Float64Array;
 
@@ -152,14 +149,13 @@ export class MaxoutLayer extends OutputLayer implements ILayer {
     constructor(opt?: LayerOptions) {
         if (!opt) { return; }
         const mopt = <MaxLayerOptions>opt;
-        super(mopt);
+        super('maxout', mopt);
 
         // required
         this.group_size = typeof mopt.group_size !== 'undefined' ? mopt.group_size : 2;
 
         // computed
         this.out_depth = Math.floor(<number>mopt.in_depth / this.group_size);
-        this.layer_type = 'maxout';
 
         this.switches = util.zeros(this.out_sx * this.out_sy * this.out_depth); // useful for backprop
     }
@@ -254,7 +250,7 @@ export class MaxoutLayer extends OutputLayer implements ILayer {
         this.out_depth = json.out_depth as number;
         this.out_sx = json.out_sx as number;
         this.out_sy = json.out_sy as number;
-        this.layer_type = json.layer_type as string;
+        this.layer_type = json.layer_type as 'maxout';
         this.group_size = json.group_size as number;
         this.switches = util.zeros(this.group_size);
     }
@@ -270,11 +266,11 @@ function tanh(x: number) {
 // Implements Tanh nnonlinearity elementwise
 // x -> tanh(x)
 // so the output is between -1 and 1.
-export class TanhLayer extends OutputLayer implements ILayer {
+export class TanhLayer extends OutputLayer<'tanh'> implements ILayer<'tanh'> {
 
     constructor(opt?: LayerOptions) {
         if (!opt) { return; }
-        super(opt);
+        super('tanh', opt);
 
         // computed
         this.layer_type = 'tanh';
@@ -314,6 +310,6 @@ export class TanhLayer extends OutputLayer implements ILayer {
         this.out_depth = json.out_depth as number;
         this.out_sx = json.out_sx as number;
         this.out_sy = json.out_sy as number;
-        this.layer_type = json.layer_type as string;
+        this.layer_type = json.layer_type as 'tanh';
     }
 }
