@@ -67,7 +67,7 @@ export class SoftmaxLayer extends LayerBase implements ILayer {
         this.out_act = A;
         return this.out_act;
     }
-    backward(y: number) {
+    backward(y?: number) {
 
         // compute and accumulate gradient wrt weights and bias of this layer
         const x = this.in_act;
@@ -135,7 +135,7 @@ export class RegressionLayer extends LayerBase implements ILayer {
     // or it can be a number if only one value is regressed
     // or it can be a struct {dim: i, val: x} where we only want to
     // regress on dimension i and asking it to have value x
-    backward(y: number | number[] | Float64Array | { [key: string]: number }) {
+    backward(y?: number | number[] | Float64Array | { [key: string]: number }) {
 
         // compute and accumulate gradient wrt weights and bias of this layer
         const x = this.in_act;
@@ -208,7 +208,7 @@ export class SVMLayer extends LayerBase implements ILayer {
         this.out_act = V; // nothing to do, output raw scores
         return V;
     }
-    backward(y: number) {
+    backward(y?: number) {
 
         // compute and accumulate gradient wrt weights and bias of this layer
         const x = this.in_act;

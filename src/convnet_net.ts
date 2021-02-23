@@ -15,12 +15,46 @@ export interface NetJSON{
     layers?: LayerJSON[];
 }
 
+export type LayerType = 
+    | FullyConnLayer
+    | LocalResponseNormalizationLayer
+    | DropoutLayer
+    | InputLayer
+    | SoftmaxLayer
+    | RegressionLayer
+    | ConvLayer
+    | PoolLayer
+    | ReluLayer
+    | SigmoidLayer
+    | TanhLayer
+    | MaxoutLayer
+    | SVMLayer
+
+class InvalidCostTypeError extends TypeError {
+    name = 'InvalidCostType'
+    constructor() { 
+        super('Invalid cost type')
+    }
+}
+
+export const smartBackward = (y: number | number[] | Float64Array | { [key: string]: number }, layer: LayerType) => {
+    if (layer instanceof RegressionLayer) {
+        return layer.backward(y);
+    } else {
+        if (y instanceof Object) {
+            throw new InvalidCostTypeError();
+        }
+
+        layer.backward(y);
+    }
+}
+
 /**
  * Net manages a set of layers
  * For now constraints: Simple linear order of layers, first layer input last layer a cost layer
  */
 export class Net {
-    layers: ILayer[];
+    layers: LayerType[];
     constructor(options?: LayerOptions[]) {
         if(!options){
             options = [];
@@ -131,8 +165,8 @@ export class Net {
     getCostLoss(V: Vol, y: number | number[] | Float64Array | { [key: string]: number }): number {
         this.forward(V, false);
         const N = this.layers.length;
-        const loss = <number>this.layers[N - 1].backward(y);
-        return loss;
+
+        return smartBackward(y, this.layers[N - 1]);
     }
 
     /**
@@ -140,7 +174,7 @@ export class Net {
      */
     backward(y: number | number[] | Float64Array | { [key: string]: number }): number {
         const N = this.layers.length;
-        const loss = <number>this.layers[N - 1].backward(y); // last layer assumed to be loss layer
+        const loss = smartBackward(y, this.layers[N - 1]); // last layer assumed to be loss layer
         for (let i = N - 2; i >= 0; i--) { // first layer assumed input
             this.layers[i].backward();
         }
@@ -186,7 +220,7 @@ export class Net {
         for (let i = 0; i < json.layers.length; i++) {
             const Lj = json.layers[i]
             const t = Lj.layer_type;
-            let L: ILayer;
+            let L: LayerType;
             if (t === 'input') { L = new InputLayer(); }
             if (t === 'relu') { L = new ReluLayer(); }
             if (t === 'sigmoid') { L = new SigmoidLayer(); }
@@ -200,6 +234,7 @@ export class Net {
             if (t === 'fc') { L = new FullyConnLayer(); }
             if (t === 'maxout') { L = new MaxoutLayer(); }
             if (t === 'svm') { L = new SVMLayer(); }
+
             L.fromJSON(Lj);
             this.layers.push(L);
         }
