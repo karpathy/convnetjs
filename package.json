@@ -26,10 +26,8 @@
         "url": "https://github.com/yoskeoka/convnetjs-ts/issues"
     },
     "homepage": "https://github.com/yoskeoka/convnetjs-ts#readme",
-    "dependencies": {
-        "tslib": "^1.6.0"
-    },
     "devDependencies": {
+        "tslib": "^2.1.0",
         "@types/chai": "^3.5.0",
         "@types/mocha": "^2.2.38",
         "@types/node": "^7.0.0",
