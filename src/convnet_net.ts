@@ -1,5 +1,5 @@
 import { Vol } from "./convnet_vol";
-import { LayerOptions, ILayer, LayerJSON, ParamsAndGrads } from "./layers";
+import { LayerOptions, LayerJSON, ParamsAndGrads } from "./layers";
 import * as util from "./convnet_util";
 import { LossLayerOptions, SVMLayer, RegressionLayer, SoftmaxLayer } from "./convnet_layers_loss";
 import { DotproductsLayerOptions, FullyConnLayer, ConvLayer } from "./convnet_layers_dotproducts";
