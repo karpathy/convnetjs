@@ -27,14 +27,14 @@
     },
     "homepage": "https://github.com/yoskeoka/convnetjs-ts#readme",
     "devDependencies": {
-        "tslib": "^2.1.0",
         "@types/chai": "^3.5.0",
         "@types/mocha": "^2.2.38",
-        "@types/node": "^7.0.0",
+        "@types/node": "^14.14.31",
         "chai": "^3.5.0",
-        "local-web-server": "^1.2.7",
+        "local-web-server": "^4.2.1",
         "mocha": "^3.2.0",
         "ts-node": "^3.0.0",
+        "tslib": "^2.1.0",
         "tslint": "^5.0.0",
         "typescript": "^2.3.0",
         "webpack": "^2.4.0"
