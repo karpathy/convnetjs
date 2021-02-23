@@ -9,7 +9,8 @@
         "buildtest": "tsc -p tsconfig.test.json",
         "test": "mocha test/build/test/*.spec.js --no-timeouts --colors",
         "build": "tsc -p . && webpack",
-        "start": "npm run build && ws"
+        "start": "npm run build && ws",
+        "install": "npm run build"
     },
     "repository": {
         "type": "git",
