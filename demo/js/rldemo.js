@@ -433,7 +433,7 @@
       ctx.stroke();
       
       if(w.clock % 200 === 0) {
-        reward_graph.add(w.clock/200, b.average_reward_window.get_average());
+        reward_graph.add(w.clock, b.average_reward_window.get_average());
         var gcanvas = document.getElementById("graph_canvas");
         reward_graph.drawSelf(gcanvas);
       }
