@@ -5,6 +5,7 @@ var layer_defs, net, trainer;
 // create neural net
 var t = "layer_defs = [];\n\
 layer_defs.push({type:'input', out_sx:1, out_sy:1, out_depth:2}); // 2 inputs: x, y \n\
+layer_defs.push({type:'fourier_feature', sx:1, stride:1}); \n\
 layer_defs.push({type:'fc', num_neurons:20, activation:'relu'});\n\
 layer_defs.push({type:'fc', num_neurons:20, activation:'relu'});\n\
 layer_defs.push({type:'fc', num_neurons:20, activation:'relu'});\n\
