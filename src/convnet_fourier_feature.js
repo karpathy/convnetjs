@@ -1,8 +1,18 @@
 (function(global) {
+    /**
+     * TODO:
+     * 
+     * 1) refactor this file to as appropiate
+     *      - forward - just go with "basic" for now - no Gaussians
+     *          - sin(2 * pi * x), cos(2 * pi * x)
+     * 2) re-compile the library
+     * 
+     * 3) use the new class in the image regression example
+     */
   "use strict";
   var Vol = global.Vol; // convenience
   
-  var PoolLayer = function(opt) {
+  var FourierFeatureLayer = function(opt) {
 
     var opt = opt || {};
 
@@ -14,52 +24,56 @@
 
     // optional
     this.sy = typeof opt.sy !== 'undefined' ? opt.sy : this.sx;
-    this.stride = typeof opt.stride !== 'undefined' ? opt.stride : 2;
+    this.stride = typeof opt.stride !== 'undefined' ? opt.stride : 1;
     this.pad = typeof opt.pad !== 'undefined' ? opt.pad : 0; // amount of 0 padding to add around borders of input volume
 
     // computed
-    this.out_depth = this.in_depth;
-    this.out_sx = Math.floor((this.in_sx + this.pad * 2 - this.sx) / this.stride + 1);
-    this.out_sy = Math.floor((this.in_sy + this.pad * 2 - this.sy) / this.stride + 1);
-    this.layer_type = 'pool';
+    this.out_depth = this.in_depth * 2;
+    this.out_sx = this.in_sx
+    this.out_sy = this.in_sy;
+    this.layer_type = 'fourier_feature';
+
+    // TODO - probably we don't need switchx and switchy in this class anymore?
     // store switches for x,y coordinates for where the max comes from, for each output neuron
     this.switchx = global.zeros(this.out_sx*this.out_sy*this.out_depth);
     this.switchy = global.zeros(this.out_sx*this.out_sy*this.out_depth);
   }
 
-  PoolLayer.prototype = {
+  FourierFeatureLayer.prototype = {
     forward: function(V, is_training) {
       this.in_act = V;
 
       var A = new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0);
       
       var n=0; // a counter for switches
-      for(var d=0;d<this.out_depth;d++) {
+      for(var d=0;d<this.out_depth / 2; d++) {
         var x = -this.pad;
         var y = -this.pad;
         for(var ax=0; ax<this.out_sx; x+=this.stride,ax++) {
           y = -this.pad;
           for(var ay=0; ay<this.out_sy; y+=this.stride,ay++) {
 
-            // convolve centered at this particular location
-            var a = -99999; // hopefully small enough ;\
-            var winx=-1,winy=-1;
-            for(var fx=0;fx<this.sx;fx++) {
-              for(var fy=0;fy<this.sy;fy++) {
-                var oy = y+fy;
-                var ox = x+fx;
-                if(oy>=0 && oy<V.sy && ox>=0 && ox<V.sx) {
-                  var v = V.get(ox, oy, d);
-                  // perform max pooling and store pointers to where
-                  // the max came from. This will speed up backprop 
-                  // and can help make nice visualizations in future
-                  if(v > a) { a = v; winx=ox; winy=oy;}
-                }
-              }
-            }
-            this.switchx[n] = winx;
-            this.switchy[n] = winy;
+            // for the first "half" of the fourier feature - use sine
+            var v = V.get(ax, ay, d);
+            var a = Math.sin(2 * Math.PI * v);
             n++;
+
+            A.set(ax, ay, d, a);
+          }
+        }
+      }
+      for(var d=0;d<this.out_depth / 2; d++) {
+        var x = -this.pad;
+        var y = -this.pad;
+        for(var ax=0; ax<this.out_sx; x+=this.stride,ax++) {
+          y = -this.pad;
+          for(var ay=0; ay<this.out_sy; y+=this.stride,ay++) {
+
+            // for the first "half" of the fourier feature - use cosine
+            var v = V.get(ax, ay, d);
+            var a = Math.cos(2 * Math.PI * v);
+            n++;
+
             A.set(ax, ay, d, a);
           }
         }
@@ -121,6 +135,6 @@
     }
   }
 
-  global.PoolLayer = PoolLayer;
+  global.FourierFeatureLayer = FourierFeatureLayer;
 
 })(convnetjs);
