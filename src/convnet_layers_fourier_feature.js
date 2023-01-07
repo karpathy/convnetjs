@@ -21,8 +21,8 @@
     this.in_sx = opt.in_sx;
     this.in_sy = opt.in_sy;
 
-    // optional
-    this.use_gaussian_mapping = typeof opt.use_gaussian_mapping !== 'undefined' ? opt.use_gaussian_mapping : true; // whether or not to factor in a random number (sampled from a Gaussian) in the Fourier Feature mapping
+    // optional - whether or not to factor in a random number (sampled from a Gaussian) in the Fourier Feature mapping
+    this.useGaussianMapping = typeof opt.use_gaussian_mapping !== 'undefined' ? opt.use_gaussian_mapping : true;
 
     // computed
     this.out_depth = this.in_depth * 2;
@@ -40,48 +40,40 @@
     forward: function(V, is_training) {
       this.in_act = V;
 
-      var A = new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0);
+      var mappedFeature = new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0);
       
       var n=0; // a counter for switches
-      for(var d=0;d<this.out_depth / 2; d++) {
+      for(var d=0;d<this.out_depth; d++) {
         var x = 0;
         var y = 0;
         for(var ax=0; ax<this.out_sx; x+=1,ax++) {
           for(var ay=0; ay<this.out_sy; y+=1,ay++) {
             // for the first "half" of the fourier feature - use sine
             var v = V.get(ax, ay, d);
-            var random_proj_factor = 1;
-            if (this.use_gaussian_mapping === true) {
-              random_proj_factor *= global.randn(0.0, 1.0);
+            var randomProjFactor = 1;
+            if (this.useGaussianMapping === true) {
+              randomProjFactor *= global.randn(0.0, 1.0);
             }
-            var a = Math.sin(2 * Math.PI * v * random_proj_factor);
+            var projectionFunc = null;
+            if (d<this.out_depth / 2) {
+              projectionFunc = Math.cos;
+            } else {
+              projectionFunc = Math.sin;
+            }
+            var a = projectionFunc(2 * Math.PI * v * randomProjFactor);
             n++;
 
-            A.set(ax, ay, d, a);
+            mappedFeature.set(ax, ay, d, a);
           }
         }
       }
-      for(var d=this.out_depth / 2; d<this.out_depth; d++) {
-        for(var ax=0; ax<this.out_sx; x+=1,ax++) {
-          for(var ay=0; ay<this.out_sy; y+=1,ay++) {
-            // for the second "half" of the fourier feature - use cosine
-            var v = V.get(ax, ay, d);
-            var a = Math.cos(2 * Math.PI * v);
-            n++;
-
-            A.set(ax, ay, d, a);
-          }
-        }
-      }
-      this.out_act = A;
+      this.out_act = mappedFeature;
       return this.out_act;
     },
     backward: function() { 
-      // pooling layers have no parameters, so simply compute 
-      // gradient wrt data here
+      // no parameters, so simply compute gradient wrt data here
       var V = this.in_act;
       V.dw = global.zeros(V.w.length); // zero out gradient wrt data
-      var A = this.out_act; // computed in forward pass 
 
       var n = 0;
       for(var d=0;d<this.out_depth;d++) {
