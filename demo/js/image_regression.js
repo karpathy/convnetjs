@@ -5,6 +5,7 @@ var layer_defs, net, trainer;
 // create neural net
 var t = "layer_defs = [];\n\
 layer_defs.push({type:'input', out_sx:1, out_sy:1, out_depth:2}); // 2 inputs: x, y \n\
+layer_defs.push({type:'fourier_feature'}); \n\
 layer_defs.push({type:'fc', num_neurons:20, activation:'relu'});\n\
 layer_defs.push({type:'fc', num_neurons:20, activation:'relu'});\n\
 layer_defs.push({type:'fc', num_neurons:20, activation:'relu'});\n\
@@ -69,7 +70,7 @@ function draw() {
   var W = nn_canvas.width;
   var H = nn_canvas.height;
 
-  var g = nn_ctx.getImageData(0, 0, W, H);
+  var g = nn_ctx.getImageData(0, 0, W, H, {willReadFrequently: true});
   var v = new convnetjs.Vol(1, 1, 2);
   for(var x=0;x<W;x++) {
     v.w[0] = (x-W/2)/W;

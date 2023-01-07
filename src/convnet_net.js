@@ -93,6 +93,7 @@
           case 'tanh': this.layers.push(new global.TanhLayer(def)); break;
           case 'maxout': this.layers.push(new global.MaxoutLayer(def)); break;
           case 'svm': this.layers.push(new global.SVMLayer(def)); break;
+          case 'fourier_feature': this.layers.push(new global.FourierFeatureLayer(def)); break;
           default: console.log('ERROR: UNRECOGNIZED LAYER TYPE: ' + def.type);
         }
       }
