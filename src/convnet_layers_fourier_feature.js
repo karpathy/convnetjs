@@ -21,11 +21,11 @@
     this.in_sx = opt.in_sx;
     this.in_sy = opt.in_sy;
 
-    // optional - whether or not to factor in a random number (sampled from a Gaussian) in the Fourier Feature mapping
-    this.useGaussianMapping = typeof opt.use_gaussian_mapping !== 'undefined' ? opt.use_gaussian_mapping : true;
+    // optional - whether to factor in a random number (sampled from a Gaussian) in the mapping or not (defaults to -1, which signifies not to include it)
+    this.gaussianMappingScale = typeof opt.gaussian_mapping_scale !== 'undefined' ? opt.gaussian_mapping_scale : -1;
 
     // computed
-    this.out_depth = this.in_depth * 2;
+    this.out_depth = this.in_depth * 2 * Math.abs(this.gaussianMappingScale);
     this.out_sx = this.in_sx
     this.out_sy = this.in_sy;
     this.layer_type = 'fourier_feature';
@@ -48,25 +48,27 @@
         var y = 0;
         for(var ax=0; ax<this.out_sx; x+=1,ax++) {
           for(var ay=0; ay<this.out_sy; y+=1,ay++) {
-            // for the first "half" of the fourier feature - use sine
-            var v = V.get(ax, ay, d);
+            var v = V.get(ax, ay, d % this.in_depth);
             var randomProjFactor = 1;
-            if (this.useGaussianMapping === true) {
+            if (this.gaussianMappingScale > 0) {
               randomProjFactor *= global.randn(0.0, 1.0);
             }
-            var projectionFunc = null;
-            if (d<this.out_depth / 2) {
-              projectionFunc = Math.cos;
+            var a;
+            // for the first "half" of the fourier feature - use sine
+            if (d < (this.out_depth / 2)) {
+              a = Math.cos(2 * Math.PI * v * randomProjFactor);
             } else {
-              projectionFunc = Math.sin;
+            // use sine for the second "half"
+              a = Math.sin(2 * Math.PI * v * randomProjFactor);
             }
-            var a = projectionFunc(2 * Math.PI * v * randomProjFactor);
             n++;
 
             mappedFeature.set(ax, ay, d, a);
           }
         }
       }
+      console.log(V);
+      console.log(mappedFeature);
       this.out_act = mappedFeature;
       return this.out_act;
     },
@@ -82,8 +84,8 @@
         for(var ax=0; ax<this.out_sx; x+=1,ax++) {
           for(var ay=0; ay<this.out_sy; y+=1,ay++) {
 
-            var chain_grad = this.out_act.get_grad(ax,ay,d);
-            V.add_grad(this.switchx[n], this.switchy[n], d, chain_grad);
+            // var chain_grad = this.out_act.get_grad(ax,ay,d);
+            // V.add_grad(this.switchx[n], this.switchy[n], d, chain_grad);
             n++;
 
           }
