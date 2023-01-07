@@ -3,6 +3,16 @@
   var Vol = global.Vol; // convenience
   
   var FourierFeatureLayer = function(opt) {
+    /**
+     * Based on the paper "Fourier Features Let Networks Learn
+     * High Frequency Functions in Low Dimensional Domains" (2020) presented 
+     * at NeurIPS (https://bmild.github.io/fourfeat/index.html) 
+     * by Matthew Tancik, Pratul P. Srinivasan, Ben Mildenhall, Sara Fridovich-Keil,
+     * Nithin Raghavan, Utkarsh Singhal, Ravi Ramamoorthi, Jonathan T. Barron and Ren Ng.
+     * 
+     * Please see the Python implementation to see examples of the concept in action:
+     *  https://github.com/tancik/fourier-feature-networks/blob/master/Demo.ipynb. 
+     */
 
     var opt = opt || {};
 
@@ -12,6 +22,7 @@
     this.in_sy = opt.in_sy;
 
     // optional
+    this.use_gaussian_mapping = typeof opt.use_gaussian_mapping !== 'undefined' ? opt.use_gaussian_mapping : true; // whether or not to factor in a random number (sampled from a Gaussian) in the Fourier Feature mapping
 
     // computed
     this.out_depth = this.in_depth * 2;
@@ -19,7 +30,7 @@
     this.out_sy = this.in_sy;
     this.layer_type = 'fourier_feature';
 
-    // TODO - probably we don't need switchx and switchy in this class anymore?
+    // TODO - maybe we don't need switchx and switchy in this class anymore?
     // store switches for x,y coordinates for where the max comes from, for each output neuron
     this.switchx = global.zeros(this.out_sx*this.out_sy*this.out_depth);
     this.switchy = global.zeros(this.out_sx*this.out_sy*this.out_depth);
@@ -37,10 +48,13 @@
         var y = 0;
         for(var ax=0; ax<this.out_sx; x+=1,ax++) {
           for(var ay=0; ay<this.out_sy; y+=1,ay++) {
-
             // for the first "half" of the fourier feature - use sine
             var v = V.get(ax, ay, d);
-            var a = Math.sin(2 * Math.PI * v);
+            var random_proj_factor = 1;
+            if (this.use_gaussian_mapping === true) {
+              random_proj_factor *= global.randn(0.0, 1.0);
+            }
+            var a = Math.sin(2 * Math.PI * v * random_proj_factor);
             n++;
 
             A.set(ax, ay, d, a);
@@ -50,8 +64,7 @@
       for(var d=0;d<this.out_depth / 2; d++) {
         for(var ax=0; ax<this.out_sx; x+=1,ax++) {
           for(var ay=0; ay<this.out_sy; y+=1,ay++) {
-
-            // for the first "half" of the fourier feature - use cosine
+            // for the second "half" of the fourier feature - use cosine
             var v = V.get(ax, ay, d);
             var a = Math.cos(2 * Math.PI * v);
             n++;
