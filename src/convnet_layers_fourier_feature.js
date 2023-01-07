@@ -20,6 +20,7 @@
     this.in_depth = opt.in_depth;
     this.in_sx = opt.in_sx;
     this.in_sy = opt.in_sy;
+    this.inputMapCache = {};  // where we'll store (x, y) ==> their equivalent Fourier Feature Mapping
 
     // optional - whether to factor in a random number (sampled from a Gaussian) in the mapping or not (defaults to -1, which signifies not to include it)
     this.gaussianMappingScale = typeof opt.gaussian_mapping_scale !== 'undefined' ? opt.gaussian_mapping_scale : -1;
@@ -34,6 +35,16 @@
 
   FourierFeatureLayer.prototype = {
     forward: function(V, is_training) {
+      var coordinateVolume = V;
+      if(!Object.hasOwn(this.inputMapCache, coordinateVolume.w)){
+        // compute for the first time
+        var transformedVolume = this.transform(coordinateVolume);
+        // save for future queries at these coordinates
+        this.inputMapCache[coordinateVolume.w] = transformedVolume;
+      }
+      return this.inputMapCache[coordinateVolume.w];
+    },
+    transform: function(V) {
       this.in_act = V;
 
       var mappedFeature = new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0);
@@ -49,7 +60,7 @@
               randomProjFactor *= global.randn(0.0, 1.0);
             }
             var a;
-            // for the first "half" of the fourier feature - use sine
+            // for the first "half" of the fourier feature - use cosine
             if (d < (this.out_depth / 2)) {
               a = Math.cos(2 * Math.PI * v * randomProjFactor);
             } else {
