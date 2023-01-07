@@ -61,7 +61,7 @@
           }
         }
       }
-      for(var d=0;d<this.out_depth / 2; d++) {
+      for(var d=this.out_depth / 2; d<this.out_depth; d++) {
         for(var ax=0; ax<this.out_sx; x+=1,ax++) {
           for(var ay=0; ay<this.out_sy; y+=1,ay++) {
             // for the second "half" of the fourier feature - use cosine
