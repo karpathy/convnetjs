@@ -30,10 +30,6 @@
     this.out_sy = this.in_sy;
     this.layer_type = 'fourier_feature';
 
-    // TODO - maybe we don't need switchx and switchy in this class anymore?
-    // store switches for x,y coordinates for where the max comes from, for each output neuron
-    this.switchx = global.zeros(this.out_sx*this.out_sy*this.out_depth);
-    this.switchy = global.zeros(this.out_sx*this.out_sy*this.out_depth);
   }
 
   FourierFeatureLayer.prototype = {
@@ -42,7 +38,6 @@
 
       var mappedFeature = new Vol(this.out_sx, this.out_sy, this.out_depth, 0.0);
       
-      var n=0; // a counter for switches
       for(var d=0;d<this.out_depth; d++) {
         var x = 0;
         var y = 0;
@@ -61,36 +56,16 @@
             // use sine for the second "half"
               a = Math.sin(2 * Math.PI * v * randomProjFactor);
             }
-            n++;
-
             mappedFeature.set(ax, ay, d, a);
           }
         }
       }
-      console.log(V);
-      console.log(mappedFeature);
       this.out_act = mappedFeature;
       return this.out_act;
     },
     backward: function() { 
       // no parameters, so simply compute gradient wrt data here
-      var V = this.in_act;
-      V.dw = global.zeros(V.w.length); // zero out gradient wrt data
-
-      var n = 0;
-      for(var d=0;d<this.out_depth;d++) {
-        var x = 0;
-        var y = 0;
-        for(var ax=0; ax<this.out_sx; x+=1,ax++) {
-          for(var ay=0; ay<this.out_sy; y+=1,ay++) {
-
-            // var chain_grad = this.out_act.get_grad(ax,ay,d);
-            // V.add_grad(this.switchx[n], this.switchy[n], d, chain_grad);
-            n++;
-
-          }
-        }
-      }
+      this.in_act.dw = global.zeros(this.in_act.w.length); // zero out gradient wrt data
     },
     getParamsAndGrads: function() {
       return [];
@@ -110,8 +85,6 @@
       this.out_sy = json.out_sy;
       this.layer_type = json.layer_type;
       this.in_depth = json.in_depth;
-      this.switchx = global.zeros(this.out_sx*this.out_sy*this.out_depth); // need to re-init these appropriately
-      this.switchy = global.zeros(this.out_sx*this.out_sy*this.out_depth);
     }
   }
 
