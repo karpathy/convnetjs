@@ -1,0 +1,13 @@
+name: ConvNetJS Security Scanning
+rules:
+  - query: security-and-quality
+  - query: security-extended
+  - query: security-audit
+  - query: experimental
+  - query: performance
+
+exclude:
+  - path: test/**
+  - path: demo/**
+  - path: build/**
+  - path: compile/**

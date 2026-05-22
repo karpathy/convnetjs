@@ -18,7 +18,10 @@ trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.01, momentum:0.1, batch
 ";
 
 function reload() {
-  eval($("#layerdef").val());
+  var config = convnetjs.demoConfig.parseNetwork($("#layerdef").val());
+  layer_defs = config.layer_defs;
+  net = config.net;
+  trainer = config.trainer;
 
   // enter buttons for layers
   var t = '';

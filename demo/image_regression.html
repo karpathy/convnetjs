@@ -9,6 +9,7 @@
 <script src="js/jquery-ui.min.js"></script>
 
 <script src="../build/convnet.js"></script>
+<script src="js/safe-config.js"></script>
 <script src="js/image_regression.js"></script>
 
 <style type="text/css">
@@ -38,7 +39,7 @@ canvas {
 
 <p>This demo that treats the pixels of an image as a learning problem: it takes the (x,y) position on a grid and learns to predict the color at that point using regression to (r,g,b). It's a bit like compression, since the image information is encoded in the weights of the network, but almost certainly not of practical kind :)</p>
 <p>
-  Note that the entire ConvNetJS definition is shown in textbox below and it gets eval()'d to create the network, so feel free to fiddle with the parameters and hit "reload". I found that, empirically and interestingly, deeper networks tend to work much better on this task given a fixed parameter budget.
+  Note that the entire ConvNetJS definition is shown in textbox below and it is parsed as a restricted configuration to create the network, so feel free to fiddle with the parameters and hit "reload". I found that, empirically and interestingly, deeper networks tend to work much better on this task given a fixed parameter budget.
 </p>
 
 <p>Report questions/bugs/suggestions to <a href="https://twitter.com/karpathy">@karpathy</a>.</p>

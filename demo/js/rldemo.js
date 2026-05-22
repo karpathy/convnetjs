@@ -302,8 +302,7 @@
       // braaain
       //this.brain = new deepqlearn.Brain(this.eyes.length * 3, this.actions.length);
       var spec = document.getElementById('qspec').value;
-      eval(spec);
-      this.brain = brain;
+      this.brain = convnetjs.demoConfig.parseDeepQ(spec).brain;
       
       this.reward_bonus = 0.0;
       this.digestion_signal = 0.0;

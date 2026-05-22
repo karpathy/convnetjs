@@ -95,7 +95,10 @@ function tick() {
 
 function reload() {
   counter = 0;
-  eval($("#layerdef").val());
+  var config = convnetjs.demoConfig.parseNetwork($("#layerdef").val());
+  layer_defs = config.layer_defs;
+  net = config.net;
+  trainer = config.trainer;
   //$("#slider").slider("value", Math.log(trainer.learning_rate) / Math.LN10);
   //$("#lr").html('Learning rate: ' + trainer.learning_rate);
 }

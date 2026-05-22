@@ -490,6 +490,9 @@ var load_from_json = function() {
   reset_all();
 }
 var change_net = function() {
-  eval($("#newnet").val());
+  var config = convnetjs.demoConfig.parseNetwork($("#newnet").val());
+  layer_defs = config.layer_defs;
+  net = config.net;
+  trainer = config.trainer;
   reset_all();
 }

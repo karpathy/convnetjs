@@ -105,7 +105,10 @@ var loaded_train_batches = [];
 $(window).load(function() {
 
   $("#newnet").val(t);
-  eval($("#newnet").val());
+  var config = convnetjs.demoConfig.parseNetwork($("#newnet").val());
+  layer_defs = config.layer_defs;
+  net = config.net;
+  trainer = config.trainer;
 
   update_net_param_display();
 
@@ -646,6 +649,9 @@ var load_pretrained = function() {
 }
 
 var change_net = function() {
-  eval($("#newnet").val());
+  var config = convnetjs.demoConfig.parseNetwork($("#newnet").val());
+  layer_defs = config.layer_defs;
+  net = config.net;
+  trainer = config.trainer;
   reset_all();
 }

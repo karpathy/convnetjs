@@ -18,6 +18,7 @@
 <script src="js/jquery-1.8.3.min.js"></script>
 <script src="js/npgmain.js"></script>
 <script src="../build/convnet.js"></script>
+<script src="js/safe-config.js"></script>
 <script src="js/regression.js"></script>
 
 <style type="text/css">
@@ -42,7 +43,7 @@ canvas {
 
 <p>The simulation below is a 1-dimensional regression where a neural network is trained to regress to y coordinates for every given point x through an L2 loss. That is, the minimized cost function computes the squared difference between the predicted y-coordinate and the "correct" y coordinate. Every 10th of a second, all points are fed to the network multiple times through the trainer class to train the network.</p>
 
-<p>The simulation below will eval() whatever you have in the text area and reload. Feel free to explore and use ConvNetJS to instantiate your own network!</p>
+<p>The simulation below parses the text area as a restricted ConvNetJS configuration and reloads the network. Feel free to explore and use ConvNetJS to instantiate your own network!</p>
 
 <p>Report questions/bugs/suggestions to <a href="https://twitter.com/karpathy">@karpathy</a>.</p>
 

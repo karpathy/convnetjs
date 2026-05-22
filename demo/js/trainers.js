@@ -106,7 +106,10 @@ $(window).load(function() {
 
 var reload = function() {
   
-  eval($("#layerdef").val()); // fills in trainer_spects[] array, and layer_defs
+  var config = convnetjs.demoConfig.parseTrainerComparison($("#layerdef").val());
+  layer_defs = config.layer_defs;
+  trainer_defs = config.trainer_defs;
+  legend = config.legend;
 
   var N = trainer_defs.length;
   nets = [];

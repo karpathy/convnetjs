@@ -19,7 +19,10 @@ trainer = new convnetjs.SGDTrainer(net, {learning_rate:0.01, momentum:0.0, batch
 
 var lix=2; // layer id of layer we'd like to draw outputs of
 function reload() {
-  eval($("#layerdef").val());
+  var config = convnetjs.demoConfig.parseNetwork($("#layerdef").val());
+  layer_defs = config.layer_defs;
+  net = config.net;
+  trainer = config.trainer;
 
   // refresh buttons
   var t = '';

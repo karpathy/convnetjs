@@ -7,6 +7,7 @@
 <script src="js/npgmain.js"></script>
 <script src="../build/convnet.js"></script>
 <script src="../build/util.js"></script>
+<script src="js/safe-config.js"></script>
 <script src="js/classify2d.js"></script>
 
 <style type="text/css">
@@ -50,7 +51,7 @@ input[type="submit"]
 <br>
 <input id="buttontp" type="submit" value="change network" onclick="reload();" style="width: 300px; height: 50px;"/>
 
-<p>Feel free to change this, the text area above gets eval()'d when you hit the button and the network gets reloaded. Every 10th of a second, all points are fed to the network multiple times through the trainer class to train the network. The resulting predictions of the network are then "painted" under the data points to show you the generalization.</p>
+<p>Feel free to change this, the text area above is parsed as a restricted ConvNetJS configuration when you hit the button and the network gets reloaded. Every 10th of a second, all points are fed to the network multiple times through the trainer class to train the network. The resulting predictions of the network are then "painted" under the data points to show you the generalization.</p>
 
 <p>On the right we visualize the transformed representation of all grid points in the original space and the data, for a given layer and only for 2 neurons at a time. The number in the bracket shows the total number of neurons at that level of representation. If the number is more than 2, you will only see the two visualized but you can cycle through all of them with the cycle button.</p>
 
