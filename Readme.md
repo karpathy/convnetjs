@@ -1,6 +1,8 @@
 
 # ConvNetJS
 
+[English](Readme.md) | [简体中文](https://github.com/karpathy/convnetjs/blob/master/Readme.zh.md)
+
 ConvNetJS is a Javascript implementation of Neural networks, together with nice browser-based demos. It currently supports:
 
 - Common **Neural Network modules** (fully connected layers, non-linearities)
